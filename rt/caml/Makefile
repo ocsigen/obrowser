@@ -65,4 +65,4 @@ include .depend
 
 clean:
 	@echo "[CLEAN]"
-	@rm -f *.cm* *~ .d stubs.c *.o *.so *-stubs.c build-stubs/build-stubs.cmo
+	@rm -f *.a *.cm* *~ .d stubs.c *.o *.so *-stubs.c build-stubs/build-stubs.cmo
