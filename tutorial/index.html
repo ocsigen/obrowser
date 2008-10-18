@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>O'Browser - Introduction and Tutorial</title>
+    <style type="text/css">
+    /* <![CDATA[ */
+      body { font-family: sans-serif; }
+      h1 { text-align: center; font-size: 200%; }
+      h2 { text-align: left; font-size: 170%; background-color: #6df;
+           border-bottom: 0.2ex black solid ; text-align: center; }
+      h3 { text-align: left; font-size: 140%; text-align: center; }
+      h4 { text-align: left; font-size: 110%; font-style: italic; }
+      a  { color: black; }
+      a:hover { background-color: black; color: #6df ; text-decoration: none; }
+      img { border: 0; }
+      p:hover { background-color: #ddf8ff }
+      .abstract { width: 50% ; margin-left: 25%; font-style: italic; padding: 0.5em;
+                  text-align: justify; background-color: #ddf8ff }
+      .warning { width: 50% ; margin-left: 25%; font-style: italic; padding: 0.5em;
+                 text-align: justify; background-color: #ffdddd }
+      .abstract:hover { background-color: #bbd6dd }
+      .warning:hover { background-color: #ddbbbb }
+    /* ]]> */
+    </style>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <script type="text/javascript" src="vm.js"></script>
+    <script type="text/javascript">
+    /* <![CDATA[ */
+      window.onload = function () {
+        exec_caml ("tutorial.exe.uue") ;
+      }
+    /* ]]> */
+    </script>
+  </head>
+  <body id="body">
+    <h1>
+      <img src="img/logo.png" alt="O'Browser : an OCaml in a browser" />
+      <br />
+      Introduction and tutorial
+    </h1>
+    <div style="text-align: center;">
+      <a href="mailto:benjamin.canou@lip6.fr"><strong>Benjamin Canou</strong></a>
+      <br /><br />
+      <span style="font-size: 90%">
+	With the help and support of my PhD thesis advisors :
+      </span> <br />
+      <strong>Vincent Balat</strong>
+      <span style="font-size: 90%">and</span>
+      <strong>Emmanuel Chailloux</strong> 
+      <br /> <br />
+      <span style="font-size: 75%">
+	Thanks for their testing, support and interest to :
+      </span> <br />
+      <span style="font-size: 80%">
+	<strong>Alexis Darrasse</strong>, <strong>Vivien Ravet</strong>,
+	<strong>Philippe Trebuchet</strong> and <strong>Philippe Wang</strong>
+      </span>
+      <br /><br />
+    </div>
+    <div class="warning">
+      <strong>Preamble:</strong>   This  page   is
+      currently  a  snapshot only  for  testing  purposes. Please  don't
+      communicate  this  url  until  an  official  release  is  announced
+      (soon). The url will be the same after the release.
+    </div>    
+    <div class="abstract">
+      <strong>Abstract:</strong>  We  present   a  way  to  run  OCaml
+      programs on a standard, unmodified web browser. To achieve this,
+      we designed a bytecode interpreter  in JavaScript, as well as an
+      implementation of  the standard  library. Since the  web browser
+      does not  provide the same  interaction mechanisms as  a typical
+      OCaml  environment,  we  provide  a modified  standard  library,
+      enabling  interaction  with  the  web  page.   This  page  is  a
+      presentation of  the project,  as well as  a tutorial on  how to
+      write and run your own O'Browser programs.
+    </div>
+
+    <h2>Overview</h2>
+
+    <h3>What is in the package ?</h3>
+
+    <h4>The Virtual Machine</h4>
+
+    <p>The VM  is written  as a bunch  of JavaScript files,  which are
+    linked together by the C preprocessor (<tt>cpp</tt>). The built VM
+    is  the <tt>vm.js</tt> file,  which is  to be  added to  web pages
+    using O'Browser by a <span id="id00::inline-source::html">
+      <!--<script type="text/javascript" src="vm.js"></script>-->
+      </span> marukp.</p>
+
+    <div id="id01::source::..:sl:rt:sl:js:sl:mlvalues.js::js"></div>
+    <div id="id02::source::..:sl:rt:sl:js:sl:main.js::js"></div>
+    <div id="id03::source::..:sl:rt:sl:js:sl:loader.js::js"></div>
+
+    <p>The main function  is <span id="id04::inline-source::js">
+	<!--exec_caml(url, args)--></span>  which  takes   an  OCaml
+    bytecode  file  url  as   first  parameters,  followed  by  string
+    arguments,  available  from  <tt>Sys.argv</tt>  from  the  O'Browser
+    program.  Since OCaml bytecode  files use bytes, and JavaScript is
+    only  able to load  (at least  on some  engines) 7-bit  ascii text
+    files,    the     bytecode    files    are     to    be    encoded
+    by <tt>uuencode</tt>.</p>
+
+    <p>For example,  the tutorial  infrastructure is loaded  after the
+      page is rendered by the following code :
+    </p>
+      <div id="id05::inline-source::html">
+	<!--    <script type="text/javascript">
+    /* <![CDATA[ */
+      window.onload = function () {
+        exec_caml ("tutorial.exe.uue") ;
+      }
+    /* ]]> */
+    </script>-->
+      </div>
+
+    <h4>The modified standard library</h4>
+
+    <p>O'Browser programs are to  be linked with our altenative standard
+    library, which  is the  one of OCaml  3.10 stripped down  from all
+    console Input/ouput  functions (like <tt>print_string</tt>, etc.).
+    It  includes the  Thread module,  and the  Graphics  module (which
+    provides an  alternative open_graph function returning  a DOM node
+    to  be  included  where  you  want  the  Graphics  window  in  the
+    page). The  later one uses the  soon-to-be-normalised HTML5 canvas
+    element, which is only available on recent Gecko, Opera and WebKit
+    based browser (i.e. not on MSIE and Konqueror 3).</p>
+
+    <p>The supplementary <tt>Js</tt>  module provides interaction with
+    the DOM (the Document Object Model).</p>
+    <div id="id06::source::..:sl:rt:sl:caml:sl:js.ml::ocaml"></div>
+
+    <p>The implementation of the externals is coded in <tt>rtjs.js</tt></p>
+    <div id="id07::source::..:sl:rt:sl:js:sl:rtjs.js::js"></div>
+
+    <h4>A few examples</h4>
+
+    <p>
+      <ul>
+	<li><a href="../examples/boulderdash">A Boulder Dash clone</a></li>
+	<li><a href="../examples/minesweeper/minesweeper.html">A mine sweeper</a></li>
+	<li><a href="../examples/pretty_colours">A syntax colouriser</a></li>
+      </ul>
+    </p>
+
+    <h4>Licences</h4>
+    <p>O'Browser is <strong>Free software</strong>, see
+    the <a href="../README">README</a> file for license details.</p>
+
+    <h2>Tutorial</h2>
+
+    <div  class="warning"><strong>Warning:</strong>  This  tutorial
+    expects you to know the  OCaml language.  Knowing HTML is required
+    but not JavaScript.  The examples have been tested successfully on
+    Firefox 3 beta,  Opera 9.5 beta, Safari 3.1  for windows, Internet
+    Explorer  8 beta  and Konqueror  4 (for  the two  later  ones, the
+    JavaScript engines  were quite slow  at running this  prototype on
+    some  examples   during  our  tests,   this  may  change   in  the
+    future).</div>
+
+    <h3>Hello World</h3>
+
+    <p>Before trying to compile the  examples, you have to compile the
+    O'Browser distribution itself. For this, you need OCaml 3.10 and the
+    GNU version  of make, then you just  have to type make  in the top
+    level folder of the extracted distribution package.</p>
+
+    <h4>A «Hello World» in OCaml in your browser</h4>
+    
+    <p>The  Js  module,  provided  in the  modified  standard  library
+    contains a binding of  the JavaScript function <tt>alert</tt> wich
+    opens  a simple  dialog showing  its string  parameter and  a «OK»
+    button. </p>
+
+    <p>Please  note that  such a  popup blocks  the  entire JavaScript
+    execution flow  and so prevents other OCaml  preemptive threads to
+    run until the user clicks on «OK». </p>
+
+    <div id="id09::example::hello::Hello:sp:World"></div>
+
+    <p>To  compile  the  example,  use  ocamlc  with  the  environment
+    OCAMLLIB set to the path where the alternative runtime library has
+    been built (the <tt>rt/caml</tt>  folder of the distribution). You
+    then  have to  uuencode your  file.  For example,  on a  UNIX-like
+    system with a bsh-like shell, you would do something like :</p>
+
+    <div style="white-space:pre; font-family: monospace;">
+      CAMLLIB=$OBROWSER_PATH/rt/caml ocamlc hello.ml -o hello.exe
+      uuencode hello.exe stdout &gt; hello.exe.uue
+    </div>
+
+    <p>If you named the uuencoded file <tt>hello.exe.uue</tt>, you can
+    then copy or  link the <tt>vm.js</tt> file in  the same folder and
+    add   the   following  <tt>hello.html</tt>   page   to  run   your
+    Hello&nbsp;World :</p>
+
+    <div id="id30::source::hello.html::html"></div>
+
+    <h4>A «Hello World» using the DOM</h4>
+    
+    <p>The Document Object Model (DOM) is an internal structure of the
+    browser, in which  each element of a web page  is represented by a
+    node.   A  node  encapsulates   named  properties,   defining  its
+    appearance, behaviour,  etc. Each node of  the page is  bound to a
+    JavaScript Object,  and the document  can be read and  modified by
+    interacting with the properties of the JavaScript objects. </p>
+
+    <p>For example,  one can modify the  <tt>children</tt> property to
+    add content  to a  page element.  In this example,  we get  a node
+    identifier   (a    string)   as   Sys.argv.(1).    We   then   use
+    get_element_by_id to  retrieve the  associated DOM node  (bound to
+    the Js.Node.t  type in the  OCaml bindings). Finally, we  append a
+    text to the content of the node.</p>
+    
+    <div id="id10::example::hello_dom::Hello:sp:World:sp:using:sp:the:sp:DOM"></div>
+
+    <h4>An interactive «Hello World»</h4>
+    
+    <p>Some  JavaScript  objects  have  special properties  which  can
+    contain  closures, called  when  some event  occurs. For  example,
+    the <tt>a</tt> DOM element can have a special behaviour by setting
+    a closure to its <tt>onclick</tt> property.</p>
+
+    <p>The OCaml  DOM interfaces provides  a mechanism to run  a OCaml
+    closure on a  DOM event. In JavaScript, when an  event is run, the
+    JavaScript control flow is blocked until the callback returns. The
+    OCaml  closures spawned by  events are,  on the  contrary, running
+    concurrently with  others, so the  programmer doesn't have  to put
+    explicit  yields and  can  run complex  computations within  event
+    handlers.</p>
+
+    <div id="id11::example::hello_event::Hello:sp:World:sp:with:sp:events"></div>
+
+    <h4>A color picker</h4>
+
+    <div id="id40::example::colorpicker::A:sp:color:sp:picker"></div>
+    
+    <h3>Modifying content by browsing the DOM</h3>
+
+    <div  class="warning"><strong>Warning:</strong> Please  run  these
+    examples before  having run any source code  coloration since they
+    browse  the whole  DOM  and source  code  coloration generates  an
+    enormous amount of DOM nodes.</div>
+
+    <h4>Constructing a TOC from the DOM</h4>
+
+    <p>This examples  browses the whole  DOM of the page,  numbers the
+    sections  and  extracts the  TOC.   To  do  this, it  matches  the
+    attributes <tt>tagName</tt>  of the node,  increments its counters
+    when it find an <tt>"H1"</tt>, <tt>"H2"</tt> or <tt>"H3"</tt>, and
+    does a  recursive call  on every <tt>Js.Node.children</tt>  of the
+    node. It also adds anchors to the page and links the corresponding
+    TOC items to them.</p>
+
+    <div id="id12::example::num_sections::Numbering:sp:the:sp:sections"></div>
+
+    <h4>Modifying links behaviour</h4>
+    <p>With this  little example,  one can add  links on a  page, wich
+      target images through their  thumbnails. When the user clicks on
+      a  thumbnail, the  image is  displayed  inline if  the user  has
+      JavaScript   enabled,  by  modfying   the  links'   targets  and
+      events.</p>
+    <p style="text-align:center">
+      <a href="pictures/P1010921.JPG" id="id13::viewer::P1010921.JPG">
+	<img src="thumbs/P1010921.JPG"
+	     alt="A flower" />
+      </a>
+      <a href="pictures/P1010944.JPG" id="id14::viewer::P1010944.JPG">
+	<img src="thumbs/P1010944.JPG"
+	     alt="Another flower" />
+      </a>
+      <br />
+
+      <a href="pictures/P1020067.JPG" id="id15::viewer::P1020067.JPG">
+	<img src="thumbs/P1020067.JPG" 
+	     alt="Another flower" />
+      </a>
+      <a href="pictures/P1020069.JPG" id="id16::viewer::P1020069.JPG">
+	<img src="thumbs/P1020069.JPG" 
+	     alt="Another flower" />
+      </a>
+      <br />
+      
+      Try the images above before and after having run this example.
+    </p>
+
+    <div id="id17::example::inline_img::Image:sp:links"></div>
+
+    <h3>Events and preemptive threads</h3>
+
+    <p>The JavaScript  runtime provides concurrent  preemtive threads,
+    with  all the  primitives  of the  standard  OCaml Thread  library
+    (excepted the ones for IO).</p>
+
+    <h4>A timer</h4>
+    
+    <p>Here,  the program  lauchnes  a thread  with  a function  which
+    updates  the   display  and  sleeps  one   second  before  calling
+    itself.  In  JavsScript, in  order  for the  user  to  be able  to
+    interact, the  programmer would have to retrun  from the function,
+    and to enqueue  a call to the display function  in the event queue
+    using  <tt>window.setTimeout</tt>.   Moreover,  there  is  neither
+    sleep, nor  call/cc mechanism,  so the programmer  has to  fill in
+    manually  the environment  of  such a  continuation. The  provided
+    preemptive  threads enables  us to  write such  an exemple  with a
+    simple recursive function that never terminates.</p>
+
+    <div id="id18::example::clock::A:sp:Timer"></div>
+
+    <h4>Producer &amp; consummers</h4>
+
+    <p>Mutexes are also implemented, which enables to write concurrent
+    programs, like the well known producer/consummers example. In this
+    example, four  consummers eat the food you  feed concurrently. For
+    this, they share a mutex on the food stock (which in fact is a DOM
+    node).</p>
+
+    <div id="id19::example::prod_cons::Producer:sp::amp::sp:consummers"></div>
+
+    <h2>Annexes</h2>
+
+    <h3>Sources of the tutorial infrastructure</h3>
+    
+    <p>Is you look at the source code of this page, you'll see that it
+    only contains the  text. Exemples and source code  extracts are in
+    fact commands encapsulated in IDs like
+    <span id="id20::inline-source::html">
+      <!--<div id="id00::source::syntax_ocaml.ml::ocaml"></div>-->
+    </span>
+    or
+    <span id="id21::inline-source::html">
+      <!--<div id="id01::example::prod_cons::Producer:amp:consummers"></div>-->
+    </span>
+    .These commands are  preprocessed by <tt>tutorial.ml</tt> and call
+    the examples,  as well as several syntax  colouring scripts (which
+    explains why the syntax colouring  is a bit slow). The <tt>Js</tt>
+    module provides the function <tt>decode_id</tt> which gives a list
+    of strings from such  an encoded ID, (here escaping <tt>:amp:</tt>
+    as an ampersand). </p>
+
+    <ul>
+      <li>
+	<strong>index.html preprocessor:</strong><br />
+	<div id="id26::source::tutorial.ml::ocaml"></div>
+      </li>
+      <li>
+	<strong>Syntax colouring main module:</strong><br />
+	<div id="id23::source::syntax_common.ml::ocaml"></div>
+      </li>
+      <li>
+	<strong>OCaml Syntax colouring:</strong><br />
+	<div id="id22::source::syntax_ocaml.ml::ocaml"></div>
+      </li>
+      <li>
+	<strong>XHML+CSS+JS Syntax colouring:</strong><br />
+	<div id="id24::source::syntax_html.ml::ocaml"></div>
+      </li>
+      <li>
+	<strong>this index.html:</strong><br />
+	<div id="id25::source::index.html::html"></div>
+      </li>
+    </ul>
+    <h3>Sources of some examples from the package</h3>
+    <ul>
+      <li>
+	<strong>Boulder Dash clone:</strong><br />
+	<div id="id27::source::..:sl:examples:sl:boulderdash:sl:main.ml::ocaml"></div>
+      </li>
+      <li>
+	<strong>Minesweeper:</strong><br />
+	<div id="id28::source::..:sl:examples:sl:minesweeper:sl:minesweeper.ml::ocaml"></div>
+      </li>
+    </ul>
+
+    <p>
+      <a href="http://validator.w3.org/check?uri=referer">
+	<img src="http://www.w3.org/Icons/valid-xhtml11-blue"
+	     alt="Valid XHTML 1.1" />
+      </a>
+      <a href="http://jigsaw.w3.org/css-validator/">
+	<img src="http://jigsaw.w3.org/css-validator/images/vcss-blue"
+             alt="Valid CSS" />
+      </a>
+    </p>
+  </body>
+</html>

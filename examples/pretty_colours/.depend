@@ -1,0 +1,10 @@
+syntax_js.cmo: syntax_common.cmo 
+syntax_js.cmx: syntax_common.cmx 
+syntax_ocaml.cmo: syntax_common.cmo 
+syntax_ocaml.cmx: syntax_common.cmx 
+syntax_xml.cmo: syntax_common.cmo 
+syntax_xml.cmx: syntax_common.cmx 
+syntax_html.cmo: syntax_common.cmo 
+syntax_html.cmx: syntax_common.cmx 
+main.cmo: syntax_common.cmo 
+main.cmx: syntax_common.cmx 

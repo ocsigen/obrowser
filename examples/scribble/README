@@ -1,0 +1,10 @@
+This example is not standalone client code and includes an ad-hoc server.
+
+To try it, run the server, on the port 1234:
+  ./server 1234
+Then point two browsers to:
+  http://localhost:1234/index.html
+
+Then draw in one instance of the client to see your drawings appear
+"simultaneaously" on the second (the drawing commands are sent at
+regular time intervals inducing a lag between drawing flushes).
