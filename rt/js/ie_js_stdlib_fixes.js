@@ -1,3 +1,12 @@
+/***********************************************************************/
+/*                              O'Browser                              */
+/*                                                                     */
+/*  Copyright 2008 Benjamin Canou. This file is distributed under the  */
+/*  terms of the GNU Library General Public License described in file  */
+/*  ../LICENSE.                                                        */
+/*                                                                     */
+/***********************************************************************/
+
 var ie = (navigator.appName == "Microsoft Internet Explorer") ;
 
 #define METHODS(c) c.prototype

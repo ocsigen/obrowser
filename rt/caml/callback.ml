@@ -4,6 +4,7 @@
 (*                           Objective Caml                            *)
 (*                                                                     *)
 (*            Xavier Leroy, projet Cristal, INRIA Rocquencourt         *)
+(*            Modified version for O'Browser by Benjamin Canou         *)
 (*                                                                     *)
 (*  Copyright 1996 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
@@ -12,9 +13,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* $Id: callback.ml,v 1.5 2003/12/31 14:20:39 doligez Exp $ *)
-
-(* Registering Caml values with the C runtime for later callbacks *)
+(* Registering Caml values with the runtime for later callbacks *)
 
 external register_named_value : string -> Obj.t -> unit
                               = "caml_register_named_value"
