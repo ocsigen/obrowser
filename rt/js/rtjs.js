@@ -30,7 +30,13 @@ RT.caml_js_node_get_attribute = function (n, a) {
     var node = unbox_abstract (n);
     var attr = string_from_value(a);
     var v = node[attr];
-    return value_from_string (v == null ? "" : v);
+    if (v == null) {
+	this.failwith ("unbound attribute");
+    }
+    if (!(v instanceof String)) {
+	v = v.toString ();
+    }
+    return value_from_string (v);
 }
 // Caml name: remove_attribute
 // Type:      t -> string -> unit
