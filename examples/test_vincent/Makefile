@@ -16,11 +16,15 @@
 
 .PHONY: clean
 
-all: main.exe.uue vm.js
+all: main.exe.uue vm.js table.js
 
-%.exe: %.ml ../../rt/caml/stdlib.cma
+main.exe: main.ml table.cma ../../rt/caml/stdlib.cma
 	@echo "[OCAMLC] $@"
-	@CAMLLIB=../../rt/caml ocamlc $< -o $@
+	@CAMLLIB=../../rt/caml ocamlc main.ml table.cma -o $@
+
+%.cmo: %.ml ../../rt/caml/stdlib.cma
+	@echo "[OCAMLC] $@"
+	@CAMLLIB=../../rt/caml ocamlc -c $< -o $@
 
 %.uue: %
 	@echo "[UUENCODE] $@"
@@ -30,6 +34,12 @@ vm.js: ../../vm.js
 	@echo "[CP] $@"
 	@cp $< $@
 
+table.cma: table.cmo table_dummy.o
+	@CAMLLIB=../../rt/caml ocamlmklib table.cmo table_dummy.o -o $(basename $@)
+
+%.o: %.c
+	gcc -c $<
+
 ../../vm.js: ../../rt/js/*.js
 	@cd ../.. && make vm.js
 
@@ -38,4 +48,4 @@ vm.js: ../../vm.js
 
 clean:
 	@echo "[CLEAN]"
-	@rm -f *.cm* *~ *.exe *.uue vm.js
+	@rm -f *.cm* *~ *.exe *.uue vm.js *.so *.dylib *.dll *.o *.a
