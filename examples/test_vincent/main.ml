@@ -4,4 +4,4 @@ open Table
 let _ =
   register_closure
     132
-    (fun () -> alert "test !")
+    (fun (s, i) -> alert ("test : " ^ s ^ ", " ^ string_of_int i))

@@ -1,3 +1,3 @@
 external register_closure
-  : int -> (unit -> unit) -> unit
+  : int -> ('a -> 'b) -> unit
   = "caml_register_closure"
