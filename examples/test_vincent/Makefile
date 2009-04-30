@@ -20,7 +20,7 @@ all: main.exe.uue vm.js table.js
 
 main.exe: main.ml table.cma ../../rt/caml/stdlib.cma
 	@echo "[OCAMLC] $@"
-	@CAMLLIB=../../rt/caml ocamlc main.ml table.cma -o $@
+	@CAMLLIB=../../rt/caml ocamlc table.cma main.ml -o $@
 
 %.cmo: %.ml ../../rt/caml/stdlib.cma
 	@echo "[OCAMLC] $@"
