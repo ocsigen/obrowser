@@ -7,6 +7,58 @@
 /*                                                                     */
 /***********************************************************************/
 
+// Caml name: js_external
+// Type:      string -> int -> ('a -> 'b) option
+RT.caml_js_external = function (vsym, nargs) {
+    var sym = string_from_value (vsym);
+    if (RT[sym] == null)
+	return UNIT;
+    this.prims[sym] = RT[sym];
+    var cl;
+    switch (nargs) {
+    case 1:
+	cl = mk_block (1, CLOSURE_TAG);
+	cl.set (0, mk_block (5, 0));
+	cl.get (0).set (0, IACC0);
+	cl.get (0).set (1, IJS_CALL1);
+	cl.get (0).set (2, sym);
+	cl.get (0).set (3, IRETURN);
+	cl.get (0).set (4, 1);
+	break;
+    case 2:
+	var cl = mk_block (1, CLOSURE_TAG);
+	cl.set (0, mk_block (8, 0));
+	cl.get (0).set (0, IGRAB);
+	cl.get (0).set (1, IACC1);
+	cl.get (0).set (2, IACC1);
+	cl.get (0).set (3, IPUSHACC1);
+	cl.get (0).set (4, IJS_CALL2);
+	cl.get (0).set (5, sym);
+	cl.get (0).set (6, IRETURN);
+	cl.get (0).set (7, 2);
+	break;
+    case 3:
+	var cl = mk_block (1, CLOSURE_TAG);
+	cl.set (0, mk_block (9, 0));
+	cl.get (0).set (0, IGRAB);
+	cl.get (0).set (1, IACC2);
+	cl.get (0).set (2, IACC2);
+	cl.get (0).set (3, IPUSHACC2);
+	cl.get (0).set (4, IPUSHACC2);
+	cl.get (0).set (5, IJS_CALL3);
+	cl.get (0).set (6, sym);
+	cl.get (0).set (7, IRETURN);
+	cl.get (0).set (8, 3);
+	break;
+    default:
+	this.failwith ("unhandled number of arguments for dyn external");
+    }
+
+    var some_cl = mk_block (1, 0);
+    some_cl.set (0, cl)
+    return some_cl;
+}
+
 // Caml name: document
 // Type:      unit -> t
 RT.caml_js_node_document = function (v) {

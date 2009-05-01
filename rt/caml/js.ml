@@ -10,6 +10,8 @@
 (*                                                                     *)
 (***********************************************************************)
 
+external js_external : string -> int -> ('a -> 'b) option = "caml_js_external"
+
 external http_get : string -> string = "caml_js_http_get"
 external http_post : string -> string -> string = "caml_js_http_post"
 external alert : string -> unit = "caml_js_alert"
