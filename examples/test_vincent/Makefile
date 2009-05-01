@@ -18,9 +18,9 @@
 
 all: main.exe.uue vm.js table.js
 
-main.exe: main.ml table.cma ../../rt/caml/stdlib.cma
+main.exe: main.ml table.ml ../../rt/caml/stdlib.cma
 	@echo "[OCAMLC] $@"
-	@CAMLLIB=../../rt/caml ocamlc table.cma main.ml -o $@
+	@CAMLLIB=../../rt/caml ocamlc table.ml main.ml -o $@
 
 %.cmo: %.ml ../../rt/caml/stdlib.cma
 	@echo "[OCAMLC] $@"
@@ -33,9 +33,6 @@ main.exe: main.ml table.cma ../../rt/caml/stdlib.cma
 vm.js: ../../vm.js
 	@echo "[CP] $@"
 	@cp $< $@
-
-table.cma: table.cmo table_dummy.o
-	@CAMLLIB=../../rt/caml ocamlmklib table.cmo table_dummy.o -o $(basename $@)
 
 %.o: %.c
 	gcc -c $<
