@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 EXAMPLES = $(patsubst examples/%,%, $(wildcard examples/*))
 EXAMPLES_TARGETS = $(patsubst examples/%,%.example, $(wildcard examples/*))
+OCAMLFIND = ocamlfind
 .PHONY: tuto dist plugin
 
 all: rt/caml/stdlib.cma vm.js tuto $(EXAMPLES_TARGETS) examples.html
@@ -60,3 +61,10 @@ dist: clean
 	@B=$$(basename $$(pwd)) ; D=$$(date "+%y%m%d.%H%M") ; \
 	 cd .. ; tar cjf $$B.$$D.tbz2 --exclude="*.svn*" --exclude="$$B/dist*" $$B ; mv $$B.$$D.tbz2 $$B/dist ; \
 	 echo "[DIST] dist/$$B.$$D.tbz2"
+
+install:
+	$(OCAMLFIND) install obrowser META vm.js rt/caml/stdlib.cma rt/caml/*.cmi rt/caml/std_exit.cmo
+	install -m 644 rt/caml/dllstdlib.so `$(OCAMLFIND) -query obrowser`
+
+uninstall:
+	$(OCAMLFIND) remove obrowser

@@ -1229,13 +1229,13 @@ METHODS(VM).thread_yield = function () {
     return false;
 }
 
-METHODS(VM).thread_new = function (clos) {
+METHODS(VM).thread_new = function (clos, arg1) {
     var t = {
 	cur_code : clos.get (0),
 	pc : 0,
 	sp : 0,
 	caml_trap_sp : -1,
-	accu : UNIT,
+	accu : ((arg1 == null) ? UNIT : arg1),
 	stack : new Array (),
  	env : clos,
 	extra_args : 0,
