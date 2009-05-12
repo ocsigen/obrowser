@@ -7,6 +7,7 @@
 /*                                                                     */
 /***********************************************************************/
 
+
 function R2BLE(tbl,n) {
     var v1 = (tbl).get ((n) * 2 + 1) ;
     var v2 = (tbl).get ((n) * 2) ;
@@ -78,7 +79,7 @@ function run_mem (pc, mem, curr_pos) {
 	    return ;
 	src = pc.get (pcp++) ;
 	if (src == 0xff) {
-	    mem.get (dst) = curr_pos ;
+	    mem.set (dst, curr_pos) ;
 	} else {
 	    mem.set (dst, mem.get (src)) ;
 	}
