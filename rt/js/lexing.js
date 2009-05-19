@@ -7,6 +7,30 @@
 /*                                                                     */
 /***********************************************************************/
 
+#define REFILL_BUFF      0
+#define LEX_BUFFER       1
+#define LEX_BUFFER_LEN   2
+#define LEX_ABS_POS      3
+#define LEX_START_POS    4
+#define LEX_CURR_POS     5
+#define LEX_LAST_POS     6
+#define LEX_LAST_ACTION  7
+#define LEX_EOF_REACHED  8
+#define LEX_MEM          9
+#define LEX_START_P      10
+#define LEX_CURR_P       11
+
+#define LEX_BASE         0
+#define LEX_BACKTRK      1
+#define LEX_DEFAULT      2
+#define LEX_TRANS        3
+#define LEX_CHECK        4
+#define LEX_BASE_CODE    5
+#define LEX_BACKTRK_CODE 6
+#define LEX_DEFAULT_CODE 7
+#define LEX_TRANS_CODE   8
+#define LEX_CHECK_CODE   9
+#define LEX_CODE         10
 
 function R2BLE(tbl,n) {
     var v1 = (tbl).get ((n) * 2 + 1) ;
@@ -16,57 +40,6 @@ function R2BLE(tbl,n) {
 	v = -((v - 1) ^ 0xFFFF) ;
     }
     return v;
-}
-
-// Caml name: c_engine
-// Type:      lex_tables -> int -> lexbuf -> int
-RT["caml_lex_engine"] = function (tbl, start_state, lexbuf) {
-    var state, base, backtrk, c;
-
-    state = start_state;
-    if (state >= 0) {
-	lexbuf.set (4, lexbuf.get (5));
-	lexbuf.set (6, lexbuf.get (5));
-	lexbuf.set (7, -1);
-    } else {
-	state = -state - 1;
-    }
-    while (true) {
-	base = R2BLE(tbl.get (0), state);
-	if (base < 0) {
-	    return (-base-1);
-	}
-	backtrk = R2BLE(tbl.get (1), state);
-	if (backtrk >= 0) {
-	    lexbuf.set (6, lexbuf.get (5));
-	    lexbuf.set (7, backtrk);
-	}
-	if (lexbuf.get (5) >= lexbuf.get (2)){
-	    if (lexbuf.get (8) == mk_bool (false)){
-		return (-state-1);
-	    } else {
-		c = 256;
-	    }
-	} else {
-	    c = lexbuf.get (1).get (lexbuf.get (5));
-	    lexbuf.set (5, lexbuf.get (5) + 1);
-	}
-	if (R2BLE(tbl.get (4), base + c) == state)
-	    state = R2BLE(tbl.get (3), base + c);
-	else
-	    state = R2BLE(tbl.get (2), state);
-	if (state < 0) {
-	    lexbuf.set (5, lexbuf.get (6));
-	    if (lexbuf.get (7) == -1) {
-		this.failwith("lexing: empty token");
-	    } else {
-		return lexbuf.get (7);
-	    }
-	}else{
-	    if (c == 256)
-		lexbuf.set (8, mk_bool (false));
-	}
-    }
 }
 
 function run_mem (pc, mem, curr_pos) {
@@ -103,66 +76,118 @@ function run_tag (pc, mem) {
     }
 }
 
+// Caml name: c_engine
+// Type:      lex_tables -> int -> lexbuf -> int
+RT["caml_lex_engine"] = function(tbl, start_state, lexbuf) {
+    var state, base, backtrk, c ;
+    state = start_state;
+    if (state >= 0) {
+	lexbuf.set (LEX_LAST_POS, (lexbuf.get (LEX_CURR_POS)));
+	lexbuf.set (LEX_START_POS, (lexbuf.get (LEX_CURR_POS)));
+	lexbuf.set (LEX_LAST_ACTION, -1);
+    } else {
+	state = -state - 1;
+    }
+    while (true) {
+	base = R2BLE(tbl.get (LEX_BASE), state);
+	if (base < 0) {
+	    return (-base-1);
+	}
+	backtrk = R2BLE(tbl.get (LEX_BACKTRK), state);
+	if (backtrk >= 0) {
+	    var pc_off =  R2BLE(tbl.get (LEX_BACKTRK_CODE), state);
+	    run_tag(tbl.get (LEX_CODE).shift (pc_off), lexbuf.get (LEX_MEM));
+	    lexbuf.set (LEX_LAST_POS, lexbuf.get (LEX_CURR_POS));
+	    lexbuf.set (LEX_LAST_ACTION, backtrk);
+	}
+	if (lexbuf.get (LEX_CURR_POS) >= lexbuf.get (LEX_BUFFER_LEN)){
+	    if (lexbuf.get (LEX_EOF_REACHED) == mk_bool (false)){
+		return (-state - 1);
+	    } else {
+		c = 256;
+	    }
+	} else {
+	    c = lexbuf.get (LEX_BUFFER).get (lexbuf.get (LEX_CURR_POS));
+	    lexbuf.set (LEX_CURR_POS, lexbuf.get (LEX_CURR_POS) + 2);
+	}
+	if (R2BLE(tbl.get (LEX_CHECK), base + c) == state)
+	    state = R2BLE(tbl.get (LEX_TRANS), base + c);
+	else
+	    state = R2BLE(tbl.get (LEX_DEFAULT), state);
+	if (state < 0) {
+	    lexbuf.set (LEX_CURR_POS, lexbuf.get (LEX_LAST_POS));
+	    if (lexbuf.get (LEX_LAST_ACTION) == -1) {
+		caml_failwith("lexing: empty token");
+	    } else {
+		return lexbuf.get (LEX_LAST_ACTION);
+	    }
+	} else {
+	    if (c == 256) lexbuf.set (LEX_EOF_REACHED, mk_bool (false));
+	}
+    }
+}
+
+
 // Caml name: c_new_engine
 // Type:      lex_tables -> int -> lexbuf -> int
 RT["caml_new_lex_engine"] = function(tbl, start_state, lexbuf) {
     var state, base, backtrk, c, pstate ;
     state = start_state;
     if (state >= 0) {
-	lexbuf.set (4, -1);
-	lexbuf.set (5, -1);
-	lexbuf.set (6, -1);
-	lexbuf.set (7, -1);
+	lexbuf.set (LEX_LAST_POS, (lexbuf.get (LEX_CURR_POS)));
+	lexbuf.set (LEX_START_POS, (lexbuf.get (LEX_CURR_POS)));
+	lexbuf.set (LEX_LAST_ACTION, -1);
     } else {
 	state = -state - 1;
     }
     while (true) {
-	base = R2BLE(tbl.get (0), state);
+	base = R2BLE(tbl.get (LEX_BASE), state);
 	if (base < 0) {
-	    var pc_off = R2BLE(tbl.get (5), state) ;
-	    run_tag(tbl.get (10).shift (pc_off), lexbuf.get (9));
+	    var pc_off = R2BLE(tbl.get (LEX_BASE_CODE), state) ;
+	    run_tag(tbl.get (LEX_CODE).shift (pc_off), lexbuf.get (LEX_MEM));
 	    return (-base-1);
 	}
-	backtrk = R2BLE(tbl.get (1), state);
+	backtrk = R2BLE(tbl.get (LEX_BACKTRK), state);
 	if (backtrk >= 0) {
-	    var pc_off =  R2BLE(tbl.get (6), state);
-	    run_tag(tbl.get (10).shift (pc_off), lexbuf.get (9));
-	    lexbuf.set (6, lexbuf.get (5));
-	    lexbuf.set (7, backtrk);
+	    var pc_off =  R2BLE(tbl.get (LEX_BACKTRK_CODE), state);
+	    run_tag(tbl.get (LEX_CODE).shift (pc_off), lexbuf.get (LEX_MEM));
+	    lexbuf.set (LEX_LAST_POS, lexbuf.get (LEX_CURR_POS));
+	    lexbuf.set (LEX_LAST_ACTION, backtrk);
 	}
-	if (lexbuf.get (5) >= lexbuf.get (2)){
-	    if (lexbuf.get (8) == mk_bool (false)){
+	if (lexbuf.get (LEX_CURR_POS) >= lexbuf.get (LEX_BUFFER_LEN)){
+	    if (lexbuf.get (LEX_EOF_REACHED) == mk_bool (false)){
 		return (-state - 1);
 	    } else {
 		c = 256;
 	    }
 	} else {
-	    c = lexbuf.get (1).get (lexbuf.get (5));
-	    lexbuf.set (5, lexbuf.get (5) + 2);
+	    c = lexbuf.get (LEX_BUFFER).get (lexbuf.get (LEX_CURR_POS));
+	    lexbuf.set (LEX_CURR_POS, lexbuf.get (LEX_CURR_POS) + 2);
 	}
 	pstate=state ;
-	if (R2BLE(tbl.get (4), base + c) == state)
-	    state = R2BLE(tbl.get (3), base + c);
+	if (R2BLE(tbl.get (LEX_CHECK), base + c) == state)
+	    state = R2BLE(tbl.get (LEX_TRANS), base + c);
 	else
-	    state = R2BLE(tbl.get (2), state);
+	    state = R2BLE(tbl.get (LEX_DEFAULT), state);
 	if (state < 0) {
-	    lexbuf.set (5, lexbuf.get (6));
-	    if (lexbuf.get (7) == -1) {
+	    lexbuf.set (LEX_CURR_POS, lexbuf.get (LEX_LAST_POS));
+	    if (lexbuf.get (LEX_LAST_ACTION) == -1) {
 		caml_failwith("lexing: empty token");
 	    } else {
-		return lexbuf.get (7);
+		return lexbuf.get (LEX_LAST_ACTION);
 	    }
 	} else {
-	    var base_code = R2BLE(tbl.get (5), pstate) ;
+	    var base_code = R2BLE(tbl.get (LEX_BASE_CODE), pstate) ;
 	    var pc_off ;
-	    if (R2BLE(tbl.get (9), base_code + c) == pstate)
-		pc_off = R2BLE(tbl.get (8), base_code + c) ;
+	    if (R2BLE(tbl.get (LEX_CHECK_CODE), base_code + c) == pstate)
+		pc_off = R2BLE(tbl.get (LEX_TRANS_CODE), base_code + c) ;
 	    else
-		pc_off = R2BLE(tbl.get (7), pstate) ;
+		pc_off = R2BLE(tbl.get (LEX_DEFAULT_CODE), pstate) ;
 	    if (pc_off > 0) 
-		run_mem(tbl.get (10).shift (pc_off),
-			lexbuf.get (9), lexbuf.get (5)) ;
-	    if (c == 256) lexbuf.set (8, mk_bool (false));
+		run_mem(tbl.get (LEX_CODE).shift (pc_off),
+			lexbuf.get (LEX_MEM), lexbuf.get (LEX_CURR_POS)) ;
+	    if (c == 256) lexbuf.set (LEX_EOF_REACHED, mk_bool (false));
 	}
     }
 }
+
