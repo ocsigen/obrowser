@@ -10,7 +10,7 @@ OTHERS=array.cmo list.cmo char.cmo string.cmo sys.cmo \
   digest.cmo random.cmo callback.cmo \
   camlinternalOO.cmo oo.cmo camlinternalMod.cmo \
   thread.cmo mutex.cmo complex.cmo lexing.cmo \
-  js.cmo graphics.cmo
+  js.cmo jSOO.cmo graphics.cmo
 .PHONY=clean depend
 
 all: stdlib.cma std_exit.cmo stubs.c

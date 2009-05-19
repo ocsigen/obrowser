@@ -139,6 +139,16 @@ RT.caml_make_vect = function (len, init) {
     return b;
 }
 
+// Caml name: make_array
+// Type:      'a array -> 'a array
+RT.caml_make_array = function (init) {
+    var b = mk_block (init.size, 0);
+    for (var i = 0;i < init.size;i++) {
+	b.set(i,init.get (i));
+    }
+    return b;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
 //  COMPARE                                                                  //
