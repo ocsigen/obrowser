@@ -1,23 +1,11 @@
 open JSOO
-
-(* boot *)
-let window = eval "window"
-let document = eval "document"
-let alert msg =
-  window >>> call_method "alert" [| string msg |] >>> ignore 
-let get_element_by_id id =
-  document >>> call_method "getElementById" [| string id |]
-let create name =
-  document >>> call_method "createElement" [| string name |]
-let text content =
-  document >>> call_method "createTextNode" [| string content |]
+open Boot
+open Tk
 
 (* example *)
 
 let body = get_element_by_id "body"
 
-let move_handlers = ref []
-let _ = window >>> set "onmousemove" (wrap_event (fun evt -> List.iter (fun f -> f evt) !move_handlers))
 let left_t = ref 0
 
 let frame color =
@@ -33,8 +21,13 @@ let frame color =
     let sby = ref 0 in
     let smx = ref 0 in
     let smy = ref 0 in
-    let dragging = ref false in
-    let rec down_handler evt = 
+    let rec move_handler (mx, my) = 
+      let nx = !sbx + mx - !smx in
+      let ny = !sby + my - !smy in
+	frame >>> get "style" >>> set "left" (string (string_of_int nx ^ "px")) ;
+	frame >>> get "style" >>> set "top" (string (string_of_int ny ^ "px"))
+    in
+    let down_handler evt = 
       let bx = frame >>> get "offsetLeft" >>> as_int in
       let by = frame >>> get "offsetTop" >>> as_int in
       let mx = evt >>> get "clientX" >>> as_int in
@@ -43,22 +36,12 @@ let frame color =
 	sby := by ;
 	smx := mx ;
 	smy := my ;
-	dragging := true
-    and up_handler evt = 
-      dragging := false
-    and move_handler evt = 
-      if !dragging then begin
-	let mx = evt >>> get "clientX" >>> as_int in
-	let my = evt >>> get "clientY" >>> as_int in
-	let nx = !sbx + mx - !smx in
-	let ny = !sby + my - !smy in
-	  frame >>> get "style" >>> set "left" (string (string_of_int nx ^ "px")) ;
-	  frame >>> get "style" >>> set "top" (string (string_of_int ny ^ "px"))
-      end
+	window_mouse_move_event +:= move_handler
+    and up_handler _ =
+      window_mouse_move_event -:= move_handler
     in
       frame >>> set "onmousedown" (wrap_event down_handler) ;
       frame >>> set "onmouseup" (wrap_event up_handler) ;
-      move_handlers := move_handler :: !move_handlers ;
       left_t := (frame >>> get "clientWidth" >>> as_int) + 10 + !left_t
  ;;
 

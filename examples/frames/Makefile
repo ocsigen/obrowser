@@ -14,13 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-.PHONY: clean
+.PHONY: clean all
 
 all: main.exe.uue vm.js
 
-%.exe: %.ml ../../rt/caml/stdlib.cma
+main.exe: boot.ml tk.ml main.ml ../../rt/caml/stdlib.cma
 	@echo "[OCAMLC] $@"
-	@CAMLLIB=../../rt/caml ocamlc $< -o $@
+	@CAMLLIB=../../rt/caml ocamlc boot.ml tk.ml main.ml -o $@
 
 %.uue: %
 	@echo "[UUENCODE] $@"
