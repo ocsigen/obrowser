@@ -1,10 +1,8 @@
-
 (***********************************************************************)
 (*                                                                     *)
 (*                           Objective Caml                            *)
 (*                                                                     *)
 (*            Xavier Leroy, projet Cristal, INRIA Rocquencourt         *)
-(*            Modified version for O'Browser by Benjamin Canou         *)
 (*                                                                     *)
 (*  Copyright 1996 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
@@ -13,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* $Id: nativeint.ml,v 1.10 2004/01/01 16:42:40 doligez Exp $ *)
+(* $Id: nativeint.ml,v 1.11 2007/01/30 09:34:36 xleroy Exp $ *)
 
 (* Module [Nativeint]: processor-native integers *)
 
@@ -54,4 +52,4 @@ external of_string: string -> nativeint = "caml_nativeint_of_string"
 
 type t = nativeint
 
-let compare = (Pervasives.compare: t -> t -> int)
+let compare (x: t) (y: t) = Pervasives.compare x y

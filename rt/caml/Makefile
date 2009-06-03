@@ -1,43 +1,40 @@
 ML=$(wildcard *.ml)
 #CMO=$(patsubst %.ml,%.cmo, $(ML))
-OTHERS=array.cmo list.cmo char.cmo string.cmo sys.cmo \
+CMOS= \
+  obj.cmo lazy.cmo \
+  jSOO_basic_io.cmo pervasives.cmo sys.cmo \
+  array.cmo list.cmo hashtbl.cmo \
+  char.cmo string.cmo \
+  stdLabels.cmo arrayLabels.cmo listLabels.cmo stringLabels.cmo \
+  set.cmo map.cmo stack.cmo queue.cmo buffer.cmo sort.cmo \
   int32.cmo int64.cmo nativeint.cmo \
-  sort.cmo obj.cmo \
-  hashtbl.cmo \
-  set.cmo map.cmo stack.cmo queue.cmo buffer.cmo \
   printf.cmo format.cmo scanf.cmo \
-  printexc.cmo \
+  arg.cmo  printexc.cmo \
   digest.cmo random.cmo callback.cmo \
+  sys.cmo thread.cmo marshal.cmo \
   camlinternalOO.cmo oo.cmo camlinternalMod.cmo \
-  thread.cmo mutex.cmo complex.cmo lexing.cmo \
-  js.cmo jSOO.cmo graphics.cmo
+  mutex.cmo complex.cmo parsing.cmo lexing.cmo stream.cmo genlex.cmo \
+  js.cmo graphics.cmo jSOO.cmo
+
 .PHONY=clean depend
 
-all: stdlib.cma std_exit.cmo stubs.c
+all: pervasives.cmi stdlib.cma std_exit.cmo stubs.c
 
-stdlib.cma: stubs.o pervasives.cmo $(OTHERS)
+stdlib.cma: stubs.o $(CMOS)
 	@echo "[MKLIB] $@"
 	@CAMLLIB=. ocamlmklib $^ -o $(basename $@)
 
-%.cmo: %.ml pervasives.cmo
+%.cmo: %.ml
 	@echo "[CAMLC] $@"
-	@CAMLLIB=. ocamlc -nostdlib -c $< -o $@
+	@CAMLLIB=. ocamlc `./Compflags $@` -nostdlib -I . -c $< -o $@
 
-%.cmi: %.mli pervasives.cmi
+%.cmi: %.mli
 	@echo "[CAMLC] $@"
-	@CAMLLIB=. ocamlc -nostdlib -c $< -o $@
-
-pervasives.cmo: pervasives.ml
-	@echo "[CAMLC] $@"
-	@CAMLLIB=. ocamlc -nostdlib -nopervasives -c $< -o $@
-
-pervasives.cmi: pervasives.mli
-	@echo "[CAMLC] $@"
-	@CAMLLIB=. ocamlc -nostdlib -nopervasives -c $< -o $@
+	@CAMLLIB=. ocamlc `./Compflags $@` -nostdlib -I . -c $< -o $@
 
 %.o: %.c
 	@echo "[CAMLC] $@"
-	@CAMLLIB=. ocamlc -nostdlib -c $< -o $@
+	@CAMLLIB=. ocamlc `./Compflags $@` -nostdlib -c $< -o $@
 
 stubs.c: $(ML)
 	@echo "[STUBS] $<"
@@ -57,9 +54,10 @@ stubs.c: $(ML)
 #build-stubs/build-stubs.cmo: build-stubs/build-stubs.ml
 #	@echo "[CAMLC] $@"
 #	@cd build-stubs && ocamlc -pp camlp4orf -c -I +camlp4 build-stubs.ml && cd ..
+
 depend:
 	@echo "[CAMLDEP]"
-	@CAMLLIB=. ocamldep *.ml > .depend
+	@CAMLLIB=. ocamldep -I . *.ml > .depend
 
 include .depend
 

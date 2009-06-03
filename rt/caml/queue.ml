@@ -1,10 +1,8 @@
-
 (***********************************************************************)
 (*                                                                     *)
 (*                           Objective Caml                            *)
 (*                                                                     *)
 (*        François Pottier, projet Cristal, INRIA Rocquencourt         *)
-(*            Modified version for O'Browser by Benjamin Canou         *)
 (*                                                                     *)
 (*  Copyright 2002 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)

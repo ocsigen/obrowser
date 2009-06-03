@@ -1,10 +1,8 @@
-
 (***********************************************************************)
 (*                                                                     *)
 (*                           Objective Caml                            *)
 (*                                                                     *)
 (*            Xavier Leroy, projet Cristal, INRIA Rocquencourt         *)
-(*            Modified version for O'Browser by Benjamin Canou         *)
 (*                                                                     *)
 (*  Copyright 1996 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
@@ -13,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* $Id: string.ml,v 1.25 2003/12/16 18:09:43 doligez Exp $ *)
+(* $Id: string.ml,v 1.28.2.1 2008/11/12 10:53:47 doligez Exp $ *)
 
 (* String operations *)
 
@@ -89,8 +87,8 @@ let escaped s =
     for i = 0 to length s - 1 do
       n := !n +
         (match unsafe_get s i with
-           '"' | '\\' | '\n' | '\t' -> 2
-          | c -> if is_printable c then 1 else 4)
+         | '"' | '\\' | '\n' | '\t' | '\r' | '\b' -> 2
+         | c -> if is_printable c then 1 else 4)
     done;
     if !n = length s then s else begin
       let s' = create !n in
@@ -98,12 +96,16 @@ let escaped s =
         for i = 0 to length s - 1 do
           begin
             match unsafe_get s i with
-              ('"' | '\\') as c ->
+            | ('"' | '\\') as c ->
                 unsafe_set s' !n '\\'; incr n; unsafe_set s' !n c
             | '\n' ->
                 unsafe_set s' !n '\\'; incr n; unsafe_set s' !n 'n'
             | '\t' ->
                 unsafe_set s' !n '\\'; incr n; unsafe_set s' !n 't'
+            | '\r' ->
+                unsafe_set s' !n '\\'; incr n; unsafe_set s' !n 'r'
+            | '\b' ->
+                unsafe_set s' !n '\\'; incr n; unsafe_set s' !n 'b'
             | c ->
                 if is_printable c then
                   unsafe_set s' !n c
@@ -146,17 +148,18 @@ let uncapitalize s = apply1 Char.lowercase s
 
 let rec index_rec s lim i c =
   if i >= lim then raise Not_found else
-  if unsafe_get s i = c then i else index_rec s lim (i+1) c;;
+  if unsafe_get s i = c then i else index_rec s lim (i + 1) c;;
 
 let index s c = index_rec s (length s) 0 c;;
 
 let index_from s i c =
-  if i < 0 || i > length s then invalid_arg "String.index_from" else
-  index_rec s (length s) i c;;
+  let l = length s in
+  if i < 0 || i > l then invalid_arg "String.index_from" else
+  index_rec s l i c;;
 
 let rec rindex_rec s i c =
   if i < 0 then raise Not_found else
-  if unsafe_get s i = c then i else rindex_rec s (i-1) c;;
+  if unsafe_get s i = c then i else rindex_rec s (i - 1) c;;
 
 let rindex s c = rindex_rec s (length s - 1) c;;
 
@@ -165,15 +168,16 @@ let rindex_from s i c =
   rindex_rec s i c;;
 
 let contains_from s i c =
-  if i < 0 || i > length s then invalid_arg "String.contains_from" else
-  try ignore(index_rec s (length s) i c); true with Not_found -> false;;
-
-let rcontains_from s i c =
-  if i < 0 || i >= length s then invalid_arg "String.rcontains_from" else
-  try ignore(rindex_rec s i c); true with Not_found -> false;;
+  let l = length s in
+  if i < 0 || i > l then invalid_arg "String.contains_from" else
+  try ignore (index_rec s l i c); true with Not_found -> false;;
 
 let contains s c = contains_from s 0 c;;
 
+let rcontains_from s i c =
+  if i < 0 || i >= length s then invalid_arg "String.rcontains_from" else
+  try ignore (rindex_rec s i c); true with Not_found -> false;;
+
 type t = string
 
-let compare = (Pervasives.compare: t -> t -> int)
+let compare = Pervasives.compare

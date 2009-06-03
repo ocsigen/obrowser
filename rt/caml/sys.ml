@@ -1,10 +1,8 @@
-
 (***********************************************************************)
 (*                                                                     *)
 (*                           Objective Caml                            *)
 (*                                                                     *)
 (*            Xavier Leroy, projet Cristal, INRIA Rocquencourt         *)
-(*            Modified version for O'Browser by Benjamin Canou         *)
 (*                                                                     *)
 (*  Copyright 1996 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
@@ -13,7 +11,11 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* $Id: sys.ml,v 1.138.2.24 2006/09/15 09:18:14 doligez Exp $ *)
+(* $Id: sys.mlp,v 1.2 2007/02/26 14:21:57 xleroy Exp $ *)
+
+(* WARNING: sys.ml is generated from sys.mlp.  DO NOT EDIT sys.ml or
+   your changes will be lost.
+*)
 
 (* System interface *)
 
@@ -25,6 +27,54 @@ let (os_type, word_size) = get_config()
 let max_array_length = (1 lsl (word_size - 10)) - 1;;
 let max_string_length = word_size / 8 * max_array_length - 1;;
 
+external file_exists: string -> bool = "caml_sys_file_exists"
+external is_directory : string -> bool = "caml_sys_is_directory"
+external remove: string -> unit = "caml_sys_remove"
+external rename : string -> string -> unit = "caml_sys_rename"
+external getenv: string -> string = "caml_sys_getenv"
+external command: string -> int = "caml_sys_system_command"
 external time: unit -> float = "caml_sys_time"
+external chdir: string -> unit = "caml_sys_chdir"
+external getcwd: unit -> string = "caml_sys_getcwd"
+external readdir : string -> string array = "caml_sys_read_directory"
 
-let ocaml_version = "3.09.3/rtjs"
+
+let interactive = ref false
+
+type signal_behavior =
+    Signal_default
+  | Signal_ignore
+  | Signal_handle of (int -> unit)
+
+external signal : int -> signal_behavior -> signal_behavior
+                = "caml_install_signal_handler"
+
+let set_signal _ _ = failwith "not implemented in obrowser"
+
+let sigabrt = -1
+let sigalrm = -2
+let sigfpe = -3
+let sighup = -4
+let sigill = -5
+let sigint = -6
+let sigkill = -7
+let sigpipe = -8
+let sigquit = -9
+let sigsegv = -10
+let sigterm = -11
+let sigusr1 = -12
+let sigusr2 = -13
+let sigchld = -14
+let sigcont = -15
+let sigstop = -16
+let sigtstp = -17
+let sigttin = -18
+let sigttou = -19
+let sigvtalrm = -20
+let sigprof = -21
+
+exception Break
+
+let catch_break _ = failwith "not implemented in obrowser"
+
+let ocaml_version = "3.11.0/obrowser";;

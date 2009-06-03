@@ -50,29 +50,3 @@ let as_string x = match extract x with String s -> s | _ -> failwith "as_string"
 let as_obj x = match extract x with Obj o -> o | _ -> failwith "as_obj"
 let as_int x = match extract x with Num f -> int_of_float f | _ -> failwith "as_int"
 let as_float x = match extract x with Num f -> f | _ -> failwith "as_float"
-
-
-(*
-let alert msg =
-  eval "window" >>> get "alert" >>> call [inject (String msg)] >>> ignore
-;;
-
-let forms () =
-  let nforms = eval "document" >>> get "forms" >>> get "length" >>> as_int in
-  let rec get_forms n acc = 
-    if n < 0 then
-      acc
-    else
-      get_forms (n - 1) ((eval "document" >>> get "forms" >>> get (string_of_int n)) :: acc)
-  in
-    get_forms (nforms - 1)
-;;
-
-let onclick_handler f =
-  fun evt ->
-    let x = evt >>> get "x" >>> as_int in
-    let y = evt >>> get "y" >>> as_int in
-      f x y ;
-      inject Nil
-;;
-*)

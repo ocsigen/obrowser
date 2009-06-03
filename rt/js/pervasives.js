@@ -629,8 +629,10 @@ RT.caml_obj_set_field = function (x, i, v) {
 // Caml name: new_block
 // Type:      int -> int -> t
 RT.caml_obj_block = function (tag, size) {
-    return mk_block (tag, size);
+    var b = mk_block (size, tag);
+    return b;
 }
+
 // Caml name: dup
 // Type:      t -> t
 RT.caml_obj_dup = function (v) {

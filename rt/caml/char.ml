@@ -1,10 +1,8 @@
-
 (***********************************************************************)
 (*                                                                     *)
 (*                           Objective Caml                            *)
 (*                                                                     *)
 (*            Xavier Leroy, projet Cristal, INRIA Rocquencourt         *)
-(*            Modified version for O'Browser by Benjamin Canou         *)
 (*                                                                     *)
 (*  Copyright 1996 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
@@ -13,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* $Id: char.ml,v 1.13 2005/05/19 15:30:35 habouzit Exp $ *)
+(* $Id: char.ml,v 1.14 2007/04/16 11:06:51 weis Exp $ *)
 
 (* Character operations *)
 
@@ -31,23 +29,26 @@ external string_unsafe_set : string -> int -> char -> unit
                            = "%string_unsafe_set"
 
 let escaped = function
-    '\'' -> "\\'"
+  | '\'' -> "\\'"
   | '\\' -> "\\\\"
   | '\n' -> "\\n"
   | '\t' -> "\\t"
-  | c ->  if is_printable c then begin
-            let s = string_create 1 in
-            string_unsafe_set s 0 c;
-            s
-          end else begin
-            let n = code c in
-            let s = string_create 4 in
-            string_unsafe_set s 0 '\\';
-            string_unsafe_set s 1 (unsafe_chr (48 + n / 100));
-            string_unsafe_set s 2 (unsafe_chr (48 + (n / 10) mod 10));
-            string_unsafe_set s 3 (unsafe_chr (48 + n mod 10));
-            s
-          end
+  | '\r' -> "\\r"
+  | '\b' -> "\\b"
+  | c ->
+    if is_printable c then begin
+      let s = string_create 1 in
+      string_unsafe_set s 0 c;
+      s
+    end else begin
+      let n = code c in
+      let s = string_create 4 in
+      string_unsafe_set s 0 '\\';
+      string_unsafe_set s 1 (unsafe_chr (48 + n / 100));
+      string_unsafe_set s 2 (unsafe_chr (48 + (n / 10) mod 10));
+      string_unsafe_set s 3 (unsafe_chr (48 + n mod 10));
+      s
+    end
 
 let lowercase c =
   if (c >= 'A' && c <= 'Z')

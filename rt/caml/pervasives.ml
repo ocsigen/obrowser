@@ -3,7 +3,6 @@
 (*                           Objective Caml                            *)
 (*                                                                     *)
 (*            Xavier Leroy, projet Cristal, INRIA Rocquencourt         *)
-(*            Modified version for O'Browser by Benjamin Canou         *)
 (*                                                                     *)
 (*  Copyright 1996 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
@@ -12,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* $Id: pervasives.ml,v 1.79 2005/10/25 18:34:07 doligez Exp $ *)
+(* $Id: pervasives.ml,v 1.81 2006/11/17 08:34:01 weis Exp $ *)
 
 (* type 'a option = None | Some of 'a *)
 
@@ -179,6 +178,7 @@ external int_of_string : string -> int = "caml_int_of_string"
 
 module String = struct
   external get : string -> int -> char = "%string_safe_get"
+  external set : string -> int -> char -> unit = "%string_safe_set"
 end
 
 let valid_float_lexem s =
@@ -202,6 +202,109 @@ let rec (@) l1 l2 =
   match l1 with
     [] -> l2
   | hd :: tl -> hd :: (tl @ l2)
+
+(* I/O operations *)
+
+type in_channel
+type out_channel
+
+let open_descriptor_out _ = failwith "not implemented in obrowser"
+let open_descriptor_in _ = failwith "not implemented in obrowser"
+
+let stdin = Obj.magic 0
+let stdout = Obj.magic 0
+let stderr = Obj.magic 0
+
+(* General output functions *)
+
+type open_flag =
+    Open_rdonly | Open_wronly | Open_append
+  | Open_creat | Open_trunc | Open_excl
+  | Open_binary | Open_text | Open_nonblock
+
+let open_desc _ _ _ = failwith "not implemented in obrowser"
+let open_out_gen mode perm name = failwith "not implemented in obrowser"
+let open_out name = failwith "not implemented in obrowser"
+let open_out_bin name = failwith "not implemented in obrowser"
+let flush _ =  failwith "not implemented in obrowser"
+let out_channels_list _ = failwith "not implemented in obrowser"
+let flush_all () = failwith "not implemented in obrowser"
+let unsafe_output _ _ _ _ = failwith "not implemented in obrowser"
+let output_char _ _ = failwith "not implemented in obrowser"
+let output_string oc s = failwith "not implemented in obrowser"
+let output oc s ofs len = failwith "not implemented in obrowser"
+let output_byte _ _ = failwith "not implemented in obrowser"
+let  output_binary_int _ _ = failwith "not implemented in obrowser"
+let marshal_to_channel _ _ _ = failwith "not implemented in obrowser"
+let output_value _ _ = failwith "not implemented in obrowser"
+let seek_out _ _ = failwith "not implemented in obrowser"
+let pos_out _ = failwith "not implemented in obrowser"
+let out_channel_length _ = failwith "not implemented in obrowser"
+let close_out_channel _ = failwith "not implemented in obrowser"
+let close_out _ = failwith "not implemented in obrowser"
+let close_out_noerr _ = failwith "not implemented in obrowser"
+let set_binary_mode_out _ _  = failwith "not implemented in obrowser"
+
+(* General input functions *)
+
+let open_in_gen _ _ _ =  failwith "not implemented in obrowser"
+let open_in _ =  failwith "not implemented in obrowser"
+let open_in_bin _ =  failwith "not implemented in obrowser"
+let input_char _ =  failwith "not implemented in obrowser"
+let unsafe_input _ _ _ _ = failwith "not implemented in obrowser"
+let input _ _ _ _ = failwith "not implemented in obrowser"
+let rec unsafe_really_input _ _ _ _ = failwith "not implemented in obrowser"
+let really_input _ _ _ _ = failwith "not implemented in obrowser"
+let input_scan_line _ = failwith "not implemented in obrowser"
+let input_line _ = failwith "not implemented in obrowser"
+
+let input_byte _ = failwith "not implemented in obrowser"
+let input_binary_int _ = failwith "not implemented in obrowser"
+let input_value _ = failwith "not implemented in obrowser"
+let seek_in _ _ = failwith "not implemented in obrowser"
+let pos_in _ = failwith "not implemented in obrowser"
+let in_channel_length _ = failwith "not implemented in obrowser"
+let close_in _ = failwith "not implemented in obrowser"
+let close_in_noerr _ = failwith "not implemented in obrowser"
+let set_binary_mode_in _ _ = failwith "not implemented in obrowser"
+
+(* Output functions on standard output *)
+
+let print_char c = JSOO_basic_io.write (let s = string_create 1 in s.[0] <- c ; s)
+let print_string s = JSOO_basic_io.write s
+let print_int i = JSOO_basic_io.write (string_of_int i)
+let print_float f = JSOO_basic_io.write (string_of_float f)
+let print_endline s =
+  print_string s; print_char '\n'
+let print_newline () = print_char '\n'
+
+(* Output functions on standard error *)
+
+let prerr_char c = JSOO_basic_io.write (let s = string_create 1 in s.[0] <- c ; s)
+let prerr_string s = JSOO_basic_io.write s
+let prerr_int i = JSOO_basic_io.write (string_of_int i)
+let prerr_float f = JSOO_basic_io.write (string_of_float f)
+let prerr_endline s =
+  prerr_string s; prerr_char '\n'
+let prerr_newline () = prerr_char '\n'
+
+(* Input functions on standard input *)
+
+let read_line () = failwith "not implemented in obrowser"
+let read_int () = failwith "not implemented in obrowser"
+let read_float () = failwith "not implemented in obrowser"
+
+(* Operations on large files *)
+
+module LargeFile =
+  struct
+    let seek_out _ _ = failwith "not implemented in obrowser"
+    let pos_out _ = failwith "not implemented in obrowser"
+    let out_channel_length _ = failwith "not implemented in obrowser"
+    let seek_in _ _ = failwith "not implemented in obrowser"
+    let pos_in _ = failwith "not implemented in obrowser"
+    let in_channel_length _ = failwith "not implemented in obrowser"
+  end
 
 (* References *)
 

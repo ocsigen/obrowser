@@ -138,3 +138,8 @@ RT.caml_md5_string = function (v, ofs, len) {
 	s[i] = v.get (ofs + i);
     return mk_array_from_js (md5 (s));
 }
+
+// Caml name: channel
+RT.caml_md5_chan = function (v, ofs, len) {
+    this.failwith ("not implemented in obrowser");
+}

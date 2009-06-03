@@ -1,10 +1,8 @@
-
 (***********************************************************************)
 (*                                                                     *)
 (*                           Objective Caml                            *)
 (*                                                                     *)
 (*         Jerome Vouillon, projet Cristal, INRIA Rocquencourt         *)
-(*            Modified version for O'Browser by Benjamin Canou         *)
 (*                                                                     *)
 (*  Copyright 2002 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
@@ -13,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* $Id: camlinternalOO.ml,v 1.14 2005/10/25 18:34:07 doligez Exp $ *)
+(* $Id: camlinternalOO.ml,v 1.16 2008/01/11 16:13:16 doligez Exp $ *)
 
 open Obj
 
@@ -208,7 +206,11 @@ let narrow table vars virt_meths concr_meths =
      (table.methods_by_name, table.methods_by_label, table.hidden_meths,
       table.vars, virt_meth_labs, vars)
      :: table.previous_states;
-  table.vars <- Vars.empty;
+  table.vars <-
+    Vars.fold
+      (fun lab info tvars ->
+        if List.mem lab vars then Vars.add lab info tvars else tvars)
+      table.vars Vars.empty;
   let by_name = ref Meths.empty in
   let by_label = ref Labs.empty in
   List.iter2
@@ -257,9 +259,11 @@ let new_slot table =
   index
 
 let new_variable table name =
-  let index = new_slot table in
-  table.vars <- Vars.add name index table.vars;
-  index
+  try Vars.find name table.vars
+  with Not_found ->
+    let index = new_slot table in
+    if name <> "" then table.vars <- Vars.add name index table.vars;
+    index
 
 let to_array arr =
   if arr = Obj.magic 0 then [||] else arr
@@ -267,16 +271,17 @@ let to_array arr =
 let new_methods_variables table meths vals =
   let meths = to_array meths in
   let nmeths = Array.length meths and nvals = Array.length vals in
-  let index = new_variable table vals.(0) in
-  let res = Array.create (nmeths + 1) index in
-  for i = 1 to nvals - 1 do ignore (new_variable table vals.(i)) done;
+  let res = Array.create (nmeths + nvals) 0 in
   for i = 0 to nmeths - 1 do
-    res.(i+1) <- get_method_label table meths.(i)
+    res.(i) <- get_method_label table meths.(i)
+  done;
+  for i = 0 to nvals - 1 do
+    res.(i+nmeths) <- new_variable table vals.(i)
   done;
   res
 
 let get_variable table name =
-  Vars.find name table.vars
+  try Vars.find name table.vars with Not_found -> assert false
 
 let get_variables table names =
   Array.map (get_variable table) names
@@ -317,9 +322,12 @@ let inherits cla vals virt_meths concr_meths (_, super, _, env) top =
   let init =
     if top then super cla env else Obj.repr (super cla) in
   widen cla;
-  (init, Array.map (get_variable cla) (to_array vals),
-   Array.map (fun nm -> get_method cla (get_method_label cla nm))
-     (to_array concr_meths))
+  Array.concat
+    [[| repr init |];
+     magic (Array.map (get_variable cla) (to_array vals) : int array);
+     Array.map
+       (fun nm -> repr (get_method cla (get_method_label cla nm) : closure))
+       (to_array concr_meths) ]
 
 let make_class pub_meths class_init =
   let table = create_table pub_meths in

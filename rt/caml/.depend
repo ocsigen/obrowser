@@ -1,9 +1,15 @@
+arg.cmo: sys.cmi string.cmi printf.cmi list.cmi buffer.cmi array.cmi arg.cmi 
+arg.cmx: sys.cmx string.cmx printf.cmx list.cmx buffer.cmx array.cmx arg.cmi 
 array.cmo: array.cmi 
 array.cmx: array.cmi 
+arrayLabels.cmo: array.cmi arrayLabels.cmi 
+arrayLabels.cmx: array.cmx arrayLabels.cmi 
 buffer.cmo: sys.cmi string.cmi buffer.cmi 
 buffer.cmx: sys.cmx string.cmx buffer.cmi 
 callback.cmo: obj.cmi callback.cmi 
 callback.cmx: obj.cmx callback.cmi 
+camlinternalLazy.cmo: obj.cmi camlinternalLazy.cmi 
+camlinternalLazy.cmx: obj.cmx camlinternalLazy.cmi 
 camlinternalMod.cmo: obj.cmi camlinternalOO.cmi array.cmi camlinternalMod.cmi 
 camlinternalMod.cmx: obj.cmx camlinternalOO.cmx array.cmx camlinternalMod.cmi 
 camlinternalOO.cmo: sys.cmi string.cmi obj.cmi map.cmi list.cmi char.cmi \
@@ -22,8 +28,16 @@ event.cmo: random.cmi queue.cmi mutex.cmi list.cmi condition.cmi array.cmi \
     event.cmi 
 event.cmx: random.cmx queue.cmx mutex.cmx list.cmx condition.cmx array.cmx \
     event.cmi 
+filename.cmo: sys.cmi string.cmi random.cmi printf.cmi buffer.cmi \
+    filename.cmi 
+filename.cmx: sys.cmx string.cmx random.cmx printf.cmx buffer.cmx \
+    filename.cmi 
 format.cmo: string.cmi printf.cmi obj.cmi list.cmi buffer.cmi format.cmi 
 format.cmx: string.cmx printf.cmx obj.cmx list.cmx buffer.cmx format.cmi 
+gc.cmo: sys.cmi gc.cmi 
+gc.cmx: sys.cmx gc.cmi 
+genlex.cmo: string.cmi stream.cmi list.cmi hashtbl.cmi char.cmi genlex.cmi 
+genlex.cmx: string.cmx stream.cmx list.cmx hashtbl.cmx char.cmx genlex.cmi 
 graphics.cmo: list.cmi js.cmo callback.cmi array.cmi graphics.cmi 
 graphics.cmx: list.cmx js.cmx callback.cmx array.cmx graphics.cmi 
 hashtbl.cmo: sys.cmi array.cmi hashtbl.cmi 
@@ -32,16 +46,24 @@ int32.cmo: pervasives.cmi int32.cmi
 int32.cmx: pervasives.cmx int32.cmi 
 int64.cmo: pervasives.cmi int64.cmi 
 int64.cmx: pervasives.cmx int64.cmi 
+jSOO.cmo: thread.cmi printexc.cmi 
+jSOO.cmx: thread.cmx printexc.cmx 
+jSOO_basic_io.cmo: jSOO.cmo 
+jSOO_basic_io.cmx: jSOO.cmx 
 js.cmo: thread.cmi string.cmi list.cmi hashtbl.cmi array.cmi 
 js.cmx: thread.cmx string.cmx list.cmx hashtbl.cmx array.cmx 
-lazy.cmo: obj.cmi lazy.cmi 
-lazy.cmx: obj.cmx lazy.cmi 
+lazy.cmo: obj.cmi camlinternalLazy.cmi lazy.cmi 
+lazy.cmx: obj.cmx camlinternalLazy.cmx lazy.cmi 
 lexing.cmo: sys.cmi string.cmi array.cmi lexing.cmi 
 lexing.cmx: sys.cmx string.cmx array.cmx lexing.cmi 
 list.cmo: list.cmi 
 list.cmx: list.cmi 
+listLabels.cmo: list.cmi listLabels.cmi 
+listLabels.cmx: list.cmx listLabels.cmi 
 map.cmo: map.cmi 
 map.cmx: map.cmi 
+marshal.cmo: string.cmi marshal.cmi 
+marshal.cmx: string.cmx marshal.cmi 
 mutex.cmo: mutex.cmi 
 mutex.cmx: mutex.cmi 
 nativeint.cmo: sys.cmi pervasives.cmi nativeint.cmi 
@@ -50,8 +72,10 @@ obj.cmo: obj.cmi
 obj.cmx: obj.cmi 
 oo.cmo: camlinternalOO.cmi oo.cmi 
 oo.cmx: camlinternalOO.cmx oo.cmi 
-pervasives.cmo: pervasives.cmi 
-pervasives.cmx: pervasives.cmi 
+parsing.cmo: obj.cmi lexing.cmi array.cmi parsing.cmi 
+parsing.cmx: obj.cmx lexing.cmx array.cmx parsing.cmi 
+pervasives.cmo: obj.cmi jSOO_basic_io.cmo pervasives.cmi 
+pervasives.cmx: obj.cmx jSOO_basic_io.cmx pervasives.cmi 
 printexc.cmo: printf.cmi obj.cmi printexc.cmi 
 printexc.cmx: printf.cmx obj.cmx printexc.cmi 
 printf.cmo: string.cmi obj.cmi list.cmi char.cmi buffer.cmi array.cmi \
@@ -74,8 +98,16 @@ sort.cmo: array.cmi sort.cmi
 sort.cmx: array.cmx sort.cmi 
 stack.cmo: list.cmi stack.cmi 
 stack.cmx: list.cmx stack.cmi 
+stdLabels.cmo: stringLabels.cmi listLabels.cmi arrayLabels.cmi stdLabels.cmi 
+stdLabels.cmx: stringLabels.cmx listLabels.cmx arrayLabels.cmx stdLabels.cmi 
+std_exit.cmo: 
+std_exit.cmx: 
+stream.cmo: string.cmi obj.cmi list.cmi lazy.cmi stream.cmi 
+stream.cmx: string.cmx obj.cmx list.cmx lazy.cmx stream.cmi 
 string.cmo: pervasives.cmi list.cmi char.cmi string.cmi 
 string.cmx: pervasives.cmx list.cmx char.cmx string.cmi 
+stringLabels.cmo: string.cmi stringLabels.cmi 
+stringLabels.cmx: string.cmx stringLabels.cmi 
 sys.cmo: sys.cmi 
 sys.cmx: sys.cmi 
 thread.cmo: thread.cmi 

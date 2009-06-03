@@ -54,45 +54,45 @@ RT.caml_sys_file_exists = function (name) {
 	return FALSE;
     }
 }
-/*
+
 // Caml name: is_directory
 // Type:      string -> bool
 RT.caml_sys_is_directory = function () {
-  throw new Error ("caml_sys_is_directory" + " not implemented");
+  this.failwith ("not implemented in obrowser");
 }
 // Caml name: remove
 // Type:      string -> unit
 RT.caml_sys_remove = function () {
-  throw new Error ("caml_sys_remove" + " not implemented");
+  this.failwith ("not implemented in obrowser");
 }
 // Caml name: rename
 // Type:      string -> string -> unit
 RT.caml_sys_rename = function () {
-  throw new Error ("caml_sys_rename" + " not implemented");
+  this.failwith ("not implemented in obrowser");
 }
 // Caml name: command
 // Type:      string -> int
 RT.caml_sys_system_command = function () {
-  throw new Error ("caml_sys_system_command" + " not implemented");
+  this.failwith ("not implemented in obrowser");
 }
 // Caml name: chdir
 // Type:      string -> unit
 RT.caml_sys_chdir = function () {
-  throw new Error ("caml_sys_chdir" + " not implemented");
+  this.failwith ("not implemented in obrowser");
 }
 // Caml name: getcwd
 // Type:      unit -> string
 RT.caml_sys_getcwd = function () {
-  throw new Error ("caml_sys_getcwd" + " not implemented");
+  this.failwith ("not implemented in obrowser");
 }
 // Caml name: readdir
 // Type:      string -> string array
 RT.caml_sys_read_directory = function () {
-  throw new Error ("caml_sys_read_directory" + " not implemented");
+  this.failwith ("not implemented in obrowser");
 }
 // Caml name: signal
 // Type:      int -> signal_behavior -> signal_behavior
 RT.caml_install_signal_handler = function () {
-  throw new Error ("caml_install_signal_handler" + " not implemented");
+  this.failwith ("not implemented in obrowser");
 }
-*/
+

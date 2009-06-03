@@ -1,10 +1,8 @@
-
 (***********************************************************************)
 (*                                                                     *)
 (*                           Objective Caml                            *)
 (*                                                                     *)
 (*   Pierre Weis and Xavier Leroy, projet Cristal, INRIA Rocquencourt  *)
-(*            Modified version for O'Browser by Benjamin Canou         *)
 (*                                                                     *)
 (*  Copyright 1999 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
@@ -12,6 +10,8 @@
 (*  the special exception on linking described in file ../LICENSE.     *)
 (*                                                                     *)
 (***********************************************************************)
+
+(* $Id: buffer.ml,v 1.19 2008/09/09 08:50:39 weis Exp $ *)
 
 (* Extensible buffers *)
 
@@ -91,6 +91,14 @@ let add_string b s =
 let add_buffer b bs =
   add_substring b bs.buffer 0 bs.position
 
+let add_channel b ic len =
+  if b.position + len > b.length then resize b len;
+  really_input ic b.buffer b.position len;
+  b.position <- b.position + len
+
+let output_buffer oc b =
+  output oc b.buffer 0 b.position
+
 let closing = function
   | '(' -> ')'
   | '{' -> '}'
@@ -118,12 +126,13 @@ let advance_to_non_alpha s start =
       'î'|'ô'|'û'|'ë'|'ï'|'ü'|'ç'|
       'É'|'À'|'Á'|'È'|'Ù'|'Â'|'Ê'|
       'Î'|'Ô'|'Û'|'Ë'|'Ï'|'Ü'|'Ç' ->
-        advance (i + 1) lim
+      advance (i + 1) lim
     | _ -> i in
   advance start (String.length s);;
 
 (* We are just at the beginning of an ident in s, starting at start. *)
-let find_ident s start =
+let find_ident s start lim =
+  if start >= lim then raise Not_found else
   match s.[start] with
   (* Parenthesized ident ? *)
   | '(' | '{' as c ->
@@ -144,19 +153,21 @@ let add_substitute b f s =
       match s.[i] with
       | '$' as current when previous = '\\' ->
          add_char b current;
-         subst current (i + 1)
+         subst ' ' (i + 1)
       | '$' ->
-         let ident, next_i = find_ident s (i + 1) in
+         let j = i + 1 in
+         let ident, next_i = find_ident s j lim in
          add_string b (f ident);
          subst ' ' next_i
       | current when previous == '\\' ->
          add_char b '\\';
          add_char b current;
-         subst current (i + 1)
+         subst ' ' (i + 1)
       | '\\' as current ->
          subst current (i + 1)
       | current ->
          add_char b current;
          subst current (i + 1)
-    end in
+    end else
+    if previous = '\\' then add_char b previous in
   subst ' ' 0;;

@@ -1,10 +1,8 @@
-
 (***********************************************************************)
 (*                                                                     *)
 (*                           Objective Caml                            *)
 (*                                                                     *)
 (*            Xavier Leroy, projet Cristal, INRIA Rocquencourt         *)
-(*            Modified version for O'Browser by Benjamin Canou         *)
 (*                                                                     *)
 (*  Copyright 1996 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
@@ -13,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* $Id: list.ml,v 1.32 2005/10/25 18:34:07 doligez Exp $ *)
+(* $Id: list.ml,v 1.33 2006/09/11 12:18:00 doligez Exp $ *)
 
 (* List operations *)
 
@@ -31,13 +29,13 @@ let tl = function
     [] -> failwith "tl"
   | a::l -> l
 
-let rec nth l n =
-  match l with
-    [] -> failwith "nth"
-  | a::l ->
-      if n = 0 then a else
-      if n > 0 then nth l (n-1) else
-      invalid_arg "List.nth"
+let nth l n =
+  if n < 0 then invalid_arg "List.nth" else
+  let rec nth_aux l n =
+    match l with
+    | [] -> failwith "nth"
+    | a::l -> if n = 0 then a else nth_aux l (n-1)
+  in nth_aux l n
 
 let append = (@)
 
