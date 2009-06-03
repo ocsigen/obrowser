@@ -504,12 +504,13 @@ var i_tbl = {
 	return true;
     },
     IMAKEBLOCK: function (vm, c) {
-	var wosize = c.cur_code.get (c.pc++);
+	var size = c.cur_code.get (c.pc++);
 	var tag = c.cur_code.get (c.pc++);
-	var block = mk_block (wosize, tag);
-	block.set(0,c.accu);
-	for (var i = 1;i < wosize;i++)
-	    block.set(i,c.stack[c.sp++]);
+	var block = mk_block (size, tag);
+	block.set(0, c.accu);
+	for (var i = 1;i < size;i++) {
+	    block.set(i, c.stack[c.sp++]);
+	}
 	c.accu = block;
 	return true;
     },
@@ -853,7 +854,7 @@ var i_tbl = {
 	return true;
     },
     IMODINT: function (vm, c) {
-	c.accu = c.accu % c.stack[c.sp++];
+	c.accu = Math.floor (c.accu) % Math.floor (c.stack[c.sp++]);
 	return true;
     },
     IANDINT: function (vm, c) {
@@ -1002,14 +1003,20 @@ var i_tbl = {
 	/* no cache implemented (yet) */
 	var meths = c.stack[c.sp].get (0);
 	var li = 3;
-	var hi = meths.get (0);
-	while (li < hi) {
-	    var mi = li + hi;
+	var hi = meths.get (0) * 2 + 1;
+	if (c.accu < 0) c.accu = 0xFFFFFFFF + c.accu + 1;
+	while (li <= hi) {
+	    if (meths.get (li) == c.accu)
+		break ;
+	    li += 2;
+	}
+	/* while (li < hi) {
+	    var mi = ((li + hi) >> 1) | 1;
 	    if (c.accu < meths.get (mi))
 		hi = mi - 2;
 	    else
 		li = mi;
-	}
+	} */
 	c.accu = meths.get (li - 1);
 	return true;
     },
@@ -1017,13 +1024,12 @@ var i_tbl = {
 	/* no cache implemented (yet) */
 	var meths = c.stack[c.sp].get (0);
 	var li = 3;
-	var hi = meths.get (0);
-	while (li < hi) {
-	    var mi = li + hi;
-	    if (c.accu < meths.get (mi))
-		hi = mi - 2;
-	    else
-		li = mi;
+	var hi = meths.get (0) * 2 + 1;
+	if (c.accu < 0) c.accu = 0xFFFFFFFF + c.accu + 1;
+	while (li <= hi) {
+	    if (meths.get (li) == c.accu)
+		break ;
+	    li += 2;
 	}
 	c.accu = meths.get (li - 1);
 	return true;
