@@ -18,9 +18,13 @@
 
 all: main.exe.uue vm.js
 
-main.exe: boot.ml tk.ml main.ml ../../rt/caml/stdlib.cma
+main.exe: boot.cmo events.cmo main.cmo ../../rt/caml/stdlib.cma
 	@echo "[OCAMLC] $@"
-	@CAMLLIB=../../rt/caml ocamlc boot.ml tk.ml main.ml -o $@
+	@CAMLLIB=../../rt/caml ocamlc boot.cmo events.cmo main.cmo -o $@
+
+%.cmo: %.ml ../../rt/caml/stdlib.cma
+	@echo "[OCAMLC] $@"
+	@CAMLLIB=../../rt/caml ocamlc -c $<
 
 %.uue: %
 	@echo "[UUENCODE] $@"

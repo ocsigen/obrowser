@@ -32,12 +32,18 @@ RT["jsoo_extract"] = function (o) {
     //   | Obj of obj        0
     //   | Num of float      1
     //   | String of string  2
+    //   | Block of Obj.t    3
     //   | Nil
     if (o == null)
 	return 0;
     if (o instanceof String) {
 	var b = mk_block (1, 2);
 	b.set (0, value_from_string (o));
+	return b;
+    }
+    if (o instanceof Block) {
+	var b = mk_block (1, 3);
+	b.set (0, o);
 	return b;
     }
     if (new Number (o) == o) {
@@ -57,7 +63,9 @@ RT["jsoo_inject"] = function (o) {
 	return null;
     if (o.tag == 2)
 	return string_from_value (o.get(0));
-    return o.get (1);
+    if (o.tag == 1)
+	return unbox_float (o.get(0));
+    return o.get (0);
 }
     
 // Caml name:  call

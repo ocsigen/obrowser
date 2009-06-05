@@ -6,6 +6,7 @@ type value =
   | Obj of obj
   | Num of float
   | String of string
+  | Block of Obj.t
   | Nil
 
 (* obtain objects *)
@@ -50,3 +51,4 @@ let as_string x = match extract x with String s -> s | _ -> failwith "as_string"
 let as_obj x = match extract x with Obj o -> o | _ -> failwith "as_obj"
 let as_int x = match extract x with Num f -> int_of_float f | _ -> failwith "as_int"
 let as_float x = match extract x with Num f -> f | _ -> failwith "as_float"
+let as_block x = match extract x with Block b -> b | _ -> failwith "as_block"

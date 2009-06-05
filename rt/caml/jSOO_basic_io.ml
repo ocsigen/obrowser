@@ -55,6 +55,7 @@ let write =
 		div >>> get "style" >>> set "background-color" (string "black") ;
 		div >>> get "style" >>> set "color" (string "green") ;
 		eval "document" >>> get "body" >>> call_method "appendChild" [| div |] >>> ignore ;
+		console := Some div ;
 		div
 	  | Some c -> c
       in
