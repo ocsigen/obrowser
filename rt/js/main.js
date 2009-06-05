@@ -408,8 +408,7 @@ var i_tbl = {
     ICLOSUREREC: function (vm, c) {
 	var nfuncs = c.cur_code.get (c.pc++);
 	var nvars = c.cur_code.get (c.pc++);
-	if (nvars > 0)
-	    c.stack[--c.sp] = c.accu;
+	if (nvars > 0) c.stack[--c.sp] = c.accu;
 	c.accu = mk_block (nfuncs * 2 - 1 + nvars, CLOSURE_TAG);
 	for (var i = 0;i < nvars;i++)
 	    c.accu.set (nfuncs * 2 - 1 + i, c.stack[c.sp++]);
@@ -419,13 +418,20 @@ var i_tbl = {
 	    var ofs = c.pc + c.cur_code.get (c.pc + i);
 	    c.accu.set (i * 2 - 1, ((i * 2) << 10) | INFIX_TAG);
 	    c.accu.set (i * 2, c.cur_code.shift (ofs));
-	    c.stack[--c.sp] = c.accu.shift (i * 2);
+	}
+	/* precompute shifts for pointer equality tests */
+	var cl = c.accu;
+	for (var i = 0;i < nfuncs-1;i++) {
+	    cl.next = cl.shift (2);
+	    cl.next.prev = cl;
+	    c.stack[--c.sp] = cl.next;
+	    cl = cl.next;
 	}
 	c.pc += nfuncs;
 	return true;
     },
     IOFFSETCLOSUREM2: function (vm, c) {
-	c.accu = c.env.shift (-2);
+	c.accu = c.env.prev;
 	return true;
     },
     IOFFSETCLOSURE0: function (vm, c) {
@@ -433,16 +439,25 @@ var i_tbl = {
 	return true;
     },
     IOFFSETCLOSURE2: function (vm, c) {
-	c.accu = c.env.shift (2);
+	c.accu = c.env.next;
 	return true;
     },
     IOFFSETCLOSURE: function (vm, c) {
-	c.accu = c.env.shift (c.cur_code.get (c.pc++));
+	var ofs = c.cur_code.get (c.pc++);
+	c.accu = c.env;
+	while (ofs > 0) {
+	    c.accu = c.accu.next;
+	    ofs -= 2;
+	}
+	while (ofs < 0) {
+	    c.accu = c.accu.prev;
+	    ofs += 2;
+	}
 	return true;
     },
     IPUSHOFFSETCLOSUREM2: function (vm, c) {
 	c.stack[--c.sp] = c.accu;
-	c.accu = c.env.shift (-2);
+	c.accu = c.env.prev;
 	return true;
     },
     IPUSHOFFSETCLOSURE0: function (vm, c) {
@@ -452,12 +467,21 @@ var i_tbl = {
     },
     IPUSHOFFSETCLOSURE2: function (vm, c) {
 	c.stack[--c.sp] = c.accu;
-	c.accu = c.env.shift (2);
+	c.accu = c.env.next;
 	return true;
     },
     IPUSHOFFSETCLOSURE: function (vm, c) {
 	c.stack[--c.sp] = c.accu;
-	c.accu = c.env.shift (c.cur_code.get (c.pc++));
+	var ofs = c.cur_code.get (c.pc++);
+	c.accu = c.env;
+	while (ofs > 0) {
+	    c.accu = c.accu.next;
+	    ofs -= 2;
+	}
+	while (ofs < 0) {
+	    c.accu = c.accu.prev;
+	    ofs += 2;
+	}
 	return true;
     },
     IGETGLOBAL: function (vm, c) {

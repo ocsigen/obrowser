@@ -26,8 +26,7 @@ let frame color =
       let ny = !sby + my - !smy in
 	frame >>> get "style" >>> set "left" (string (string_of_int nx ^ "px")) ;
 	frame >>> get "style" >>> set "top" (string (string_of_int ny ^ "px"))
-    in
-    let down_handler evt = 
+    and down_handler evt = 
       let bx = frame >>> get "offsetLeft" >>> as_int in
       let by = frame >>> get "offsetTop" >>> as_int in
       let mx = evt >>> get "clientX" >>> as_int in
