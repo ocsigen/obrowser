@@ -16,9 +16,12 @@ CMOS= \
   mutex.cmo complex.cmo parsing.cmo lexing.cmo stream.cmo genlex.cmo \
   js.cmo graphics.cmo jSOO.cmo
 
-.PHONY=clean depend
+.PHONY=clean depend exec_compflags
 
-all: pervasives.cmi stdlib.cma std_exit.cmo stubs.c
+all: exec_compflags pervasives.cmi stdlib.cma std_exit.cmo stubs.c
+
+exec_compflags:
+	@chmod +x Compflags
 
 stdlib.cma: stubs.o $(CMOS)
 	@echo "[MKLIB] $@"
