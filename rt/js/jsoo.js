@@ -36,17 +36,17 @@ RT["jsoo_extract"] = function (o) {
     //   | Nil
     if (o == null)
 	return 0;
-    if (o instanceof String) {
-	var b = mk_block (1, 2);
-	b.set (0, value_from_string (o));
-	return b;
-    }
     if (o instanceof Block) {
 	var b = mk_block (1, 3);
 	b.set (0, o);
 	return b;
     }
-    if (new Number (o) == o) {
+    if (typeof o == 'string') {
+	var b = mk_block (1, 2);
+	b.set (0, value_from_string (o));
+	return b;
+    }
+    if (typeof o == 'number') {
 	var b = mk_block (1, 1);
 	b.set (0, box_float (o));
 	return b;
