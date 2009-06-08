@@ -1,23 +1,24 @@
 open JSOO
 open Boot
 open Events
+open Style
 
 (* example *)
-
-let body = get_element_by_id "body"
 
 let left_t = ref 0
 let max_zindex = ref 0
 
 let frame color =
   let frame = create "div" in
-    frame >>> call_method "appendChild" [| text color |] >>> ignore ;
-    frame >>> get "style" >>> set "position" (string "absolute") ;
-    frame >>> get "style" >>> set "left" (string (string_of_int (!left_t + 10) ^  "px")) ;
+    frame >>> append (text color) ;
+    (frame >>> style) # set_position `ABSOLUTE ;
+    (frame >>> style) # set_dim "left" (`PX (!left_t + 10)) ;
+    (frame >>> style) # set_dim "top" (`PX 10) ;
+    ignore ((frame >>> style) # position) ;
     frame >>> get "style" >>> set "border" (string "1px black solid") ;
     frame >>> get "style" >>> set "padding" (string "10px") ;
     frame >>> get "style" >>> set "background" (string color) ;
-    body >>> call_method "appendChild" [| frame |] >>> ignore ;
+    body >>> append frame ;
     left_t := (frame >>> get "clientWidth" >>> as_int) + 10 + !left_t ;
     incr max_zindex ;
     let sbx = ref 0 and sby = ref 0 and smx = ref 0 and smy = ref 0 in
