@@ -9,6 +9,8 @@
 
 #include <ie_js_stdlib_fixes.js>
 
+#define INT32(x) ((x) | 0)
+
 #include <instructions.js>
 
 #define GOT_RES 43
@@ -862,23 +864,23 @@ var i_tbl = {
 	return true;
     },
     IADDINT: function (vm, c) {
-	c.accu = c.accu + c.stack[c.sp++];
+	c.accu = INT32 (c.accu + c.stack[c.sp++]);
 	return true;
     },
     ISUBINT: function (vm, c) {
-	c.accu = c.accu - c.stack[c.sp++];
+	c.accu = INT32 (c.accu - c.stack[c.sp++]);
 	return true;
     },
     IMULINT: function (vm, c) {
-	c.accu = c.accu * c.stack[c.sp++];
+	c.accu = INT32 (c.accu * c.stack[c.sp++]);
 	return true;
     },
     IDIVINT: function (vm, c) {
-	c.accu = Math.floor (c.accu / c.stack[c.sp++]);
+	c.accu = INT32 (c.accu / c.stack[c.sp++]);
 	return true;
     },
     IMODINT: function (vm, c) {
-	c.accu = Math.floor (c.accu) % Math.floor (c.stack[c.sp++]);
+	c.accu = INT32 (c.accu % c.stack[c.sp++]);
 	return true;
     },
     IANDINT: function (vm, c) {
@@ -894,15 +896,15 @@ var i_tbl = {
 	return true;
     },
     ILSLINT: function (vm, c) {
-	c.accu = c.accu << c.stack[c.sp++];
+	c.accu = INT32 (c.accu << c.stack[c.sp++]);
 	return true;
     },
     ILSRINT: function (vm, c) {
-	c.accu = c.accu >>> c.stack[c.sp++];
+	c.accu = INT32 (c.accu >>> c.stack[c.sp++]);
 	return true;
     },
     IASRINT: function (vm, c) {
-	c.accu = c.accu >> c.stack[c.sp++];
+	c.accu = INT32 (c.accu >> c.stack[c.sp++]);
 	return true;
     },
     IEQ: function (vm, c) {
@@ -1028,19 +1030,13 @@ var i_tbl = {
 	var meths = c.stack[c.sp].get (0);
 	var li = 3;
 	var hi = meths.get (0) * 2 + 1;
-	if (c.accu < 0) c.accu = 0xFFFFFFFF + c.accu + 1;
-	while (li <= hi) {
-	    if (meths.get (li) == c.accu)
-		break ;
-	    li += 2;
-	}
-	/* while (li < hi) {
+	while (li < hi) {
 	    var mi = ((li + hi) >> 1) | 1;
 	    if (c.accu < meths.get (mi))
 		hi = mi - 2;
 	    else
 		li = mi;
-	} */
+	} 
 	c.accu = meths.get (li - 1);
 	return true;
     },
@@ -1049,12 +1045,13 @@ var i_tbl = {
 	var meths = c.stack[c.sp].get (0);
 	var li = 3;
 	var hi = meths.get (0) * 2 + 1;
-	if (c.accu < 0) c.accu = 0xFFFFFFFF + c.accu + 1;
-	while (li <= hi) {
-	    if (meths.get (li) == c.accu)
-		break ;
-	    li += 2;
-	}
+	while (li < hi) {
+	    var mi = ((li + hi) >> 1) | 1;
+	    if (c.accu < meths.get (mi))
+		hi = mi - 2;
+	    else
+		li = mi;
+	} 
 	c.accu = meths.get (li - 1);
 	return true;
     },
