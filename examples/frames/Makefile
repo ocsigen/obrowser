@@ -1,26 +1,13 @@
-# Caml Virtual Machine in JavaScript       
-# (C) 2007 Benjamin Canou (Benjamin.Canou@gmail.com)
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+SOURCES=boot.ml events.ml style.ml geometry.ml main.ml
+CMOS=$(patsubst %.ml, %.cmo, $(SOURCES))
 
-.PHONY: clean all
+.PHONY: clean all depend
 
 all: main.exe.uue vm.js
 
-main.exe: boot.cmo events.cmo style.cmo main.cmo ../../rt/caml/stdlib.cma
+main.exe: $(CMOS) ../../rt/caml/stdlib.cma
 	@echo "[OCAMLC] $@"
-	@CAMLLIB=../../rt/caml ocamlc boot.cmo events.cmo style.cmo main.cmo -o $@
+	@CAMLLIB=../../rt/caml ocamlc $(CMOS) -o $@
 
 %.cmo: %.ml ../../rt/caml/stdlib.cma
 	@echo "[OCAMLC] $@"
@@ -43,3 +30,8 @@ vm.js: ../../vm.js
 clean:
 	@echo "[CLEAN]"
 	@rm -f *.cm* *~ *.exe *.uue vm.js
+
+include .depend
+
+depend:
+	@CAMLLIB=../../rt/caml ocamldep $(SOURCES)> .depend
