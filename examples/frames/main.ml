@@ -17,10 +17,8 @@ let frame color =
     incr id ; incr max_z ;
     let sbx = ref 0 and sby = ref 0 and smx = ref 0 and smy = ref 0 in
     let move_handler (mx, my) = 
-      let nx = !sbx + mx - !smx in
-      let ny = !sby + my - !smy in
-	(frame >>> geometry) # set_x ((nx / size) * size) ;
-	(frame >>> geometry) # set_y ((ny / size) * size) ;
+      (frame >>> geometry) # set_x (!sbx + mx - !smx) ;
+      (frame >>> geometry) # set_y (!sby + my - !smy)
     in
       frame >>> Mouse_down.bind
 	(fun (mx, my) ->
