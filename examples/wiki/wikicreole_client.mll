@@ -130,7 +130,8 @@ let push c v =
     Link _ -> c.link_content <- v :: c.link_content
   | _      -> c.inline_mix <- c.build.inline v :: c.inline_mix
 
-let push_string c s = push c (c.build.chars s)
+let push_string c s =
+  push c (c.build.chars s)
 
 let push_chars c lexbuf = push_string c (Lexing.lexeme lexbuf)
 
@@ -422,7 +423,6 @@ rule parse_bol c =
       end_paragraph c 0;
       assert (match c.stack with Paragraph _ -> true | _ -> false);
       let l = count '=' (Lexing.lexeme lexbuf) in
-	Js.alert ("OLOL " ^ string_of_int l) ;
       c.stack <- Heading (l, read_attribs att parse_attribs c lexbuf);
       c.heading <- true;
       parse_rem c lexbuf
