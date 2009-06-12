@@ -59,125 +59,20 @@ RT.caml_js_external = function (vsym, nargs) {
     return some_cl;
 }
 
-// Caml name: document
-// Type:      unit -> t
-RT.caml_js_node_document = function (v) {
-    return box_abstract (document);
-}
-// Caml name: text
-// Type:      string -> t
-RT.caml_js_node_text = function (v) {
-    var t = string_from_value (v);
-    return box_abstract (document.createTextNode(t));;
-}
-// Caml name: element
-// Type:      string -> t
-RT.caml_js_node_element = function (i) {
-    var id = string_from_value(i);
-    return box_abstract (document.createElement(id));;
-}
-// Caml name: get_attribute
-// Type:      t -> string -> string
-RT.caml_js_node_get_attribute = function (n, a) {
-    var node = unbox_abstract (n);
-    var attr = string_from_value(a);
-    var v = node[attr];
-    if (v == null) {
-	this.failwith ("unbound attribute");
-    }
-    if (!(v instanceof String)) {
-	v = v.toString ();
-    }
-    return value_from_string (v);
-}
-// Caml name: remove_attribute
-// Type:      t -> string -> unit
-RT.caml_js_node_remove_attribute = function (n, a) {
-    var node = unbox_abstract (n);
-    var attr = string_from_value(a);
-    node.removeAttribute(attr);
-    return UNIT;
-}
-// Caml name: set_attribute
-// Type:      t -> string -> string -> unit
-RT.caml_js_node_set_attribute = function (n, a, v) {
-    var node = unbox_abstract (n);
-    var attr = string_from_value(a);
-    var value = string_from_value(v);
-    node.setAttribute (attr, value);
-    return UNIT;
-}
-// Caml name: get_element_by_id
-// Type:      t -> string -> t
-RT.caml_js_node_get_element_by_id = function (n,i) {
-    var node = unbox_abstract (n);
-    var id = string_from_value(i);
-    var obj = node.getElementById(id);
-    if (obj == null)
-	this.failwith ("No such node \"" + id + "\"");
-    return box_abstract (obj);
-}
-// Caml name: register_event
-// Type:      t -> string -> (unit -> unit) -> unit
-RT.caml_js_node_register_event = function (n, e, closure) {
-    var node = unbox_abstract (n);
-    var event = string_from_value (e);
-    function mk_cb (vm, cb) {
-	return function () {
-	    vm.thread_new (cb);
-	    vm.run ();
-	}
-    }
-    node[event] = mk_cb (this, closure);
-    return UNIT;
-}
-// Caml name: clear_event
-// Type:      t -> string -> unit
-RT.caml_js_node_clear_event = function (n, e) {
-    var node = unbox_abstract (n);
-    var event = string_from_value (e);
-    node[event] = null;
-    return UNIT;
-}
-
-// Caml name: append
-// Type:      t -> t -> unit
-RT.caml_js_node_append = function (n, c) {
-    var node = unbox_abstract (n);
-    var content = unbox_abstract (c);
-    try {
-	node.appendChild (content);
-    } catch (e) {
-	this.failwith ("caml_js_node_append: " + e.message);
-    }
-    return UNIT;
-}
-// Caml name: remove
-// Type:      t -> t -> unit
-RT.caml_js_node_remove = function (n, c) {
-    var node = unbox_abstract (n);
-    var content = unbox_abstract (c);
-    try {
-	node.removeChild (content);
-    } catch (e) {
-	this.failwith ("caml_js_node_remove: " + e.message);
-    }
-    return UNIT;
-}
 // Caml name: children
 // Type:      t -> t list
 RT.caml_js_node_children = function (n) {
-    var node = unbox_abstract (n);
+    var node = n;
     try {
 	var res = nil;
 	var cur = nil;
 	var children = node.childNodes;
 	for (c = 0;c < children.length;c++) {
 	    if (res == nil) {
-		res = cons (box_abstract (children[c]),nil);
+		res = cons (children[c],nil);
 		cur = res;
 	    } else {
-		cur.set(1, cons (box_abstract (children[c]),nil));
+		cur.set(1, cons (children[c],nil));
 		cur = cur.get (1);
 	    }
 	}
@@ -189,7 +84,7 @@ RT.caml_js_node_children = function (n) {
 // Caml name: n_children
 // Type:      t -> int
 RT.caml_js_node_n_children = function (n) {
-    var node = unbox_abstract (n);
+    var node = n;
     try {
 	return node.childNodes.length;
     } catch (e) {
@@ -200,9 +95,9 @@ RT.caml_js_node_n_children = function (n) {
 // Caml name: child
 // Type:      t -> int -> t
 RT.caml_js_node_child = function (n, i) {
-    var node = unbox_abstract (n);
+    var node = n;
     try {
-	return box_abstract (node.childNodes[i]);
+	return node.childNodes[i];
     } catch (e) {
 	this.failwith ("caml_js_node_n_children: " + e.message);
     }
@@ -212,14 +107,14 @@ RT.caml_js_node_child = function (n, i) {
 // Caml name: create
 // Type:      unit -> t
 RT.caml_js_fragment_create = function (v) {
-    return box_abstract (document.createDocumentFragment ());
+    return document.createDocumentFragment ();
 }
 
 // Caml name: append
 // Type:      t -> Node.t -> unit
 RT.caml_js_fragment_append = function (f, n) {
-    var fragment = unbox_abstract (f);
-    var node = unbox_abstract (n);
+    var fragment = f;
+    var node = n;
     try {
 	fragment.appendChild (node);
     } catch (e) {
@@ -231,8 +126,8 @@ RT.caml_js_fragment_append = function (f, n) {
 // Caml name: flush
 // Type:      Node.t -> t -> unit
 RT.caml_js_fragment_flush = function (n,f) {
-    var fragment = unbox_abstract (f);
-    var node = unbox_abstract (n);
+    var fragment = f;
+    var node = n;
     try {
 	node.appendChild (fragment);
     } catch (e) {

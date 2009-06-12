@@ -13,8 +13,9 @@ CMOS= \
   digest.cmo random.cmo callback.cmo \
   sys.cmo thread.cmo marshal.cmo \
   camlinternalOO.cmo oo.cmo camlinternalMod.cmo \
+  jSOO.cmo \
   mutex.cmo complex.cmo parsing.cmo lexing.cmo stream.cmo genlex.cmo \
-  js.cmo graphics.cmo jSOO.cmo
+  js.cmo graphics.cmo
 
 .PHONY=clean depend exec_compflags
 

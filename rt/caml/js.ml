@@ -22,27 +22,29 @@ external enable_utf8 : bool -> unit = "caml_js_enable_utf8"
 external utf8_enabled : unit -> bool = "caml_js_utf8_enabled"
 
 module Node = struct
-  type t
-  external document : unit -> t = "caml_js_node_document"
-  let document = document ()
-  external text : string -> t = "caml_js_node_text"
-  external element : string -> t = "caml_js_node_element"
-  external get_attribute : t -> string -> string = "caml_js_node_get_attribute"
-  external set_attribute : t -> string -> string -> unit = "caml_js_node_set_attribute"
-  external remove_attribute : t -> string -> unit = "caml_js_node_remove_attribute"
-  external get_element_by_id : t -> string -> t = "caml_js_node_get_element_by_id"
-  external register_event : t -> string -> (unit -> unit) -> unit = "caml_js_node_register_event"
-  external clear_event : t -> string -> unit = "caml_js_node_clear_event"
-  let register_event id ev fn arg =
-    register_event id ev
-      (fun () ->
-	 try
-           fn arg; Thread.exit ()
-	 with x ->
-           Thread.thread_uncaught_exception x;
-           Thread.exit ())
-  external append : t -> t -> unit = "caml_js_node_append"
-  external remove : t -> t -> unit = "caml_js_node_remove"
+  open JSOO
+  type t = obj
+  let document = eval "document"    
+  let text content =
+    document >>> call_method "createTextNode" [| string content |]
+  let element tag =
+    document >>> call_method "createElement" [| string tag |]
+  let get_attribute node name =
+    try node >>> get name >>> as_string with _ -> failwith "get_attribute"
+  let set_attribute node name value =
+    node >>> call_method "setAttribute" [| string name ; string value |] >>> ignore
+  let remove_attribute node name =
+    node >>> set name (inject Nil)
+  let get_element_by_id root id =
+    root >>> call_method "getElementById" [| string id |]
+  let register_event node name fn arg =
+    node >>> set name (wrap_event (fun _ -> ignore (fn arg)))
+  let clear_event node name f =
+    node >>> set name (inject Nil)
+  let append node child =
+    node >>> call_method "appendChild" [| child |] >>> ignore
+  let remove node child =
+    node >>> call_method "removeChild" [| child |] >>> ignore
   external children : t -> t list = "caml_js_node_children"
   external n_children : t -> int = "caml_js_node_n_children"
   external child : t -> int -> t = "caml_js_node_child"

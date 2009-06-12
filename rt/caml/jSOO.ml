@@ -44,7 +44,7 @@ let wrap_event f =
 	 f (get_event_arg ()) ;
 	 Thread.exit ();
        with e ->
-	 eval "console" >>> call_method "debug" [| string (Printexc.to_string e) |] >>> ignore ;
+	 Thread.thread_uncaught_exception e;
 	 Thread.exit ())
 
 let as_string x = match extract x with String s -> s | _ -> failwith "as_string"

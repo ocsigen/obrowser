@@ -33,11 +33,11 @@
 #define LEX_CODE         10
 
 function R2BLE(tbl,n) {
-    var v1 = (tbl).get ((n) * 2 + 1) ;
-    var v2 = (tbl).get ((n) * 2) ;
+    var v1 = tbl.get ((n) * 2 + 1) & 0xFF ;
+    var v2 = tbl.get ((n) * 2) & 0xFF ;
     var v = ((v1 << 8) | (v2)) ;
     if (v & 0x8000) {
-	v = -((v - 1) ^ 0xFFFF) ;
+	v = v - 0xFFFF - 1 ;
     }
     return v;
 }
@@ -94,6 +94,7 @@ RT["caml_lex_engine"] = function(tbl, start_state, lexbuf) {
 	    return (-base-1);
 	}
 	backtrk = R2BLE(tbl.get (LEX_BACKTRK), state);
+	
 	if (backtrk >= 0) {
 	    var pc_off =  R2BLE(tbl.get (LEX_BACKTRK_CODE), state);
 	    run_tag(tbl.get (LEX_CODE).shift (pc_off), lexbuf.get (LEX_MEM));
@@ -108,7 +109,7 @@ RT["caml_lex_engine"] = function(tbl, start_state, lexbuf) {
 	    }
 	} else {
 	    c = lexbuf.get (LEX_BUFFER).get (lexbuf.get (LEX_CURR_POS));
-	    lexbuf.set (LEX_CURR_POS, lexbuf.get (LEX_CURR_POS) + 2);
+	    lexbuf.set (LEX_CURR_POS, lexbuf.get (LEX_CURR_POS) + 1);
 	}
 	if (R2BLE(tbl.get (LEX_CHECK), base + c) == state)
 	    state = R2BLE(tbl.get (LEX_TRANS), base + c);
@@ -117,7 +118,7 @@ RT["caml_lex_engine"] = function(tbl, start_state, lexbuf) {
 	if (state < 0) {
 	    lexbuf.set (LEX_CURR_POS, lexbuf.get (LEX_LAST_POS));
 	    if (lexbuf.get (LEX_LAST_ACTION) == -1) {
-		caml_failwith("lexing: empty token");
+		this.failwith("lexing: empty token");
 	    } else {
 		return lexbuf.get (LEX_LAST_ACTION);
 	    }
@@ -162,7 +163,7 @@ RT["caml_new_lex_engine"] = function(tbl, start_state, lexbuf) {
 	    }
 	} else {
 	    c = lexbuf.get (LEX_BUFFER).get (lexbuf.get (LEX_CURR_POS));
-	    lexbuf.set (LEX_CURR_POS, lexbuf.get (LEX_CURR_POS) + 2);
+	    lexbuf.set (LEX_CURR_POS, lexbuf.get (LEX_CURR_POS) + 1);
 	}
 	pstate=state ;
 	if (R2BLE(tbl.get (LEX_CHECK), base + c) == state)
@@ -172,7 +173,7 @@ RT["caml_new_lex_engine"] = function(tbl, start_state, lexbuf) {
 	if (state < 0) {
 	    lexbuf.set (LEX_CURR_POS, lexbuf.get (LEX_LAST_POS));
 	    if (lexbuf.get (LEX_LAST_ACTION) == -1) {
-		caml_failwith("lexing: empty token");
+		this.failwith("lexing: empty token");
 	    } else {
 		return lexbuf.get (LEX_LAST_ACTION);
 	    }
