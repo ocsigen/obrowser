@@ -31,10 +31,10 @@ vm.js: ../../vm.js
 	@cp $< $@
 
 ../../vm.js: ../../rt/js/*.js
-	@cd ../.. && make vm.js
+	@cd ../.. && $(MAKE) vm.js
 
  ../../rt/caml/stdlib.cma:  ../../rt/caml/*.ml*
-	@cd ../.. && make rt/caml/stdlib.cma
+	@cd ../.. && $(MAKE) rt/caml/stdlib.cma
 
 thumbs:
 	@echo "[LINK] $@"

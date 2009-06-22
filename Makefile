@@ -22,15 +22,15 @@ all: rt/caml/stdlib.cma vm.js tuto $(EXAMPLES_TARGETS) examples.html
 
 %.example: 
 	@echo "[EXAMPLE] $*"
-	@cd examples/$* && make --no-print-directory
+	@cd examples/$* && $(MAKE) --no-print-directory
 
 tuto:
 	@echo "[TUTORIAL]"
-	@cd tutorial && make --no-print-directory
+	@cd tutorial && $(MAKE) --no-print-directory
 
 plugin:
 	@echo "[MOZILLA PLUGIN]"
-	@cd rt/plugin/npapi && make --no-print-directory
+	@cd rt/plugin/npapi && $(MAKE) --no-print-directory
 
 examples.html:
 	@echo "[EXAMPLES INDEX]"
@@ -39,7 +39,7 @@ examples.html:
 	echo "</ul></body></html>" >> $@
 
 rt/caml/stdlib.cma: $(wildcard rt/caml/*.ml) $(wildcard rt/caml/*.mli)
-	cd rt/caml && make
+	cd rt/caml && $(MAKE)
 
 vm.js: 	$(wildcard rt/js/*.js)	
 	@echo "[CPP] $@"
@@ -48,10 +48,10 @@ vm.js: 	$(wildcard rt/js/*.js)
 clean:
 	@echo "[CLEAN]"
 	@$(RM) -f rt/js/*~
-	@for ex in $(EXAMPLES) ; do cd examples/$$ex && make clean && cd ../.. ; done
-	@cd rt/caml && make clean
+	@for ex in $(EXAMPLES) ; do cd examples/$$ex && $(MAKE) clean && cd ../.. ; done
+	@cd rt/caml && $(MAKE) clean
 	@rm -f examples.html
-	@cd tutorial && make clean
+	@cd tutorial && $(MAKE) clean
 	@$(RM) -f *.exe *.cm* *.so *.a *.dylib *.o *~ *.uue \
                     vm.js server
 	@$(RM) -f examples/*/*.exe examples/*/*.cm* examples/*/*.exe.uue \

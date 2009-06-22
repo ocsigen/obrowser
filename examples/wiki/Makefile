@@ -9,7 +9,7 @@ vm.js: ../../vm.js
 	@cp $< $@
 
 ../../vm.js: ../../rt/js/*.js
-	@cd ../.. && make vm.js
+	@cd ../.. && $(MAKE) vm.js
 
 clean:
 	@ocamlbuild -clean
