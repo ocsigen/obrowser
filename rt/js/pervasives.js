@@ -252,6 +252,12 @@ RT.caml_ge_float = function (a, b) {
     return mk_bool (caml_compare (a,b) >= 0);
 }
 
+// Caml name: (=)
+// Type:      'a -> 'a -> bool
+RT.caml_eq_float = function (a, b) {
+    return mk_bool (caml_compare (a,b) == 0);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
 //  HASH                                                                     //
