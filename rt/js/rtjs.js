@@ -230,7 +230,7 @@ RT.caml_js_http_post = function (vurl, type, data) {
 	    vm.thread_notify_all (xmlhttp);
 	}
 	xmlhttp.open("POST", url, true);
-	xhr.setRequestHeader("Content-Type", string_from_value (type));
+	xmlhttp.setRequestHeader("Content-Type", string_from_value (type));
 	xmlhttp.send(string_from_value (data));
 	var cont = function  () {
 	    if (xmlhttp.readyState != 4)
