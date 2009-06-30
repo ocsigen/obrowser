@@ -38,11 +38,113 @@ int32_ops = {
 	throw new Error ("int32 not supported yet");
     },
     deserialize : function (reader) {
-	return reader.read32u ();
+	return mk_custom (int32_ops, reader.read32u ());
     }
 };
 
 register_custom (int32_ops);
+
+// Caml name: Int32.neg
+// Caml type: int32 -> int32
+RT.caml_int32_neg = function (a) {
+    var a = a.get (1);
+    return mk_custom (int32_ops, -a);
+}
+// Caml name: Int32.add
+// Caml type: int32 -> int32 -> int32
+RT.caml_int32_add = function (va,vb) {
+    var a = va.get (1);
+    var b = vb.get (1) ;
+    return mk_custom (int32_ops, a + b);
+}
+// Caml name: Int32.sub
+// Caml type: int32 -> int32 -> int32
+RT.caml_int32_sub = function (a,b) {
+    var a = a.get (1);
+    var b = b.get (1) ;
+    return mk_custom (int32_ops, a - b);
+}
+// Caml name: Int32.mul
+// Caml type: int32 -> int32 -> int32
+RT.caml_int32_mul = function (a,b) {
+    var a = a.get (1);
+    var b = b.get (1) ;
+    return mk_custom (int32_ops, a * b);
+}
+// Caml name: Int32.div
+// Caml type: int32 -> int32 -> int32
+RT.caml_int32_div = function (a,b) {
+    var a = a.get (1);
+    var b = b.get (1) ;
+    return mk_custom (int32_ops, a / b);
+}
+// Caml name: Int32.rem
+// Caml type: int32 -> int32 -> int32
+RT.caml_int32_mod = function (a,b) {
+    var a = a.get (1);
+    var b = b.get (1) ;
+    return mk_custom (int32_ops, a % b);
+}
+// Caml name: Int32.logand
+// Caml type: int32 -> int32 -> int32
+RT.caml_int32_and = function (a,b) {
+    var a = a.get (1);
+    var b = b.get (1) ;
+    return mk_custom (int32_ops, a & b);
+}
+// Caml name: Int32.logor
+// Caml type: int32 -> int32 -> int32
+RT.caml_int32_or = function (a,b) {
+    var a = a.get (1);
+    var b = b.get (1) ;
+    return mk_custom (int32_ops, a | b);
+}
+// Caml name: Int32.logxor
+// Caml type: int32 -> int32 -> int32
+RT.caml_int32_xor = function (a,b) {
+    var a = a.get (1);
+    var b = b.get (1) ;
+    return mk_custom (int32_ops, a ^ b);
+}
+// Caml name: Int32.shift_left
+// Caml type: int32 -> int -> int32
+RT.caml_int32_lsl = function (a,b) {
+    var a = a.get (1);
+    return mk_custom (int32_ops, a << b);
+}
+// Caml name: Int32.shift_right
+// Caml type: int32 -> int -> int32
+RT.caml_int32_asr = function (a,b) {
+    var a = a.get (1);
+    return mk_custom (int32_ops, a >> b);
+}
+// Caml name: Int32.shift_right_logical
+// Caml type: int32 -> int -> int32
+RT.caml_int32_lsr = function (a,b) {
+    var a = a.get (1);
+    return mk_custom (int32_ops, a >>> b);
+}
+// Caml name: Int32.of_int
+// Caml type: int -> int32
+RT.caml_int32_of_int = function (a) {
+    return mk_custom (int32_ops, a);
+}
+// Caml name: Int32.to_int
+// Caml type: int32 -> int
+RT.caml_int32_to_int = function (a) {
+    return a.get (1);
+}
+// Caml name: Int32.format
+// Caml type: string -> int32 -> string
+RT.caml_int32_format = function (f, v) {
+    return RT.caml_format_int.call (this, f, v.get (1));
+}
+// Caml name: Int32.of_string
+// Caml type: string -> int32
+RT.caml_int32_of_string = function (s) {
+    return mk_custom (RT.caml_int_of_string.call (this, s));
+}
+
 
 /* nativeint */
 
@@ -55,12 +157,12 @@ nativeint_ops = {
 	return a;
     },
     serialize : function (writer) {
-	throw new Error ("int32 not supported yet");
+	throw new Error ("nativeint not supported yet");
     },
     deserialize : function (reader) {
 	var l = reader.read8u ();
 	if (l == 1)
-	    return reader.read32u ();
+	    return mk_custom (nativeint_ops, reader.read32u ());
 	else
 	    throw new Error ("> 32 bits native int not supported yet");
     }
