@@ -205,7 +205,7 @@ RT.caml_js_http_get_with_status = function (vurl) {
 
 // Caml name: http_post
 // Type:      string -> string -> string -> (int *  string)
-RT.caml_js_http_post = function (url, type, data) {
+RT.caml_js_http_post = function (vurl, type, data) {
     var url = string_from_value (vurl);
 
     var xmlhttp = false;
