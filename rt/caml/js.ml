@@ -12,8 +12,12 @@
 
 external js_external : string -> int -> ('a -> 'b) option = "caml_js_external"
 
-external http_get : string -> string = "caml_js_http_get"
-external http_post : string -> string -> string = "caml_js_http_post"
+external http_get_with_status : string -> (int * string) = "caml_js_http_get_with_status"
+let http_get url = snd (http_get_with_status url)
+
+(* url -> content type -> data -> (status * result) *)
+external http_post : string -> string -> string -> (int * string) = "caml_js_http_post"
+
 external alert : string -> unit = "caml_js_alert"
 external params : unit -> string array = "caml_js_params"
 let params = params ()

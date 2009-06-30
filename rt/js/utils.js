@@ -185,40 +185,6 @@ function http_get (url, error) {
     return xmlhttp.responseText;
 }
 
-// get text file from url with post parameters as string
-function http_post (url, post, error) {
-    var xmlhttp=false;
-    /*@cc_on @*/
-    /*@if (@_jscript_version >= 5)
-        try {
-          xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
-        } catch (e) {
-          try {
-            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-          } catch (E) {
-            xmlhttp = false;
-          }
-        }
-      @else
-        xmlhttp = false;
-      @end @*/
-    if (!xmlhttp && typeof XMLHttpRequest != 'undefined') {
-	try {
-   	    xmlhttp = new XMLHttpRequest();
-	    xmlhttp.open("POST", url, false);
-	    xmlhttp.send(post);
-	} catch (e) {
-	    throw new Error ("unable to load file " + url + ": " + e.message);
- 	}
-//	if (xmlhttp.status != 200) {
-//	    var data = uudecode (xmlhttp.responseText);
-//	    error (input_val (data, caml_failwith));
-//	}
-	return xmlhttp.responseText;
-    }
-    throw new Error ("unable to load file");
-}
-
 // uudecode a string to a byte (int) array
 function uudecode (s) {
     var out = new Array ();

@@ -136,26 +136,6 @@ RT.caml_js_fragment_flush = function (n,f) {
     return UNIT;
 }
 
-// Caml name: http_get
-// Type:      string -> string
-RT.caml_js_http_get = function (url) {
-    try {
-	return value_from_string (http_get (string_from_value (url)));
-    } catch (e) {
-	this.failwith ("caml_js_http_get: " + e.message);
-    }
-}
-
-// Caml name: http_post
-// Type:      string -> string -> string
-    RT.caml_js_http_post = function (url, post) {
-    try {
-	return value_from_string (http_post (string_from_value (url), string_from_value (post)));
-    } catch (e) {
-	this.failwith ("caml_js_http_post: " + e.message);
-    }
-}
-
 // Caml name: alert
 // Type:      string -> unit
 RT.caml_js_alert = function (msg) {
@@ -177,4 +157,92 @@ RT.caml_js_exec = function (url, args) {
 	argv[i] = string_from_value (args.get(i));
     new VM(string_from_value (url), argv).run ();
     return UNIT;
+}
+
+
+// Caml name: http_get_with_status
+// Type:      string -> (int *  string)
+RT.caml_js_http_get_with_status = function (vurl) {
+    var url = string_from_value (vurl);
+
+    var xmlhttp = false;
+    var vm = this;
+    /* get request object */
+    if (ie) {
+        try {
+	    xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+        } catch (e) {
+	    try {
+		xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+	    } catch (E) {
+		throw new Error ("Unsupported Internet Explorer");
+	    }
+        }
+    } else {
+	xmlhttp = new XMLHttpRequest();
+    }
+    /* do request */
+    try {
+	xmlhttp.onreadystatechange = function () {
+	    vm.thread_notify_all (xmlhttp);
+	}
+	xmlhttp.open("GET", url, true);
+	xmlhttp.send(null);
+	var cont = function  () {
+	    if (xmlhttp.readyState != 4)
+		vm.thread_wait (xmlhttp, cont);		
+	    var b = mk_block (2, 0);
+	    b.set (0, xmlhttp.status);
+	    b.set (1, value_from_string (xmlhttp.responseText));
+	    return b;
+	}
+	vm.thread_wait (xmlhttp, cont);
+    } catch (e) {
+	if ((e == MAGIC_CAML_CONT) || (e == MAGIC_CAML_EX)) throw e;
+	throw new Error ("unable to load url " + url + ": " + e.message);
+    }
+}
+
+// Caml name: http_post
+// Type:      string -> string -> string -> (int *  string)
+RT.caml_js_http_post = function (url, type, data) {
+    var url = string_from_value (vurl);
+
+    var xmlhttp = false;
+    var vm = this;
+    /* get request object */
+    if (ie) {
+        try {
+	    xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+        } catch (e) {
+	    try {
+		xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+	    } catch (E) {
+		throw new Error ("Unsupported Internet Explorer");
+	    }
+        }
+    } else {
+	xmlhttp = new XMLHttpRequest();
+    }
+    /* do request */
+    try {
+	xmlhttp.onreadystatechange = function () {
+	    vm.thread_notify_all (xmlhttp);
+	}
+	xmlhttp.open("POST", url, true);
+	xhr.setRequestHeader("Content-Type", string_from_value (type));
+	xmlhttp.send(string_from_value (data));
+	var cont = function  () {
+	    if (xmlhttp.readyState != 4)
+		vm.thread_wait (xmlhttp, cont);		
+	    var b = mk_block (2, 0);
+	    b.set (0, xmlhttp.status);
+	    b.set (1, value_from_string (xmlhttp.responseText));
+	    return b;
+	}
+	vm.thread_wait (xmlhttp, cont);
+    } catch (e) {
+	if ((e == MAGIC_CAML_CONT) || (e == MAGIC_CAML_EX)) throw e;
+	throw new Error ("unable to load url " + url + ": " + e.message);
+    }
 }
