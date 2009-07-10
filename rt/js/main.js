@@ -45,6 +45,7 @@ var RT = [];
 #include <threads.js>
 #include <rtjs.js>
 #include <jsoo.js>
+#include <regexp.js>
 
 #ifdef DEBUG
 function debug (msg) {
