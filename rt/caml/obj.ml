@@ -33,6 +33,12 @@ external new_block : int -> int -> t = "caml_obj_block"
 external dup : t -> t = "caml_obj_dup"
 external truncate : t -> int -> unit = "caml_obj_truncate"
 
+let marshal (obj : t) =
+  Marshal.to_string obj []
+let unmarshal str pos =
+  (Marshal.from_string str pos, pos + Marshal.total_size str pos)
+
+
 let lazy_tag = 246
 let closure_tag = 247
 let object_tag = 248
@@ -51,3 +57,4 @@ let final_tag = custom_tag
 
 let int_tag = 1000
 let out_of_heap_tag = 1001
+let unaligned_tag = 1002

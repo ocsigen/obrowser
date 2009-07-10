@@ -1,8 +1,8 @@
 ML=$(wildcard *.ml)
 #CMO=$(patsubst %.ml,%.cmo, $(ML))
 CMOS= \
-  obj.cmo lazy.cmo \
   jSOO_basic_io.cmo pervasives.cmo sys.cmo \
+  marshal.cmo obj.cmo lazy.cmo \
   array.cmo list.cmo hashtbl.cmo \
   char.cmo string.cmo \
   stdLabels.cmo arrayLabels.cmo listLabels.cmo stringLabels.cmo \
@@ -11,7 +11,7 @@ CMOS= \
   printf.cmo format.cmo scanf.cmo \
   arg.cmo  printexc.cmo \
   digest.cmo random.cmo callback.cmo \
-  sys.cmo thread.cmo marshal.cmo \
+  sys.cmo thread.cmo \
   camlinternalLazy.cmo camlinternalOO.cmo oo.cmo camlinternalMod.cmo \
   jSOO.cmo \
   mutex.cmo complex.cmo parsing.cmo lexing.cmo stream.cmo genlex.cmo \
