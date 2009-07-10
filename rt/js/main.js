@@ -1328,6 +1328,7 @@ METHODS(VM).thread_wakeup = function (pid) {
 }
 
 #include <exceptions.js>
+#include <callback.js>
 
 function exec_caml (url) {
     var argv = [];
