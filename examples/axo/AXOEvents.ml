@@ -66,18 +66,6 @@ module Onclick =
        let default_value = Some ()
      end)
 
-module Mouse_move =
-  Make (
-    struct
-      type v = int * int
-      let name = "onmousemove"
-      let destruct obj =
-        (obj >>> get "clientX" >>> as_int,
-         obj >>> get "clientY" >>> as_int)
-      let default_value = None
-    end
-)
-
 module Mouse_up =
   Make (
     struct

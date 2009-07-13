@@ -34,6 +34,7 @@ struct
 
   let table    (* ?attrs ?chidren () *) = smart_create ~name:"table"
   let colgroup (* ?attrs ?chidren () *) = smart_create ~name:"colgroup"
+  let col      (* ?attrs ?chidren () *) = smart_create ~name:"col"
   let thead    (* ?attrs ?chidren () *) = smart_create ~name:"thead"
   let tbody    (* ?attrs ?chidren () *) = smart_create ~name:"tbody"
   let tr (* ?attrs ?chidren () *) = smart_create ~name:"tr"

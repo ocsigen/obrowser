@@ -38,6 +38,9 @@ struct
   let child n obj = child obj n
   let get_parent obj =
     obj >>> call_method "getParent" [| |]
+(*TODO:allow boolean arguments ! *)
+  let copy deep obj =
+    obj >>> call_method "cloneNode" [||]
 
   (* tampering with events *)
   let register_event name fn arg node =
@@ -68,7 +71,6 @@ struct
       fold 0 s
   let empty n = List.iter (fun c -> n >>> remove c) (n >>> children)
   let replace_all n c = empty n ; append n c
-  let copy_all n1 n2 = n1 >>> iter (fun c -> n2 >>> append c)
 
 end
 
@@ -76,37 +78,46 @@ end
 let blunt_alert = Js.alert
 let body = Node.document >>> Node.get_element_by_id "body" (*TODO: get rid of that !*)
 let alert =
-   let prepare text =
-     let mask = Node.element "div" in
-       mask >>> Node.set_attribute "style"
-         "position: fixed; right: 0px; top: 0px; width: 100%; \
-          height: 100%; background-color: grey; opacity: .4;" ;
-     let button = Node.element "a" in
-       button >>> Node.append (Node.text "Ok") ;
-       button >>> Node.set_attribute "style" "background-color: blue" ;
-     let msg = Node.element "div" in
-       msg >>> Node.append (Node.text text) ;
-     let panel = Node.element "div" in
-       panel >>> Node.append msg ;
-       panel >>> Node.append (Node.element "br") ;
-       panel >>> Node.append button ;
-       panel >>> Node.set_attribute "style"
-         "position: fixed; left: 50%; bottom: 50%; \
+  let q = Queue.create () in
+  let show (mask, panel) =
+    body >>> Node.append mask ;
+    body >>> Node.append panel;
+  in
+  let prepare text =
+    let mask = Node.element "div" in
+      mask >>> Node.set_attribute "style"
+        "position: fixed; right: 0px; top: 0px; width: 100%; \
+         height: 100%; background-color: grey; opacity: .4;" ;
+    let button = Node.element "a" in
+      button >>> Node.append (Node.text "Ok") ;
+      button >>> Node.set_attribute "style" "background-color: cyan" ;
+    let msg = Node.element "div" in
+      msg >>> Node.append (Node.text text) ;
+    let panel = Node.element "div" in
+      panel >>> Node.append msg ;
+      panel >>> Node.append (Node.element "br") ;
+      panel >>> Node.append button ;
+      panel >>> Node.set_attribute "style"
+        "position: fixed; left: 50%; bottom: 50%; \
          -moz-border-radius: 5px; padding: 10px; \
          background-color: white; text-align: right;" ;
-     let close () =
-       body >>> Node.remove mask ;
-       body >>> Node.remove panel ;
-     in
-       button >>> Node.register_event "onclick" close () ;
-       (mask, panel)
-   in
-     fun text ->
-       let (mask, panel) = prepare text in
-       body >>> Node.append mask ;
-       body >>> Node.append panel
+    let close () =
+      body >>> Node.remove mask ;
+      body >>> Node.remove panel ;
+      if Queue.is_empty q
+      then ()
+      else show (Queue.pop q)
+    in
+      button >>> Node.register_event "onclick" close () ;
+      (mask, panel)
+  in
+    fun text ->
+      let res = prepare text in
+      if Queue.is_empty q
+      then show res
+      else (Queue.push res q)
 
-let debug msg =
+let debug msg = (*/!\ NOT TO BE CALLED WITHOUT Firebug ON*)
   eval "console" >>> call_method "debug" [| string msg |] >>> ignore 
 
 let auto_debug f =
@@ -116,7 +127,12 @@ let auto_debug f =
 module Misc =
 struct
 
+  let navigator_id =
+    JSOO.eval "navigator.appName"
   let disable_selection () =
     JSOO.eval "document.onmousedown = function() {return false;}"
+  let new_z_index =
+    let zindex = ref 0 in
+      fun () -> incr zindex ; !zindex
 
 end

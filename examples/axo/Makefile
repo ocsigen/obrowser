@@ -1,17 +1,19 @@
 
-AUXCMOS=
-#../../../ocsigen.dev/xmlp4/newocaml/simplexmlparser.cmo
+#SIMPLEXMLPARSER=simplexmlparser.cmo
 
-SOURCES= AXOJs.ml AXOLang.ml AXOTree.ml AXOString.ml AXOCom.ml AXOHtml.ml AXOWidgets.ml AXOEvents.ml AXOToolkit.ml main.ml
+SOURCES= AXOJs.ml AXOLang.ml AXOCom.ml AXOHtml.ml AXOStyle.ml AXOEvents.ml AXOWidgets.ml AXOToolkit.ml main.ml
 CMOS=$(patsubst %.ml, %.cmo, $(SOURCES))
 
 .PHONY: clean all depend
 
 all: main.exe.uue vm.js
 
-main.exe: $(CMOS) ../../rt/caml/stdlib.cma
+main.exe: $(SIMPLEXMLPARSER) $(CMOS) ../../rt/caml/stdlib.cma
 	@echo "[OCAMLC] $@"
-	@CAMLLIB=../../rt/caml ocamlc $(AUXCMOS) $(CMOS) -o $@
+	@CAMLLIB=../../rt/caml ocamlc -verbose $(SIMPLEXMLPARSER) $(CMOS) -o $@
+
+$(SIMPLEXMLPARSER):
+	cp ~/src/ocsigen.dev/xmlp4/newocaml/simplexmlparser.cm{o,i} .
 
 %.cmi: %.mli ../../rt/caml/stdlib.cma
 	@echo "[OCAMLC] $@"
@@ -32,12 +34,12 @@ vm.js: ../../vm.js
 ../../vm.js: ../../rt/js/*.js
 	@cd ../.. && $(MAKE) vm.js
 
- ../../rt/caml/stdlib.cma:  ../../rt/caml/*.ml*
+../../rt/caml/stdlib.cma:  ../../rt/caml/*.ml*
 	@cd ../.. && $(MAKE) rt/caml/stdlib.cma
 
 clean:
 	@echo "[CLEAN]"
-	@rm -f *.cm* *~ *.exe *.uue vm.js
+	@rm -f *.cm* *~ *.exe *.uue vm.js simplexmlparser.cm{o,i}
 
 #include .depend
 

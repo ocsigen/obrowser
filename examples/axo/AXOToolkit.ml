@@ -1,8 +1,7 @@
 (* This module agregates graphical standard constructions *)
 
 
-open JSOO
-
+open AXOLang
 
 let foldable ?(folded = true) ~button ?button_alt content =
   let container = AXOHtml.Low.div
@@ -74,40 +73,47 @@ type 'a dnd_rendered =
       dnd_dragg       : JSOO.obj ;      (* the handle to drag the line        *)
       dnd_drop        : JSOO.obj ;      (* the place to drop the lines        *)
       dnd_kids_ground : JSOO.obj ;      (* the DOM node to drop children in   *)
-      dnd_action      : 'a dnd_rendered AXOTree.tree ->
-                        'a dnd_rendered AXOTree.tree ->
-                        'a dnd_rendered AXOTree.tree -> unit;
-
     }
-type 'a dnd_rendered_tree = 'a dnd_rendered AXOTree.tree
 
-exception Interrupted of exn
+exception Interrupted
 
 let dndable_tree (*Still buggy*)
       ~renderer   (* take a node, make a rendered *)
+      ~action
       tree =
 
-  let rec aux depth = function
-    | { AXOTree.content = t ; AXOTree.children = []} ->
-        let result = renderer t [] depth in
-          AXOTree.node result []
+  let shadow =
+    let o = AXOHtml.Low.div
+              ~attrs:[("style","background: gray; opacity: .3;")]
+              ()
+    in
+    let s = new AXOWidgets.shadow AXOJs.body o in
+      s # set_height 10 ; s # set_width 30 ; s
+  in
 
-    | { AXOTree.content = t ; AXOTree.children = l} ->
+  let rec aux depth = function
+    | { LTree.content = t ; LTree.children = []} ->
+        let result = renderer t [] depth in
+          LTree.node result []
+
+    | { LTree.content = t ; LTree.children = l} ->
         let result = renderer t l depth in
         let children = List.map (aux (succ depth)) l in
           List.iter
             (fun c -> result.dnd_kids_ground >>> AXOJs.Node.append c)
-            (List.map (fun e -> e.AXOTree.content.dnd_line) children) ;
-          AXOTree.node result children
+            (List.map (fun e -> e.LTree.content.dnd_line) children) ;
+          LTree.node result children
 
   in
 
   let tree = ref (aux 0 tree) in
 
   let rec mu_handler downed downed_c uped uped_c = fun _ ->
+    shadow#deactivate ;
+
     (* unbinding the handler *)
     (try
-      AXOTree.iter
+      LTree.iter
            (fun r _ ->
               r.dnd_drop >>> AXOEvents.Mouse_up.clear () ;
            )
@@ -117,40 +123,48 @@ let dndable_tree (*Still buggy*)
 
     if uped <> downed
     then (
-      let dnode = AXOTree.node downed downed_c in
-      let unode = AXOTree.node uped uped_c in
+      let dnode = LTree.node downed downed_c in
+      let unode = LTree.node uped uped_c in
       (* acting as told *)
       (try
-         uped.dnd_action !tree dnode unode;
-      with exc ->
-         AXOJs.alert
-           ("drag and drop action failed : " ^ Printexc.to_string exc)) ;
-      (try
-         tree := AXOTree.move !tree dnode unode ;
-         with exc ->
-           AXOJs.alert
-              "drag and drop action performed, tree manipulation error") ;
-      (try
-         uped.dnd_kids_ground >>> AXOJs.Node.append downed.dnd_line
-       with exc ->
-         AXOJs.alert
-           "drag and drop action performed, DOM manipulation error. \
-            Drag and drop not supported anymore." ;
-         AXOTree.iter
-           (fun r _ -> r.dnd_dragg >>> AXOEvents.Mouse_down.clear ())
-           !tree ;
+         (try
+            action !tree dnode unode;
+          with exc ->
+            AXOJs.alert
+              ("drag and drop action failed : " ^ Printexc.to_string exc) ;
+            raise Interrupted
+         ) ;
+         (try
+            tree := LTree.move !tree dnode unode ;
+          with exc ->
+            AXOJs.alert
+              "drag and drop action performed, tree manipulation error" ;
+            raise Interrupted
+         ) ;
+         (try
+            uped.dnd_kids_ground >>> AXOJs.Node.append downed.dnd_line
+          with exc ->
+            AXOJs.alert
+              "drag and drop action performed, DOM manipulation error. \
+               Drag and drop not supported anymore." ;
+            LTree.iter
+              (fun r _ -> r.dnd_dragg >>> AXOEvents.Mouse_down.clear ())
+              !tree ;
+         )
+       with Interrupted -> ()
       )
     )
   and md_handler downed downed_c = fun (mx,my) ->
+    shadow#activate ;
 
-    AXOTree.iter
+    LTree.iter
       (fun uped uped_c ->
          uped.dnd_drop >>> AXOEvents.Mouse_up.bind
            (mu_handler downed downed_c uped uped_c);
       )
       !tree ;
   in
-    AXOTree.iter
+    LTree.iter
       (fun r rc -> r.dnd_dragg >>> AXOEvents.Mouse_down.bind (md_handler r rc))
       !tree ;
     (fun () -> !tree)
@@ -168,18 +182,47 @@ let static_table_tree
       tree =
 
   let rec aux depth = function
-    | { AXOTree.content = t ; AXOTree.children = []} ->
+    | { LTree.content = t ; LTree.children = []} ->
         let result = renderer t [] depth in
-          AXOTree.node result []
+          LTree.node result []
 
-    | { AXOTree.content = t ; AXOTree.children = l} ->
+    | { LTree.content = t ; LTree.children = l} ->
         let result = renderer t l depth in
         let children = List.map (aux (succ depth)) l in
-          AXOTree.node result children
+          LTree.node result children
 
   in
   let tree = aux 0 tree in
-    AXOTree.iter
+    LTree.iter
       (fun { static_line = l } _ -> table >>> AXOJs.Node.append l)
       tree ;
     tree
+
+
+
+let dynamic_list ~container ?preload ?button ?throbber ~parse ~url ~args () =
+  let button = LOption.unopt
+    ~default:(new AXOWidgets.text_button "Load more...")
+    button
+  in
+  let throbber = LOption.unopt
+    ~default:(
+      fun () ->
+        AXOHtml.Low.div ~children:[AXOJs.Node.text "Waiting..."] ()
+    )
+    throbber
+  in
+  let rec load_n_show () =
+    try
+      let t = throbber () in
+      container >>> AXOJs.Node.insert_before t button#get_obj ;
+      let res = AXOCom.dynload url (args ()) parse in (*TODO use the real dynload*)
+      container >>> AXOJs.Node.insert_before res t ;
+      container >>> AXOJs.Node.remove t ;
+
+    with Failure t -> button#remove_click_action load_n_show ; AXOJs.alert t
+  in
+    button#add_click_action load_n_show ;
+    container >>> AXOJs.Node.append button#get_obj ;
+    container
+
