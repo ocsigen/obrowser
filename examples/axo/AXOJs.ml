@@ -77,17 +77,21 @@ end
 
 let blunt_alert = Js.alert
 let body = Node.document >>> Node.get_element_by_id "body" (*TODO: get rid of that !*)
-let alert =
+let (alert, rich_alert) =
   let q = Queue.create () in
-  let show (mask, panel) =
+  let mask =
+    let mask = Node.element "div" in
+    mask >>> Node.set_attribute "style"
+      "position: fixed; right: 0px; top: 0px; width: 100%; \
+       height: 100%; background-color: grey; opacity: .4;" ;
+    mask
+  in
+  let show panel =
+    Queue.push panel q ;
     body >>> Node.append mask ;
     body >>> Node.append panel;
   in
   let prepare text =
-    let mask = Node.element "div" in
-      mask >>> Node.set_attribute "style"
-        "position: fixed; right: 0px; top: 0px; width: 100%; \
-         height: 100%; background-color: grey; opacity: .4;" ;
     let button = Node.element "a" in
       button >>> Node.append (Node.text "Ok") ;
       button >>> Node.set_attribute "style" "background-color: cyan" ;
@@ -104,18 +108,48 @@ let alert =
     let close () =
       body >>> Node.remove mask ;
       body >>> Node.remove panel ;
+      ignore (Queue.pop q) ;
       if Queue.is_empty q
       then ()
       else show (Queue.pop q)
     in
       button >>> Node.register_event "onclick" close () ;
-      (mask, panel)
+      panel
   in
-    fun text ->
-      let res = prepare text in
+  let rich_prepare obj =
+    let button = Node.element "a" in
+      button >>> Node.append (Node.text "Ok") ;
+      button >>> Node.set_attribute "style" "background-color: cyan" ;
+    let panel = Node.element "div" in
+      panel >>> Node.append obj ;
+      panel >>> Node.append (Node.element "br") ;
+      panel >>> Node.append button ;
+      panel >>> Node.set_attribute "style"
+        "position: fixed; left: 50%; bottom: 50%; \
+         -moz-border-radius: 5px; padding: 10px; \
+         background-color: white; text-align: right;" ;
+    let close () =
+      body >>> Node.remove mask ;
+      body >>> Node.remove panel ;
+      ignore (Queue.pop q) ;
       if Queue.is_empty q
-      then show res
-      else (Queue.push res q)
+      then ()
+      else show (Queue.pop q)
+    in
+      button >>> Node.register_event "onclick" close () ;
+      panel
+  in
+
+    ((fun text ->
+        let res = prepare text in
+        if Queue.is_empty q
+        then show res
+        else (Queue.push res q)),
+     (fun obj ->
+        let res = rich_prepare obj in
+        if Queue.is_empty q
+        then show res
+        else (Queue.push res q)))
 
 let debug msg = (*/!\ NOT TO BE CALLED WITHOUT Firebug ON*)
   eval "console" >>> call_method "debug" [| string msg |] >>> ignore 

@@ -1,5 +1,5 @@
 
-#SIMPLEXMLPARSER=simplexmlparser.cmo
+SIMPLEXMLPARSER=simplexmlparser.cmo
 
 SOURCES= AXOJs.ml AXOLang.ml AXOCom.ml AXOHtml.ml AXOStyle.ml AXOEvents.ml AXOWidgets.ml AXOToolkit.ml main.ml
 CMOS=$(patsubst %.ml, %.cmo, $(SOURCES))

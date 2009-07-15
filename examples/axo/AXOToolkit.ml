@@ -2,70 +2,20 @@
 
 
 open AXOLang
+exception Interrupted
 
-let foldable ?(folded = true) ~button ?button_alt content =
-  let container = AXOHtml.Low.div
-                    ~children:(button
-                               :: (if folded
-                                   then []
-                                   else [ content ])
-                    )
-                    ()
-  in
-  let folded = ref folded in
-
-    button >>> AXOEvents.Onclick.bind
+let foldable ?(folded = true) ~button content =
+  let container = new AXOWidgets.div_container in
+    container#add_widget (button :> AXOWidgets.widget) ;
+    if folded then () else container#add_widget content ;
+    button#add_click_action
       (fun () ->
-         (if !folded
-          then container >>> AXOJs.Node.append content
-          else container >>> AXOJs.Node.remove content) ;
-         folded := not !folded ;
-         (match button_alt with
-            | None -> ()
-            | Some alt -> button >>> alt)
+         (if button#get_state
+          then container # add_widget content
+          else container # remove_widget content) ;
       ) ;
-
     container
 
-(* TODO: update to the new AXOTree tree type
-let ul_based_tree
-      ~button_renderer
-      ?fake_button_renderer
-      ~node_renderer
-      tree =
-  let rec aux = function
-    | AXOTree.Nil -> AXOHtml.Low.div ()
-    | AXOTree.Node (t, []) ->
-        AXOHtml.Low.div
-          ~children:(
-            match fake_button_renderer with
-              | None -> [ (node_renderer t []) ; ]
-              | Some f -> [ (f t) # get_obj ; (node_renderer t []) ; ]
-          )
-          ()
-    | AXOTree.Node (t, l) ->
-        begin
-          let button = button_renderer t l in
-          let line = node_renderer t l in
-          let children = List.map aux l in
-          let result =
-            AXOHtml.Low.div
-              ~children:[ button # get_obj ; line ; ]
-              ()
-          in
-          let wraped_children = AXOHtml.High.ul children in
-          let folded = ref true in
-            button # get_obj >>> Onclick.bind
-              (fun () ->
-                 (if !folded
-                  then result >>> AXOJs.Node.append wraped_children
-                  else result >>> AXOJs.Node.remove wraped_children) ;
-                 folded := not !folded ;
-                 button # click ) ;
-            result
-        end
-  in aux tree
- *)
 
 type 'a dnd_rendered =
     { dnd_node        : 'a ;            (* a node to keep some info           *)
@@ -74,8 +24,6 @@ type 'a dnd_rendered =
       dnd_drop        : JSOO.obj ;      (* the place to drop the lines        *)
       dnd_kids_ground : JSOO.obj ;      (* the DOM node to drop children in   *)
     }
-
-exception Interrupted
 
 let dndable_tree (*Still buggy*)
       ~renderer   (* take a node, make a rendered *)
@@ -138,7 +86,8 @@ let dndable_tree (*Still buggy*)
             tree := LTree.move !tree dnode unode ;
           with exc ->
             AXOJs.alert
-              "drag and drop action performed, tree manipulation error" ;
+              "drag and drop action performed, tree manipulation error.\
+               You may want to reload the page." ;
             raise Interrupted
          ) ;
          (try
