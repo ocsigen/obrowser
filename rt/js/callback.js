@@ -20,20 +20,20 @@ i_tbl_cb[IRAISE] = function (vm, c) {
     }
 }
 
-VM.callback = function (clos, args) {
+METHODS(VM).callback = function (clos, args) {
+    var code = mk_block (7, 0);
     var ctx = {
-	cur_code : clos.get (0),
+	cur_code : code,
 	pc : 0,
 	sp : 0,
 	caml_trap_sp : -1,
 	accu : UNIT,
 	stack : new Array (),
- 	env : clos,
+ 	env : mk_block (0, 0),
 	extra_args : 0,
 	status : RUN,
-	pid : this.max_pid
+	pid : 0
     } ;
-    var code = mk_block (7, CLOSURE_TAG);
     var narg = args.length;
     var octx = this.ctx ;
     this.ctx = ctx;
@@ -51,17 +51,19 @@ VM.callback = function (clos, args) {
     code.set (2, IAPPLY);
     code.set (3, narg);
     code.set (4, IPOP);
-    code.set (5,  1);
+    code.set (5, 1);
     code.set (6, ISTOP);
 
     try {
-	while (c.cur_code.get (c.pc) != ISTOP) {
-	    if (! i_tbl_cb [c.cur_code.get (c.pc++)] (this, c)) {
+	while (ctx.cur_code.get (ctx.pc) != ISTOP) {
+	    if (! i_tbl_cb [ctx.cur_code.get (ctx.pc++)] (this, ctx)) {
+		this.ctx = octx;
 		this.failwith ("blocking functions in callbacks not supported");
 	    }
 	}
     } catch (e) {
-	if (e[0] = MAGIC_CAML_CALLBACK) {
+	this.ctx = octx;
+	if (e[0] == MAGIC_CAML_CALLBACK) {
 	    this.raise (e[1]);
 	} else {
 	    throw e;
