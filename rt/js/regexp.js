@@ -78,15 +78,15 @@ RT.caml_regexp_replace = function (vr, vsub, vs) {
 RT.caml_regexp_replace_fun = function (vr, vf, vs) {
     var r = unbox_abstract (vr) ;
     var s = string_from_value (vs) ;
+    var vm = this;
     var f = function () {
-	var vargs = [];
-	vargs.set (0, arguments[arguments.length - 2]);
+	var vargs = mk_block (arguments.length - 2, 0);
 	for (var i = 0; i < arguments.length - 2;i++) {
-	    vargs.set (1 + i, value_from_string (arguments[i]));
+	    vargs.set (i, value_from_string (arguments[i]));
 	}
-	return string_from_value (this.callback (vf, vargs));
+	return string_from_value (vm.callback (vf, [arguments[arguments.length - 2], vargs]));
     }
-    return (value_from_string (s.replace (r, sub)));    
+    return (value_from_string (s.replace (r, f)));
 }
 
 // Caml name: split
