@@ -292,6 +292,51 @@ object
 
 end
 
+let body_container : [ `Block ] generic_container =
+object (self)
+
+  inherit [ [ `Inline | `Block ] ] generic_container
+
+  val obj = AXOJs.Node.body
+
+  method get_obj = obj
+
+  method get_width  : int = obj >>> get "offsetWidth"  >>> as_int
+  method get_height : int = obj >>> get "offsetHeight" >>> as_int
+  method get_x      : int = obj >>> get "offsetLeft"   >>> as_int
+  method get_y      : int = obj >>> get "offsetTop"    >>> as_int
+
+  method set_width  (w : int) : unit =
+    (obj >>> AXOStyle.style) # set_dim "width" (AXOStyle.px w)
+  method set_height (h : int) : unit =
+    (obj >>> AXOStyle.style) # set_dim "height" (AXOStyle.px h)
+  method set_x      (x : int) : unit =
+    (obj >>> AXOStyle.style) # set_dim "left" (AXOStyle.px x)
+  method set_y      (y : int) : unit =
+    (obj >>> AXOStyle.style) # set_dim "top" (AXOStyle.px y)
+
+  method move_x     (x : int) : unit = self#set_x (self#get_x + x)
+  method move_y     (y : int) : unit = self#set_y (self#get_y + y)
+
+  method set_attribute n v = obj >>> AXOJs.Node.set_attribute n v
+  method get_attribute n   = obj >>> AXOJs.Node.get_attribute n
+
+  method set_position p = (obj >>> AXOStyle.style) # set_position p
+
+  val mutable content = []
+
+  method get_content   = content
+  method wipe_content  = content <- []
+  method add_widget ?before wi = match before with
+      | None -> content <- wi :: (List.filter ((!=) wi) content) ;
+                obj >>> AXOJs.Node.append wi#get_obj ;
+      | Some wii -> content <- LList.insert_after content wi wii ;
+                    obj >>> AXOJs.Node.insert_before wi#get_obj wii#get_obj ;
+  method remove_widget wi = content <- List.filter ((!=) wi) content ;
+                            obj >>> AXOJs.Node.remove wi#get_obj ;
+
+end
+
 class inline_container =
 object (self)
 

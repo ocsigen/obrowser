@@ -16,6 +16,7 @@ struct
   (* creating nodes *)
   let window = eval "window"
   let document = eval "document"    
+  let body = document >>> get "body"
   let text content =
     document >>> call_method "createTextNode" [| string content |]
   let element tag =
@@ -32,15 +33,19 @@ struct
   (* getting nodes *)
   let get_element_by_id id root =
     root >>> call_method "getElementById" [| string id |]
+  let get_element_by_tag tag root =
+    root >>> call_method "getElementByTagName" [| string tag |]
   external children   : obj -> obj list   = "caml_js_node_children"
   external n_children : obj -> int        = "caml_js_node_n_children"
   external child      : obj -> int -> obj = "caml_js_node_child"
   let child n obj = child obj n
   let get_parent obj =
     obj >>> call_method "getParent" [| |]
-(*TODO:allow boolean arguments ! *)
   let copy deep obj =
-    obj >>> call_method "cloneNode" [||]
+    obj >>> call_method "cloneNode" [| int 0 |]
+  let get_value obj =
+    obj >>> get "nodeValue"
+    
 
   (* tampering with events *)
   let register_event name fn arg node =
@@ -76,7 +81,6 @@ end
 
 
 let blunt_alert = Js.alert
-let body = Node.document >>> Node.get_element_by_id "body" (*TODO: get rid of that !*)
 let (alert, rich_alert) =
   let q = Queue.create () in
   let mask =
@@ -88,8 +92,8 @@ let (alert, rich_alert) =
   in
   let show panel =
     Queue.push panel q ;
-    body >>> Node.append mask ;
-    body >>> Node.append panel;
+    Node.body >>> Node.append mask ;
+    Node.body >>> Node.append panel;
   in
   let prepare text =
     let button = Node.element "a" in
@@ -106,8 +110,8 @@ let (alert, rich_alert) =
          -moz-border-radius: 5px; padding: 10px; \
          background-color: white; text-align: right;" ;
     let close () =
-      body >>> Node.remove mask ;
-      body >>> Node.remove panel ;
+      Node.body >>> Node.remove mask ;
+      Node.body >>> Node.remove panel ;
       ignore (Queue.pop q) ;
       if Queue.is_empty q
       then ()
@@ -129,8 +133,8 @@ let (alert, rich_alert) =
          -moz-border-radius: 5px; padding: 10px; \
          background-color: white; text-align: right;" ;
     let close () =
-      body >>> Node.remove mask ;
-      body >>> Node.remove panel ;
+      Node.body >>> Node.remove mask ;
+      Node.body >>> Node.remove panel ;
       ignore (Queue.pop q) ;
       if Queue.is_empty q
       then ()

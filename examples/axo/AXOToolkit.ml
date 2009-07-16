@@ -12,8 +12,8 @@ let foldable ?(folded = true) ~button content =
     button#add_click_action
       (fun () ->
          (if button#get_state
-          then container # add_widget content
-          else container # remove_widget content) ;
+          then container#add_widget content
+          else container#remove_widget content ) ;
       ) ;
     container
 

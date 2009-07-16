@@ -65,7 +65,5 @@ let dynload url args
       | 5 -> on_5xx res
       | _ -> AXOJs.alert ("Server sent " ^ (string_of_int code)) ; failwith msg
 
-(*
-let parse_xml s = Simplexmlparser.xmlparser_string s
- *)
+let parse_xml s = Js.dom_of_xml s
 
