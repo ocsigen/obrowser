@@ -246,3 +246,21 @@ RT.caml_js_http_post = function (vurl, type, data) {
 	throw new Error ("unable to load url " + url + ": " + e.message);
     }
 }
+
+// Caml name: dom_of_xml
+// Type:      string -> JSOO.obj
+RT.caml_js_dom_of_xml = function (str) 
+{
+  try { //IE
+    xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+    xmlDoc.async = "false";
+    xmlDoc.loadXML(str);
+    return xmlDoc; 
+  } catch(e) {
+    try {
+      parser = new DOMParser();
+      xmlDoc = parser.parseFromString(str,"text/xml");
+      return xmlDoc;
+    } catch(e) { throw new Error ("unable to parse : " + e.message) }
+  }
+}

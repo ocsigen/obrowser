@@ -18,6 +18,8 @@ let http_get url = snd (http_get_with_status url)
 (* url -> content type -> data -> (status * result) *)
 external http_post : string -> string -> string -> (int * string) = "caml_js_http_post"
 
+external dom_of_xml : string -> JSOO.obj = "caml_js_dom_of_xml"
+
 external alert : string -> unit = "caml_js_alert"
 external params : unit -> string array = "caml_js_params"
 let params = params ()
