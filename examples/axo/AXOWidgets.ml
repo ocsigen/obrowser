@@ -13,6 +13,8 @@ type generic = [ `Inline | `Block ]
 class virtual [ 'a ] generic_widget =
 object
 
+  method virtual get_obj : JSOO.obj
+
   method virtual get_width  : int
   method virtual get_height : int
   method virtual get_x      : int
@@ -37,8 +39,41 @@ end
 class block_widget =
 object ( self )
 
-  inherit [ [< `Block ] ] generic_widget
+  inherit [ [ `Block ] ] generic_widget
   val obj = AXOHtml.Low.div ()
+
+  method get_obj = obj
+
+  method get_width  : int = obj >>> get "offsetWidth"  >>> as_int
+  method get_height : int = obj >>> get "offsetHeight" >>> as_int
+  method get_x      : int = obj >>> get "offsetLeft"   >>> as_int
+  method get_y      : int = obj >>> get "offsetTop"    >>> as_int
+
+  method set_width  (w : int) : unit =
+    (obj >>> AXOStyle.style) # set_dim "width" (AXOStyle.px w)
+  method set_height (h : int) : unit =
+    (obj >>> AXOStyle.style) # set_dim "height" (AXOStyle.px h)
+  method set_x      (x : int) : unit =
+    (obj >>> AXOStyle.style) # set_dim "left" (AXOStyle.px x)
+  method set_y      (y : int) : unit =
+    (obj >>> AXOStyle.style) # set_dim "top" (AXOStyle.px y)
+
+  method move_x     (x : int) : unit = self#set_x (self#get_x + x)
+  method move_y     (y : int) : unit = self#set_y (self#get_y + y)
+
+  method set_attribute n v = obj >>> AXOJs.Node.set_attribute n v
+  method get_attribute n   = obj >>> AXOJs.Node.get_attribute n
+
+  method set_position p = (obj >>> AXOStyle.style) # set_position p
+
+end
+class inline_widget =
+object ( self )
+
+  inherit [ [ `Inline | `Block ] ] generic_widget
+  val obj = AXOHtml.Low.span ()
+
+  method get_obj = obj
 
   method get_width  : int = obj >>> get "offsetWidth"  >>> as_int
   method get_height : int = obj >>> get "offsetHeight" >>> as_int
@@ -66,44 +101,39 @@ end
 
 
 (* text widgets *)
-class virtual [ 'a ] text_widget obj txt =
-object ( self )
+class virtual [ 'a ] generic_text_widget =
+object
 
-  inherit [ 'a ] generic_widget
-  val mutable text = txt
-  val obj = AXOHtml.Low.span ~children:[ AXOJs.Node.text txt] ()
-
-  method get_width  : int = obj >>> get "offsetWidth"  >>> as_int
-  method get_height : int = obj >>> get "offsetHeight" >>> as_int
-  method get_x      : int = obj >>> get "offsetLeft"   >>> as_int
-  method get_y      : int = obj >>> get "offsetTop"    >>> as_int
-
-  method set_width  (w : int) : unit =
-    (obj >>> AXOStyle.style) # set_dim "width" (AXOStyle.px w)
-  method set_height (h : int) : unit =
-    (obj >>> AXOStyle.style) # set_dim "height" (AXOStyle.px h)
-  method set_x      (x : int) : unit =
-    (obj >>> AXOStyle.style) # set_dim "left" (AXOStyle.px x)
-  method set_y      (y : int) : unit =
-    (obj >>> AXOStyle.style) # set_dim "top" (AXOStyle.px y)
-
-  method move_x     (x : int) : unit = self#set_x (self#get_x + x)
-  method move_y     (y : int) : unit = self#set_y (self#get_y + y)
-
-  method set_attribute n v = obj >>> AXOJs.Node.set_attribute n v
-  method get_attribute n   = obj >>> AXOJs.Node.get_attribute n
-
-  method get_text            : string = text
-  method set_text (t:string) : unit   = text <- t ;
-    obj >>> AXOJs.Node.replace_all (AXOJs.Node.text text)
-
-  method set_position p = (obj >>> AXOStyle.style) # set_position p
+  inherit ['a] generic_widget
+  method virtual get_text : string
+  method virtual set_text : string -> unit
 
 end
-class inline_text_widget text =
-object inherit [ [< `Inline ] ] text_widget (AXOHtml.Low.span ()) text end
-class block_text_widget text =
-object inherit [ [< `Block ] ] text_widget (AXOHtml.Low.div ()) text end
+class inline_text_widget txt =
+object
+
+  inherit inline_widget
+  inherit [ [< `Inline ] ] generic_text_widget
+  val mutable text = txt
+
+  method get_text   = text
+  method set_text t = text <- t ;
+                      obj >>> AXOJs.Node.replace_all (AXOJs.Node.text text)
+
+
+end
+class block_text_widget txt =
+object
+
+  inherit block_widget
+  inherit [ [< `Block ] ] generic_text_widget
+  val mutable text = txt
+
+  method get_text   = text
+  method set_text t = text <- t ;
+                      obj >>> AXOJs.Node.replace_all (AXOJs.Node.text text)
+
+end
 
 (* button widgets *)
 module Button_click =
@@ -208,9 +238,8 @@ object (self)
 end
 
 
-(* TODO !!!*)
 (* shadow widget *)
-module Mouse_move =
+module Shadow_move =
   AXOEvents.Make
     (struct
        type v = int * int
@@ -220,63 +249,95 @@ module Mouse_move =
           obj >>> get "clientY" >>> as_int)
        let default_value = None
      end)
-
-class shadow container = (*TODO : make exception proof !*)
+class shadow widget container = (*TODO : get rid of container by going up in the DOM tree !*)
 object (self)
 
-  method private move (x,y) =
-    w#set_x (x + 2) ; w#set_y (y + 2)
+  inherit block_widget as w
+
+  val mutable activated = false
+
+  method private move (x,y) = w#set_x (x + 2) ; w#set_y (y + 2)
   method activate =
-    container >>> Mouse_move.bind move_handler ;
-    container >>> AXOJs.Node.append obj
+    w#set_width widget#get_width ; w#set_height widget#get_height ;
+    if not activated
+    then (
+      container >>> Shadow_move.bind (fun (x,y) -> self#move (x,y)) ;
+      container >>> AXOJs.Node.append obj ;
+    )
   method deactivate =
-    container >>> AXOJs.Node.remove obj ;
-    container >>> Mouse_move.clear ()
+    if activated
+    then (
+      container >>> AXOJs.Node.remove obj ;
+      container >>> Shadow_move.clear ()
+    )
 
   initializer
-    (obj >>> AXOStyle.style) # set_position AXOStyle.Fixed ;
+    w#set_position AXOStyle.Fixed ;
+    w#set_attribute "style" "background-color: black; opacity: .3"
 
 end
 
 
 (* Containers *)
+class virtual [ 'a ] generic_container =
+object
 
-class container (box : JSOO.obj) =
-object (self)
+  inherit [ 'a ] generic_widget
 
-  inherit widget box as w
-
-  method get_content   = w#get_obj >>> AXOJs.Node.children
-  method wipe_content  = w#get_obj >>> AXOJs.Node.empty
-  method add_obj ?before o = match before with
-    | None ->   w#get_obj >>> AXOJs.Node.append o ;
-    | Some b -> w#get_obj >>> AXOJs.Node.insert_before o b ;
-  method add_widget ?before (wi : widget) =
-    let before = LOption.apply_on_opted
-                   (fun w -> w#get_obj)
-                   (before : widget option)
-    in
-    self#add_obj ?before wi#get_obj
-  method remove_obj o = w#get_obj >>> AXOJs.Node.remove o
-  method remove_widget (wi : widget) = self#remove_obj wi#get_obj
-
-  method iter (f : JSOO.obj -> unit)     = w#get_obj >>> AXOJs.Node.iter f
-  method iter_rec (f : JSOO.obj -> unit) = w#get_obj >>> AXOJs.Node.iter_rec f
-
+  method virtual get_content   : 'a generic_widget list
+  method virtual wipe_content  : unit
+  method virtual add_widget    :
+    ?before:('a generic_widget) -> 'a generic_widget -> unit
+  method virtual remove_widget : 'a generic_widget -> unit
 
 end
-let widget_of_container c = (c : container :> widget)
 
-class div_container = container (AXOHtml.Low.div ())
-class span_container = container (AXOHtml.Low.span ())
-class p_container = container (AXOHtml.Low.p ())
+class inline_container =
+object (self)
+
+  inherit inline_widget as w
+  inherit [ [ `Inline ] ] generic_container
+
+  val mutable content = []
+
+  method get_content   = content
+
+  method wipe_content  = content <- []
+
+  method add_widget ?before wi = match before with
+      | None -> content <- wi :: (List.filter ((!=) wi) content) ;
+                obj >>> AXOJs.Node.append wi#get_obj ;
+      | Some wii -> content <- LList.insert_after content wi wii ;
+                    obj >>> AXOJs.Node.insert_before wi#get_obj wii#get_obj ;
+
+  method remove_widget wi = content <- List.filter ((!=) wi) content ;
+                            obj >>> AXOJs.Node.remove wi#get_obj ;
+
+end
+class block_container =
+object (self)
+
+  inherit block_widget as w
+  inherit [ [ `Inline | `Bolck ] ] generic_container
+
+  val mutable content = []
+
+  method get_content   = content
+  method wipe_content  = content <- []
+  method add_widget ?before wi = match before with
+      | None -> content <- wi :: (List.filter ((!=) wi) content) ;
+                obj >>> AXOJs.Node.append wi#get_obj ;
+      | Some wii -> content <- LList.insert_after content wi wii ;
+                    obj >>> AXOJs.Node.insert_before wi#get_obj wii#get_obj ;
+
+  method remove_widget wi = content <- List.filter ((!=) wi) content ;
+                            obj >>> AXOJs.Node.remove wi#get_obj ;
+
+end
+
 
 (* trees *)
-
-(*The widget uses a 3-tuple with elements being :
- * 'a : whatever info you want to keep...
- * container : the main container with the displayed DOM part
- * container : the place where children's main containers are *)
+(*
 class ['a] tree (box : JSOO.obj) (t : ('a * container * container) LTree.tree) =
 object (self)
 
@@ -467,3 +528,4 @@ object
 
 
 end
+*)

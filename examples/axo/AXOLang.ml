@@ -37,19 +37,28 @@ end
 
 module LList = struct
 
-let filter_map f l =
-  let rec aux accu = function
-    | [] -> accu
-    | h::t -> (match f h with
-                 | None -> aux accu t
-                 | Some v -> aux (v::accu) t)
-  in aux [] l
+  let filter_map f l =
+    let rec aux accu = function
+      | [] -> accu
+      | h::t -> (match f h with
+                   | None -> aux accu t
+                   | Some v -> aux (v::accu) t)
+    in aux [] l
 
-let split_map f l =
-  let rec aux acc1 acc2 = function
-    | [] -> (acc1, acc2)
-    | hd :: tl -> let (a, b) = f hd in aux (a :: acc1) (b :: acc2) tl
-  in aux [] [] l
+  let split_map f l =
+    let rec aux acc1 acc2 = function
+      | [] -> (acc1, acc2)
+      | hd :: tl -> let (a, b) = f hd in aux (a :: acc1) (b :: acc2) tl
+    in aux [] [] l
+
+  let insert_after l element reference =
+    let rec aux acc = function
+      | [] -> raise Not_found
+      | hd :: tl ->
+          if hd = reference
+          then ( List.rev acc ) @ ( hd :: element :: tl )
+          else aux ( hd :: acc ) tl
+    in aux [] l
 
 end
 

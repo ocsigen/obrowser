@@ -1,5 +1,4 @@
 
-SIMPLEXMLPARSER=simplexmlparser.cmo
 
 SOURCES= AXOJs.ml AXOLang.ml AXOCom.ml AXOHtml.ml AXOStyle.ml AXOEvents.ml AXOWidgets.ml AXOToolkit.ml main.ml
 CMOS=$(patsubst %.ml, %.cmo, $(SOURCES))
@@ -8,12 +7,9 @@ CMOS=$(patsubst %.ml, %.cmo, $(SOURCES))
 
 all: main.exe.uue vm.js
 
-main.exe: $(SIMPLEXMLPARSER) $(CMOS) ../../rt/caml/stdlib.cma
+main.exe: $(CMOS) ../../rt/caml/stdlib.cma
 	@echo "[OCAMLC] $@"
-	@CAMLLIB=../../rt/caml ocamlc -verbose $(SIMPLEXMLPARSER) $(CMOS) -o $@
-
-$(SIMPLEXMLPARSER):
-	cp ~/src/ocsigen.dev/xmlp4/newocaml/simplexmlparser.cm{o,i} .
+	@CAMLLIB=../../rt/caml ocamlc $(CMOS) -o $@
 
 %.cmi: %.mli ../../rt/caml/stdlib.cma
 	@echo "[OCAMLC] $@"
@@ -39,7 +35,7 @@ vm.js: ../../vm.js
 
 clean:
 	@echo "[CLEAN]"
-	@rm -f *.cm* *~ *.exe *.uue vm.js simplexmlparser.cm{o,i}
+	@rm -f *.cm* *~ *.exe *.uue vm.js
 
 #include .depend
 
