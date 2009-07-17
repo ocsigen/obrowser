@@ -34,16 +34,13 @@ let test_tree =
       ] ;
    ]
 
-let content = new AXOWidgets.block_text_widget "esfblhf kjhvljkdsf kg"
+let content = new AXOWidgets.block_text_widget "Lorem ipsum etc."
 
 
 let f =
   AXOToolkit.foldable
-    (new AXOWidgets.inline_text_cyclic_button
-        ("Expand",true)
-       [("Fold" , false)])
-    (content :> AXOWidgets.generic AXOWidgets.generic_widget)
+    (new AXOWidgets.inline_text_button "Expand/collapse")
+    (content :> AXOWidgets.generic_widget)
 
 let _ =
-  AXOWidgets.body_container#add_widget
-    (f :> AXOWidgets.generic AXOWidgets.generic_widget)
+  AXOWidgets.body # add_widget (f :> AXOWidgets.generic_widget)

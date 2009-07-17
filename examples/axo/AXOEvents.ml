@@ -57,6 +57,51 @@ struct
 end
 
 
+module Make_for_widget = functor (Params : PARAMS) ->
+struct
+  open Params
+  exception Cannot_destruct of exn
+  let handlers_field = "caml_" ^ name ^ "_handlers"
+
+  let bind f w =
+    let handlers =
+      try
+	Obj.obj (w#obj >>> get handlers_field >>> as_block)
+      with Failure "as_block" ->
+	(* first event handler *)
+	let handlers = ref [] in
+	  w#obj >>> set handlers_field (inject (Block (Obj.repr handlers))) ;
+	  w#obj >>> set name
+	    (wrap_event
+	       (fun evt ->
+		  let v =
+		    try destruct evt with e ->
+		      match default_value with
+			| Some v -> v
+			| None -> raise (Cannot_destruct e)
+		  in
+		    List.iter (fun f -> f v) !handlers)) ;
+	  handlers
+    in handlers := f :: (List.filter ((!=) f) !handlers)
+
+  let unbind f w =
+    let handlers =
+      try
+	Obj.obj (w#obj >>> get handlers_field >>> as_block)
+      with Failure "as_block" ->
+	ref []
+    in
+      handlers := List.filter ((!=) f) !handlers ;
+      if !handlers = [] then (
+	w#obj >>> set handlers_field (inject Nil) ;
+	w#obj >>> set name (inject Nil)
+      )
+
+    let clear () w =
+      w#obj >>> set handlers_field (inject Nil) ;
+      w#obj >>> set name (inject Nil)
+end
+
 module Onclick =
   Make (
     struct
