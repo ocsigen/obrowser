@@ -16,20 +16,20 @@ module LOption = struct
     | None -> ()
     | Some v -> f v ; ()
 
-  let unopt ?exc ?default vopt = match (default, vopt) with
+  let unopt
+        ?(exc = Failure "AXOLang.unopt can't unopt None")
+        ?default
+        vopt = match (default, vopt) with
     | _, Some v -> v
     | Some v, _ -> v
-    | _         -> match exc with
-        | None -> failwith "AXOLang.unopt can't unopt None"
-        | Some exc -> raise exc
+    | _         -> raise exc
 
   let assoc_opt k l = try Some (List.assoc k l) with Not_found -> None
 
-  (*TODO: use regexp to have 'none' and 'quote' really mattering*)
-  let string_of_t_opt ?(none = "") ?(quote = "") string_of_t = function
-    | None -> none
-    | Some t -> quote ^ (string_of_t t) ^ quote
-  let t_opt_of_string ?(none = "") ?(quote = "") t_of_string = function
+  let string_of_t_opt string_of_t = function
+    | None -> ""
+    | Some t -> string_of_t t
+  let t_opt_of_string t_of_string = function
     | "" -> None
     | s -> t_of_string s
 
