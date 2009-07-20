@@ -2,8 +2,6 @@
 open AXOLang
 
 
-let body = AXOJs.Node.document >>> AXOJs.Node.get_element_by_id "body"
-
 let test_tree =
   LTree.node "test"
    [ LTree.node "Un"
@@ -34,12 +32,24 @@ let test_tree =
       ] ;
    ]
 
-let content = new AXOWidgets.block_text_widget "Lorem ipsum etc."
+let content = new AXOWidgets.block_container
 
+let s = new AXOToolkit.select
+let _ = List.map
+          (fun t -> s # add_option t)
+          ["tata" ; "tete" ; "tyty" ; "tutu" ; "titi" ; "toto" ]
+let _ = content # add_widget (s :> AXOWidgets.generic_widget)
+
+let i = new AXOToolkit.typed_text_input string_of_int int_of_string 0
+let _ = i#set_attribute "size" "4"
+let _ = content # add_widget (i :> AXOWidgets.generic_widget)
+
+let ii = Js.Html.input string_of_int int_of_string 0 10 true (fun _ -> ())
+let _ = content # add_widget ((new AXOWidgets.widget_wrap ii.Js.Html.node) :> AXOWidgets.generic_widget)
 
 let f =
-  AXOToolkit.foldable
-    (new AXOWidgets.inline_text_button "Expand/collapse")
+  AXOToolkit.foldable ~folded:false
+    ~button:(new AXOWidgets.inline_text_button "Expand/collapse")
     (content :> AXOWidgets.generic_widget)
 
 let _ =

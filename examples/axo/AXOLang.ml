@@ -33,9 +33,19 @@ module LOption = struct
     | "" -> None
     | s -> t_of_string s
 
+  let optionnaly_add_to_list l = function
+    | None -> l
+    | Some v -> v::l
+
 end
 
 module LList = struct
+
+  let rev_append l1 l2 =
+    let rec aux l2 = function
+      | [] -> l2
+      | hd :: tl -> aux (hd :: l2) tl
+    in aux l1 l2
 
   let filter_map f l =
     let rec aux accu = function
@@ -56,8 +66,14 @@ module LList = struct
       | [] -> raise Not_found
       | hd :: tl ->
           if hd = reference
-          then ( List.rev acc ) @ ( hd :: element :: tl )
+          then rev_append acc ( hd :: element :: tl )
           else aux ( hd :: acc ) tl
+    in aux [] l
+
+  let find_remove f l =
+    let rec aux acc = function
+      | [] -> raise Not_found
+      | hd :: tl -> if f hd then (hd,rev_append acc tl) else aux (hd :: acc) tl
     in aux [] l
 
 end

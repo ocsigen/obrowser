@@ -69,10 +69,10 @@ object (self)
   method move_x     (x : int) : unit = self#set_x (self#get_x + x)
   method move_y     (y : int) : unit = self#set_y (self#get_y + y)
 
-  method set_attribute n v = self#obj >>> AXOJs.Node.set_attribute n v
-  method get_attribute n   = self#obj >>> AXOJs.Node.get_attribute n
+  method set_attribute n v = (self#obj) >>> AXOJs.Node.set_attribute n v
+  method get_attribute n   = (self#obj) >>> AXOJs.Node.get_attribute n
 
-  method set_position p = (self#obj >>> AXOStyle.style) # set_position p
+  method set_position p = ((self#obj) >>> AXOStyle.style) # set_position p
 
 end
 
@@ -91,6 +91,16 @@ object ( self )
 
   inherit common
   val obj = AXOHtml.Low.span ()
+  method obj = obj
+
+  inherit widget_plugin
+
+end
+class widget_wrap obj_ = (* for wraping a JSOO.obj into a widget *)
+object
+
+  inherit common
+  val obj = obj_
   method obj = obj
 
   inherit widget_plugin
@@ -169,7 +179,8 @@ object (self)
 
   val mutable content = []
   method get_content   = content
-  method wipe_content  = content <- []
+  method wipe_content  = content <- [] ;
+                         self#obj >>> AXOJs.Node.empty ;
   method add_widget ?before wi = match before with
       | None -> content <- wi :: (List.filter ((!=) wi) content) ;
                 self#obj >>> AXOJs.Node.append wi#obj ;
