@@ -48,13 +48,13 @@ vm.js: 	$(wildcard rt/js/*.js)
 clean:
 	@echo "[CLEAN]"
 	@$(RM) -f rt/js/*~
-	@for ex in $(EXAMPLES) ; do cd examples/$$ex && $(MAKE) clean && cd ../.. ; done
 	@cd rt/caml && $(MAKE) clean
 	@rm -f examples.html
 	@cd tutorial && $(MAKE) clean
 	@$(RM) -f *.exe *.cm* *.so *.a *.dylib *.o *~ *.uue \
                     vm.js server
 	@$(RM) -f examples/*/*.exe examples/*/*.cm* examples/*/*.exe.uue \
+	@for ex in $(EXAMPLES) ; do cd examples/$$ex && $(MAKE) clean && cd ../.. ; done
 
 dist: clean
 	@if ! [ -d dist ] ; then mkdir dist ; fi
