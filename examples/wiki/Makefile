@@ -13,4 +13,4 @@ vm.js: ../../vm.js
 
 clean:
 	@ocamlbuild -clean
-	@-/bin/rm *~
+	@-/bin/rm -f *~

@@ -18,11 +18,15 @@ EXAMPLES_TARGETS = $(patsubst examples/%,%.example, $(wildcard examples/*))
 OCAMLFIND = ocamlfind
 .PHONY: tuto dist plugin
 
-all: rt/caml/stdlib.cma vm.js tuto $(EXAMPLES_TARGETS) examples.html
+all: rt/caml/stdlib.cma vm.js tuto $(EXAMPLES_TARGETS) examples.html AXO
 
 %.example: 
 	@echo "[EXAMPLE] $*"
 	@cd examples/$* && $(MAKE) --no-print-directory
+
+AXO:
+	@echo "[AXO]"
+	@cd axo/ && $(MAKE) --no-print-directory
 
 tuto:
 	@echo "[TUTORIAL]"
@@ -53,8 +57,9 @@ clean:
 	@cd tutorial && $(MAKE) clean
 	@$(RM) -f *.exe *.cm* *.so *.a *.dylib *.o *~ *.uue \
                     vm.js server
-	@$(RM) -f examples/*/*.exe examples/*/*.cm* examples/*/*.exe.uue \
+	@$(RM) -f examples/*/*.exe examples/*/*.cm* examples/*/*.exe.uue
 	@for ex in $(EXAMPLES) ; do cd examples/$$ex && $(MAKE) clean && cd ../.. ; done
+	@cd axo && $(MAKE) clean
 
 dist: clean
 	@if ! [ -d dist ] ; then mkdir dist ; fi
@@ -63,7 +68,7 @@ dist: clean
 	 echo "[DIST] dist/$$B.$$D.tbz2"
 
 install:
-	$(OCAMLFIND) install obrowser META vm.js rt/caml/stdlib.cma rt/caml/*.cmi rt/caml/std_exit.cmo examples/axo/AXOJs.cmo examples/axo/AXOCom.cmo examples/axo/AXOLang.cmo examples/axo/AXOJs.cmi examples/axo/AXOCom.cmi examples/axo/AXOLang.cmi
+	$(OCAMLFIND) install obrowser META vm.js rt/caml/stdlib.cma rt/caml/*.cmi rt/caml/std_exit.cmo axo/AXO.cma
 	install -m 644 rt/caml/dllstdlib.so `$(OCAMLFIND) -query obrowser`
 
 uninstall:
