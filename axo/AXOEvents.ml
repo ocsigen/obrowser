@@ -1,4 +1,4 @@
-(*This module provides ways to tamper with events. One can use common cases at
+(** This module provides ways to tamper with events. One can use common cases at
 * the end of the module as example.*)
 
 open JSOO
@@ -7,9 +7,9 @@ module type PARAMS = sig
   type v (* event valuation *)
   val name : string
   val destruct : obj -> v
-    (* /!\ The [obj] the [destruct] function is called upon is an event object
+    (** /!\ The [obj] the [destruct] function is called upon is an event object
      * (and not the DOM object the event was fired upon ; to get the target node
-     * of the event use get_target).*)
+     * of the event use [get_target]).*)
   val default_value : v option
     (* an error message is produced if default value is None
      * and the destruction failed *)
@@ -60,13 +60,13 @@ struct
       obj >>> set name (inject Nil)
 end
 
-(*[get_target evt] get the DOM node originaly associated to the event. *)
+(**[get_target evt] get the DOM node originaly associated to the event. *)
 let get_target evt = evt >>> JSOO.get "target"
 
-(*[get_current_target evt] get the DOM node currently associated to the event *)
+(**[get_current_target evt] get the DOM node currently associated to the event *)
 let get_current_target evt = evt >>> JSOO.get "currentTerget"
 
-(*[stop_propagation evt] prevent the event for going up in the DOM tree. *)
+(**[stop_propagation evt] prevent the event for going up in the DOM tree. *)
 let stop_propagation evt = evt >>> JSOO.call_method "staopPropagation" [| |]
 
 

@@ -36,6 +36,7 @@ struct
   let p    (* ?attrs ?children () *) = smart_create ~name:"p"
 
   let br () = smart_create ~name:"br" ()
+  let string = AXOJs.Node.text
 
   let ul (* ?attrs ?children () *) = smart_create ~name:"ul"
   let ol (* ?attrs ?children () *) = smart_create ~name:"ol"
@@ -59,51 +60,42 @@ struct
 end 
 
 module High =
-  (* High level module : creating nodes with hints on specific attributes *)
+  (** High level module : creating nodes with "hints" on specific attributes
+  * TODO: make function set exhaustive ; make hints set exhaustive *)
 struct
 
   let a ?href ?attrs ?children () =
     let obj = smart_create ~name:"a" ?attrs ?children () in
-      begin
-        match href with
-          | None -> ()
-          | Some v -> obj >>> AXOJs.Node.set_attribute "href" v
-      end ;
+      (match href with
+         | None -> ()
+         | Some v -> obj >>> AXOJs.Node.set_attribute "href" v ) ;
       obj
 
   let img ?src ?alt ?attrs () = 
     let obj = smart_create ~name:"img" ?attrs () in
-      begin
-        match src with
-          | None -> ()
-          | Some v -> obj >>> AXOJs.Node.set_attribute "src" v ;
-      end ;
-      begin
-        match alt with
-          | None -> ()
-          | Some v -> obj >>> AXOJs.Node.set_attribute "alt" v ;
-      end ;
+      (match src with
+         | None -> ()
+         | Some v -> obj >>> AXOJs.Node.set_attribute "src" v ) ;
+      (match alt with
+         | None -> ()
+         | Some v -> obj >>> AXOJs.Node.set_attribute "alt" v ) ;
       obj
 
 
+  let ul ?attrs lis = Low.ul ?attrs ~children:lis ()
+  let ol ?attrs lis = Low.ol ?attrs ~children:lis ()
 
-  let ul ?attrs lis =
-    Low.ul ?attrs ~children:lis ()
-  let ol ?attrs lis =
-    Low.ol ?attrs ~children:lis ()
-
-  let tr ?attrs tds =
-    Low.tr ?attrs ~children:tds ()
-  let tbody ?attrs trs =
-    Low.tbody ?attrs ~children:trs ()
-  let colgroup ?attrs cols =
-    Low.colgroup ?attrs ~children:cols ()
+  let tr ?attrs tds        = Low.tr ?attrs ~children:tds ()
+  let tbody ?attrs trs     = Low.tbody ?attrs ~children:trs ()
+  let colgroup ?attrs cols = Low.colgroup ?attrs ~children:cols ()
   let table ?attrs ?(colgroup) ?(thead) ~tbody () =
     Low.table ?attrs
       ~children:(
         LOption.optionnaly_add_to_list
           (LOption.optionnaly_add_to_list [ tbody ] thead)
-          colgroup)
+          colgroup
+      )
+      ()
 
   let option ?(attrs = []) ?value ?label ?(disabled = false) ?(selected = false)
              txt =

@@ -1,26 +1,24 @@
-(*This module allow easy creation of graphical widgets*)
+(**This module allow easy creation of graphical widgets*)
 
-(*each widget kind is organised with :
+(** Each widget kind is organised with :
  *
  * a virtual "interface" ( called generic_* ) with detailed comments on expected methods behaviour
  *
  * a half virtual plugin ( called *_plugin )
  *
- * a wrapper to be used to avoid code duplication in implementation *)
+ * a wrapper to be used to avoid code duplication in implementation
+ * *)
 
 
-
-
-
-
-
-(* To have implementation of a widget/button/... one can use
+(* To have an implementation of a widget/button/... one can use
 
  -the default wrappers :
      class block_widget = object inherit widget_wrap (AXOHtml.Low.div ()) end
      let w = new block_widget
+  or directly :
+     let w = new widget_wrap (AXOHtml.Low.div ())
 
- -the plugins :
+ -the plugins : (using several plugins allow one to get a powerful class/object)
      class block_text_button_widget activated txt =
        object
          inherit common_wrap (AXOHtml.Low.div ())
@@ -30,7 +28,7 @@
        end
      let tbw = new block_text_button_widget false "btw"
 
- -custom wrappers :
+ -custom wrappers : (create a wrapper from plugins)
      class text_button_widget_wrap activated txt obj_ =
        object
          inherit common_wrap obj_
@@ -50,8 +48,8 @@ open AXOLang
 class virtual common =
 object
   method virtual obj : JSOO.obj
-    (* This method should return the DOM object the widget is built upon. It
-    * should always return the very same object. *)
+    (** This method should return the DOM object the widget is built upon. It
+      * should always return the very same object. *)
 end
 
 (*This class allow the wraping of an obj into a common-compatible ocamlobject*)
@@ -70,24 +68,48 @@ object
 
   inherit common
 
-  method virtual get_width  : int (* the width of the widget *)
-  method virtual get_height : int (* the heigth of the widget *)
-  method virtual get_x      : int (* the x position of the widget *)
-  method virtual get_y      : int (* the y position of the widget (starting at the top of the container the obj is in)*)
+  method virtual get_width  : int
+  (** the width of the widget *)
 
-  method virtual set_width  : int -> unit (* change width *)
-  method virtual set_height : int -> unit (* change height *)
-  method virtual set_x      : int -> unit (* change x *)
-  method virtual set_y      : int -> unit (* change y *)
+  method virtual get_height : int
+  (** the heigth of the widget *)
 
-  method virtual move_x     : int -> unit (* add to x *)
-  method virtual move_y     : int -> unit (* add to y *)
+  method virtual get_x      : int
+  (** the x position of the widget *)
 
-  method virtual set_attribute : string -> string -> unit (* set an attribute *)
-  method virtual get_attribute : string -> string         (* get an attribute *)
-  method virtual remove_attribute : string -> unit     (* remove an attribute *)
+  method virtual get_y      : int
+  (** the y position of the widget
+    * /!\(starting at the top of the container the obj is in)*)
 
-  method virtual set_position : AXOStyle.position -> unit (* set the position *)
+  method virtual set_width  : int -> unit
+  (** change width *)
+
+  method virtual set_height : int -> unit
+  (** change height *)
+
+  method virtual set_x      : int -> unit
+  (** change x *)
+
+  method virtual set_y      : int -> unit
+  (** change y *)
+
+  method virtual move_x     : int -> unit
+  (** add to x *)
+
+  method virtual move_y     : int -> unit
+  (** add to y *)
+
+  method virtual set_attribute : string -> string -> unit
+  (** set an attribute *)
+
+  method virtual get_attribute : string -> string
+  (** get an attribute *)
+
+  method virtual remove_attribute : string -> unit
+  (** remove an attribute *)
+
+  method virtual set_position : AXOStyle.position -> unit
+  (** set the position *)
 
 end
 
@@ -136,8 +158,12 @@ end
 class virtual generic_text = (* interface *)
 object
   inherit common
-  method virtual get_text : string         (* get the text content *)
-  method virtual set_text : string -> unit (* set the content to a new one *)
+  method virtual get_text : string
+  (** get the text content *)
+
+  method virtual set_text : string -> unit
+  (** set the content to a new one *)
+
 end
 class virtual text_plugin txt = (* plugin *)
 object (self)
@@ -172,10 +198,17 @@ object
 
   inherit common
 
-  method virtual get_content  : common list (* get the common's put in the container *)
-  method virtual wipe_content : unit (* remove everything from the container *)
-  method virtual add_common   : ?before:common -> common -> unit (* add a common*)
-  method virtual remove_common: common -> unit (* remove a common *)
+  method virtual get_content  : common list
+  (** get the commons put in the container *)
+
+  method virtual wipe_content : unit
+  (** remove everything from the container *)
+
+  method virtual add_common   : ?before:common -> common -> unit
+  (** add a common *)
+
+  method virtual remove_common: common -> unit
+  (** remove a common *)
 
 end
 class virtual container_plugin =
@@ -230,12 +263,20 @@ object
 
   inherit common
 
-  method virtual add_click_action    :(unit -> unit) -> unit  (*bind an event *)
-  method virtual remove_click_action :(unit -> unit) -> unit (*unbind an event*)
-  method virtual clear_click_actions : unit              (* unbind all events *)
+  method virtual add_click_action    :(unit -> unit) -> unit
+  (**bind an event *)
 
-  method virtual deactivate : unit (* temporarily deactivate events *)
-  method virtual activate   : unit (* reset deactivated events *)
+  method virtual remove_click_action :(unit -> unit) -> unit
+  (**unbind an event*)
+
+  method virtual clear_click_actions : unit
+  (** unbind all events *)
+
+  method virtual deactivate : unit
+  (** temporarily deactivate events *)
+
+  method virtual activate   : unit
+  (** reset deactivated events *)
 
 end
 class virtual button_plugin ?(activated = true) () =

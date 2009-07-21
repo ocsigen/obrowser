@@ -1,7 +1,10 @@
 (** These are miscellianous functions to factor code.
   * There is nothing specific to obrwoser nor AXO in this module only
   * simple/basic functions that could be included in a course or an
-  * extensive base library (such as Batteries).*)
+  * extensive base library (such as Batteries).
+  *
+  * As the modules only agregates classic examples/exercises in ocaml there's
+  * not much of a documentation here. *)
 
 let (>>>) x f = f x
 
@@ -24,13 +27,11 @@ module LOption = struct
     | None -> ()
     | Some f -> f v ; ()
 
-  let unopt
-        ?(exc = Failure "AXOLang.unopt can't unopt None")
-        ?default
-        vopt = match (default, vopt) with
-    | _, Some v -> v
-    | Some v, _ -> v
-    | _         -> raise exc
+  let unopt ?(exc = Failure "AXOLang.unopt can't unopt None") ?default vopt =
+    match (default, vopt) with
+      | _     , Some v -> v
+      | Some v, None   -> v
+      | None  , None   -> raise exc
 
   let assoc_opt k l = try Some (List.assoc k l) with Not_found -> None
 
@@ -101,6 +102,7 @@ module LTree = struct
   let iter f tree =
     let rec aux { content = t ; children = l } = f t l ; List.iter aux l in
       aux tree
+  (** the function argument receives depth information *)
   let iteri f tree =
     let rec aux i { content = t ; children = l } =
       f t l i ;

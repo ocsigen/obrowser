@@ -2,31 +2,44 @@
 
 open JSOO
 
-(* position attribute enumeration *)
+(** Position attribute enumeration *)
 type position =
   | Absolute
   | Fixed
   | Relative
 
-(* dimension enumeration *)
+(** Dimension type enumeration *)
 type dim =
   | Px of int
   | Ex of int
   | Em of int
   | Pct of int
 
+(** The next 4 functions are for int to dim conversion. *)
 let px x = Px x
 let ex x = Ex x
 let em x = Em x
 let pct x = Pct x
 
+(** As there are many ways of giving a color proerty in css, it is very hardto
+  * give a better type for color. A private type with a Regexp-check constructor
+  * could be used... *)
 type color = string
 
+let rgb r g b = ((  "rgb("
+                  ^ string_of_int r ^ ","
+                  ^ string_of_int g ^ ","
+                  ^ string_of_int b ^ ")"
+                 ) : color)
+let hex r g b = (( "#" ^ Printf.sprintf "%X%X%X" r g b) : color )
+
+(* internal only : used by the [style] function *)
 class style obj =
 object
   val sty = obj >>> get "style"
 
-  (* generic methods *)
+  (** [set_dim n v] sets the [n] dimension to [v]. [n] can be one of "width",
+  * "height" ... *)
   method set_dim (n : string) (v : dim) : unit =
     sty >>> set n
       (match v with
@@ -54,6 +67,12 @@ object
   method set_z_index (z : int) : unit =
     sty >>> set "zIndex" (int z)
 
+  (** Set the zIndex using [AXOJs.Misc.new_z_index] zIndex well *)
+  method auto_set_z_index : int =
+    let z = AXOJs.Misc.new_z_index () in
+      sty >>> set "zIndex" (int z) ;
+      z
+
   method background_color : color =
     sty >>> get "background" >>> as_string
   method set_background_color (c : color) : unit =
@@ -61,7 +80,7 @@ object
 
 end
 
-(* [obj >>> style] gives an ocaml object of class style to perform attribute
+(** [obj >>> style] gives an ocaml object of class style to perform attribute
  * setting. eg : [ ( obj >>> style ) # set_z_index 0 ] *)
 let style obj =
   try
@@ -113,4 +132,4 @@ let geometry obj =
       geometry
 
 
-(*TODO: add a mean to change list like attributes (class, style, ...)  easily.*)
+(*TODO: add a way to change list like attributes (class, style, ...)  easily.*)
