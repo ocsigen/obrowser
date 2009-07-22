@@ -31,32 +31,66 @@ module Low =
    * children. TODO: make exhaustive the set of function *)
 struct
 
-  let div  (* ?attrs ?children () *) = smart_create ~name:"div"
-  let span (* ?attrs ?children () *) = smart_create ~name:"span"
-  let p    (* ?attrs ?children () *) = smart_create ~name:"p"
+  (*Note : frequent use of partial application on smart_create ! *)
 
-  let br () = smart_create ~name:"br" ()
+  let div         = smart_create ~name:"div"
+  let span        = smart_create ~name:"span"
+  let p           = smart_create ~name:"p"
+  let blockquote  = smart_create ~name:"blockquote"
+  let q           = smart_create ~name:"q"
+  let pre         = smart_create ~name:"pre"
+
+  let br ()  = smart_create ~name:"br" ()
+  let hr     = smart_create ~name:"hr"
   let string = AXOJs.Node.text
 
-  let ul (* ?attrs ?children () *) = smart_create ~name:"ul"
-  let ol (* ?attrs ?children () *) = smart_create ~name:"ol"
-  let li (* ?attrs ?children () *) = smart_create ~name:"li"
+  let a = smart_create ~name:"a"
 
-  let table    (* ?attrs ?chidren () *) = smart_create ~name:"table"
-  let colgroup (* ?attrs ?chidren () *) = smart_create ~name:"colgroup"
-  let col      (* ?attrs ?chidren () *) = smart_create ~name:"col"
-  let thead    (* ?attrs ?chidren () *) = smart_create ~name:"thead"
-  let tbody    (* ?attrs ?chidren () *) = smart_create ~name:"tbody"
-  let tr (* ?attrs ?chidren () *) = smart_create ~name:"tr"
-  let th (* ?attrs ?chidren () *) = smart_create ~name:"th"
-  let td (* ?attrs ?chidren () *) = smart_create ~name:"td"
+  let ul = smart_create ~name:"ul"
+  let ol = smart_create ~name:"ol"
+  let li = smart_create ~name:"li"
 
-  let h n (* ?attrs ?chidren () *) = smart_create ~name:("h" ^(string_of_int n))
+  let table    = smart_create ~name:"table"
+  let caption  = smart_create ~name:"caption"
+  let colgroup = smart_create ~name:"colgroup"
+  let col      = smart_create ~name:"col"
+  let thead    = smart_create ~name:"thead"
+  let tbody    = smart_create ~name:"tbody"
+  let tr       = smart_create ~name:"tr"
+  let th       = smart_create ~name:"th"
+  let td       = smart_create ~name:"td"
+  let tfoot    = smart_create ~name:"tfoot"
 
-  let option (* ?attrs ?children () *) = smart_create ~name:"option"
-  let select (* ?attrs ?children () *) = smart_create ~name:"select"
-  let input  (* ?attrs ?children () *) = smart_create ~name:"input"
-  
+  let h n  = smart_create ~name:("h" ^(string_of_int n))
+
+  let form     = smart_create ~name:"form"
+  let option   = smart_create ~name:"option"
+  let optgroup = smart_create ~name:"optgroup"
+  let select   = smart_create ~name:"select"
+  let input    = smart_create ~name:"input"
+  let textarea = smart_create ~name:"textarea"
+  let button   = smart_create ~name:"button"
+  let label    = smart_create ~name:"label"
+
+  let em     = smart_create ~name:"em"
+  let strong = smart_create ~name:"strong"
+  let dfn    = smart_create ~name:"dfn"
+  let code   = smart_create ~name:"code"
+  let samp   = smart_create ~name:"samp"
+  let kbd    = smart_create ~name:"kbd"
+  let var    = smart_create ~name:"var"
+  let cite   = smart_create ~name:"cite"
+
+  let del = smart_create ~name:"del"
+  let ins = smart_create ~name:"ins"
+  let sub = smart_create ~name:"sub"
+  let sup = smart_create ~name:"sup"
+
+  let fieldset = smart_create ~name:"fieldset"
+  let legend   = smart_create ~name:"legend"
+
+  let img = smart_create ~name:"img"
+
 end 
 
 module High =
@@ -64,36 +98,34 @@ module High =
   * TODO: make function set exhaustive ; make hints set exhaustive *)
 struct
 
-  let a ?href ?attrs ?children () =
-    let obj = smart_create ~name:"a" ?attrs ?children () in
-      (match href with
-         | None -> ()
-         | Some v -> obj >>> AXOJs.Node.set_attribute "href" v ) ;
-      obj
+  let set_opt_attr name value obj =
+    match value with
+      | None -> obj
+      | Some v -> obj >>> AXOJs.Node.set_attribute name v ; obj
+  let set_opt_attrs attrs obj =
+    List.fold_left (fun o (n,v) -> o >>> set_opt_attr n v) obj attrs
 
+  let a ?href ?attrs ?children () =
+    ( Low.a ?attrs ?children () ) >>> set_opt_attr "href" href
   let img ?src ?alt ?attrs () = 
-    let obj = smart_create ~name:"img" ?attrs () in
-      (match src with
-         | None -> ()
-         | Some v -> obj >>> AXOJs.Node.set_attribute "src" v ) ;
-      (match alt with
-         | None -> ()
-         | Some v -> obj >>> AXOJs.Node.set_attribute "alt" v ) ;
-      obj
+    ( Low.img ?attrs () ) >>> set_opt_attrs [ ("src",src) ; ("alt",alt) ]
 
 
   let ul ?attrs lis = Low.ul ?attrs ~children:lis ()
   let ol ?attrs lis = Low.ol ?attrs ~children:lis ()
 
-  let tr ?attrs tds        = Low.tr ?attrs ~children:tds ()
+  let tr ?align ?attrs tds =
+    ( Low.tr ?attrs ~children:tds () ) >>> set_opt_attr "align" align
   let tbody ?attrs trs     = Low.tbody ?attrs ~children:trs ()
   let colgroup ?attrs cols = Low.colgroup ?attrs ~children:cols ()
-  let table ?attrs ?(colgroup) ?(thead) ~tbody () =
+  let table ?attrs ?caption ?colgroup ?thead ~tbody ?tfoot () =
     Low.table ?attrs
       ~children:(
         LOption.optionnaly_add_to_list
-          (LOption.optionnaly_add_to_list [ tbody ] thead)
-          colgroup
+          (LOption.optionnaly_add_to_list
+             (LOption.optionnaly_add_to_list [ tbody ] thead)
+             colgroup)
+          caption
       )
       ()
 
@@ -110,7 +142,7 @@ struct
            if selected then Some ("selected","selected") else None ;
           ]
       )
-      ~children:[AXOJs.Node.text txt]
+      ~children:[Low.string txt]
       ()
   let select ?attrs to_option options =
     Low.select ?attrs ~children:( List.map to_option options ) ()

@@ -4,9 +4,17 @@
 open AXOLang
 
 (* internal only : replace every occurence of a char with a string
-* TODO : escape character in regexp*)
+* TODO : use regexp with escaping for special characters. Current implementation in O(length)*)
 let seek_and_destroy seek destroy str =
-  Regexp.replace (Regexp.make (string_of_char seek)) destroy str
+  let rec aux str =                    
+    try                                
+      let i = String.index str seek in 
+          (String.sub str 0 i)         
+        ^ destroy                      
+        ^ (aux (String.sub str (succ i) ((String.length str) - (succ i))))
+    with Not_found -> str                                                 
+  in aux str  
+
 
 (* internal only : associate a char and it's percent-encoding *)
 let percent_assoc = (*/!\ '%' must be first ; ' ' must be after '+' !*)
@@ -17,7 +25,7 @@ let percent_assoc = (*/!\ '%' must be first ; ' ' must be after '+' !*)
    (' ', "+")   ]
 
 (* internal only : encode a string according to percent-encoding system *)
-let urlencode_string str = (*TODO: improve performances*)
+let urlencode_string str = (*TODO: improve performances ( O(21*length) ~ 0(length) but still...) *)
   List.fold_left (fun a (s,d) -> seek_and_destroy s d a)
     str percent_assoc
    
@@ -71,10 +79,11 @@ let alert_on_code
     | 5 -> on_5xx res
     | _ -> AXOJs.alert ("Server sent " ^ (string_of_int (fst res)))
 
-(** [dynload_post url args] make a post request at [url] with [args] and parse
-* the result in case of a 200 return code. If not 200 the default (overidable
-* via [on_ixx] (where i is 1, 3, 4 or 5) optional arguments) behaviour is to
-* fail. *)
+(** [dynload_post url args parse] make a post request at [url] with [args] and
+  * parse the result using [parse] with the result of the http_post request
+  * in case of a 200 return code. If not 200 the default (overidable
+  * via [on_ixx] (where i is 1, 3, 4 or 5) optional arguments) behaviour is to
+  * fail. *)
 let dynload_post url args
       ?(on_1xx = (fun (_,m) -> failwith m))
       ?(on_3xx = (fun (_,m) -> failwith m))

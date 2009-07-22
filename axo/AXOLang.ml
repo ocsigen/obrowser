@@ -40,7 +40,7 @@ module LOption = struct
     | Some t -> string_of_t t
   let t_opt_of_string t_of_string = function
     | "" -> None
-    | s -> t_of_string s
+    | s -> Some (t_of_string s)
 
   let optionnaly_add_to_list l = function
     | None -> l
@@ -85,6 +85,19 @@ module LList = struct
       | [] -> raise Not_found
       | hd :: tl -> if f hd then (hd,rev_append acc tl) else aux (hd :: acc) tl
     in aux [] l
+
+  let interval_list ?(comp = compare) ~bump ~min ~max () =
+    let rec aux accu curr =
+      if (comp curr max) > 0
+      then accu
+      else aux (curr::accu) (bump curr)
+    in List.rev (aux [] min) (*TODO : optimize (easy) *)
+
+  let int_interval_list ?(bump = 1) ~min ~max () =
+    interval_list ~bump:((+) bump) ~min ~max ()
+
+  let int32_interval_list ?(bump = Int32.one) ~min ~max () =
+    interval_list ~bump:(Int32.add bump) ~min ~max ()
 
 end
 

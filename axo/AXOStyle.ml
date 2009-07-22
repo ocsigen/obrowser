@@ -104,8 +104,12 @@ class geometry obj = object (self)
     obj >>> get "offsetLeft" >>> as_int
   method set_x (x : int) : unit =
     (obj >>> style) # set_dim "left" (px x)
+  method set_anti_x (x : int) : unit =
+    (obj >>> style) # set_dim "right" (px x)
   method y : int =
     obj >>> get "offsetTop" >>> as_int
+  method set_anti_y (y : int) : unit =
+    (obj >>> style) # set_dim "bottom" (px y)
   method set_y (y : int) : unit =
     (obj >>> style) # set_dim "top" (px y)
   method bounds : int * int * int * int =

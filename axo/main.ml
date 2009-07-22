@@ -49,7 +49,7 @@ let _ = List.map
 let _ = content # add_common (s :> AXOWidgets.common)
 
 let i = new AXOToolkit.typed_text_input
-          ~parse_error_style:"background-color: red; "
+          ~parse_error_color:"red "
           string_of_int int_of_string 0
 let _ = i#set_attribute "size" "4"
 let _ = content # add_common (i :> AXOWidgets.common)

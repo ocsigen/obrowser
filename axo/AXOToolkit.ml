@@ -18,6 +18,12 @@ object
   inherit AXOWidgets.widget_wrap (AXOHtml.Low.span ())
 end
 
+(************)
+(*** text ***)
+(************)
+class inline_text txt =
+object inherit AXOWidgets.text_wrap  txt (AXOHtml.Low.span ()) end
+
 (**************************)
 (*** Classic containers ***)
 (**************************)
@@ -30,9 +36,27 @@ object
   inherit AXOWidgets.container_wrap (AXOHtml.Low.span ())
 end
 
+(*************)
+(*** Mixed ***)
+(*************)
+class widget_container_wrap obj_ =
+object
+  inherit AXOWidgets.common_wrap obj_
+  inherit AXOWidgets.widget_plugin
+  inherit AXOWidgets.container_plugin
+end
+class block_widget_container = widget_container_wrap (AXOHtml.Low.div ())
+
 (*************************)
 (*** Some more buttons ***)
 (*************************)
+class inline_text_widget_button ?(activated = true) txt =
+object
+  inherit AXOWidgets.common_wrap (AXOHtml.Low.span ())
+  inherit AXOWidgets.text_plugin txt
+  inherit AXOWidgets.widget_plugin
+  inherit AXOWidgets.button_plugin activated
+end
 class cyclic_block_text_button ?(activated = true) hd_txt tl_txt =
   let q =
     let q = Queue.create () in
@@ -47,7 +71,7 @@ class cyclic_block_text_button ?(activated = true) hd_txt tl_txt =
 object (* OBOB proof *)
 
   inherit AXOWidgets.common_wrap ( AXOHtml.Low.div () )
-  inherit AXOWidgets.button_plugin ~activated () as b
+  inherit AXOWidgets.button_plugin activated as b
   inherit AXOWidgets.text_plugin (cycle ()) as t
 
   method clear_click_actions =
@@ -77,11 +101,12 @@ module On_input_change =
 
 (* select *)
 class select =
-object
+object (self)
 
   inherit AXOWidgets.widget_container_wrap (AXOHtml.Low.select ()) as wc
 
   val mutable option_list = []
+
   method add_option ?value ?label ?disabled ?selected txt =
     let child =
       new AXOWidgets.common_wrap
@@ -89,12 +114,13 @@ object
     in
       option_list <- ( child, txt ) :: option_list ;
       wc # add_common child ;
-  method remove_option txt =
-    let ((child,_), new_option_list) =
-      LList.find_remove (fun (_,t) -> t = txt) option_list
-    in
+
+  method private remove_by f =
+    let ( (child,_),new_option_list ) = LList.find_remove f option_list in
       wc # remove_common child ;
       option_list <- new_option_list ;
+  method remove_option_by_txt txt =
+      self#remove_by (fun (_,t) -> t = txt)
 
   method set_editable b =
     if b
@@ -104,34 +130,61 @@ object
 end
 
 (* input *)
+class text_input value =
+object (self)
+
+  inherit AXOWidgets.widget_wrap
+         ( AXOHtml.Low.input
+             ~attrs:[("type", "text") ; ("value", value)]
+             ()
+         )
+
+  val mutable v = value
+  method get_value    = v
+  method set_value vv = self#set_attribute "value" vv ; v <- vv
+
+  initializer
+    self#obj >>> On_input_change.bind ( fun sv -> self # set_value sv )
+
+end
 class [ 'a ] typed_text_input
-  ?parse_error_style
+  ?parse_error_color
   ?parse_error_message
+  ?size
   string_of_t t_of_string (value : 'a) =
 object (self)
 
   inherit AXOWidgets.widget_wrap
          ( AXOHtml.Low.input
-             ~attrs:[("type", "text") ; ("value", string_of_t value)]
+             ~attrs:(
+               LOption.optionnaly_add_to_list
+                 [("type", "text") ; ("value", string_of_t value)]
+                 (LOption.apply_on_opted
+                    (fun s -> ("size",string_of_int s))
+                    size
+                 )
+             )
              ()
          ) as w
 
   val mutable v = value
   
   method get_value    = v
-  method set_value vv = v <- vv ; w # set_attribute "value" (string_of_t vv)
+  method set_value vv =
+    try w#set_attribute "value" (string_of_t vv) ; v <- vv
+    with _ -> ()
 
   initializer
     w#obj >>> On_input_change.bind
-      (let sty = ref (try w # get_attribute "style" with _ -> "") in
+      (let bgcol = ref (try w # get_background with _ -> "") in
        fun sv ->
          try
            self # set_value (t_of_string sv) ;
-           w#set_attribute "style" !sty ;
+           w#set_background !bgcol ;
          with _ ->
            self # set_value v ;
-           sty := (try w # get_attribute "style" with _ -> "") ;
-           LOption.cb_on_opted (w # set_attribute "style") parse_error_style ;
+           bgcol := (try w # get_background with _ -> "") ;
+           LOption.cb_on_opted (w # set_background) parse_error_color ;
            LOption.cb_on_opted AXOJs.alert parse_error_message ;
       )
 
@@ -178,51 +231,9 @@ end
 
 
 
-(* shadow : use it to show a phantom node of your dragg actions *)
-module Shadow_move =
-  AXOEvents.Make
-    (struct
-       type v = int * int
-       let name = "onmousemove"
-       let destruct obj =
-         (obj >>> get "clientX" >>> as_int,
-          obj >>> get "clientY" >>> as_int)
-       let default_value = None
-     end)
-class shadow
-    ?(style = "background-color: black; opacity: .3")
-    widget = (* a shadow takes the imitated widget as argument *)
-  let w = new block_widget in
-object (self)
-
-
-  val mutable activated = false
-
-  method private move (x,y) = w#set_x (x + 2) ; w#set_y (y + 2)
-  method activate : unit =
-    w#set_width widget#get_width ; w#set_height widget#get_height ;
-    if not activated
-    then (
-      AXOWidgets.body#obj >>> Shadow_move.bind (fun (x,y) -> self#move (x,y)) ;
-      AXOWidgets.body # add_common (w :> AXOWidgets.common) ;
-    )
-  method deactivate : unit =
-    if activated
-    then (
-      AXOWidgets.body # remove_common (w :> AXOWidgets.common) ;
-      AXOWidgets.body#obj >>> Shadow_move.clear ()
-    )
-
-  initializer
-    w#set_position AXOStyle.Fixed ;
-    w#set_attribute "style" style
-
-end
-
-
-
-
-(* trees *)
+(*************)
+(*** trees ***)
+(*************)
 let foldable_tree ?(depth = (-1)) tree elements container =
   let before = None in
   let rec aux t l container d =
@@ -252,4 +263,89 @@ let foldable_tree ?(depth = (-1)) tree elements container =
       LTree.node (t,dom) nl
   in aux (LTree.get_content tree) (LTree.get_children tree) container 0
 
-       
+
+(************)
+(*** Mask ***)
+(************)
+class mask =
+object (self)
+  inherit block_widget
+  initializer
+    self#set_attribute "style"
+         "position: fixed; right: 0px; top: 0px; width: 100%; \
+          height: 100%; background-color: black; opacity: .5;"
+end
+
+
+
+
+(**********)
+(*** BR ***)
+(**********)
+class br = object inherit AXOWidgets.common_wrap (AXOHtml.Low.br ()) end
+
+(************)
+(*** link ***)
+(************)
+(*TODO: make a link_widget with multiple inheritance *)
+(*TODO: make an image_link *)
+class link ?href txt = (*TODO: add set_text and get_text method *)
+object (self)
+
+  inherit AXOWidgets.common_wrap
+    (AXOHtml.High.a ?href ~children:[AXOHtml.Low.string txt] ())
+
+  method set_href href = self#obj >>> AXOJs.Node.set_attribute "href" href
+  method get_href      = self#obj >>> AXOJs.Node.get_attribute "href"
+
+end
+
+(*************)
+(*** popup ***)
+(*************)
+class popup ?(background = "white") ?(place = fun _ -> None) content =
+  let c = new block_widget_container in
+  let m = new mask in
+  let x = new inline_text_widget_button "CLOSE" in
+object (self)
+
+  val mutable showed = false
+
+  method show =
+    if showed
+    then ()
+    else (
+      ignore (m#auto_set_z_index) ;
+      AXOWidgets.body#add_common ( m :> AXOWidgets.common ) ;
+      ignore (c#auto_set_z_index) ;
+      (match place () with
+         | None -> c#set_position AXOStyle.Fixed ; c#set_x 10 ; c#set_y 10 ;
+         | Some (p, x, y) ->    c#set_position p ; c#set_x x  ; c#set_y y  ;
+      ) ;
+      AXOWidgets.body#add_common ( c :> AXOWidgets.common ) ;
+      showed <- not showed ;
+    )
+  method hide =
+    if showed
+    then (
+      AXOWidgets.body#remove_common ( c :> AXOWidgets.common ) ;
+      AXOWidgets.body#remove_common ( m :> AXOWidgets.common ) ;
+      showed <- not showed ;
+    )
+    else ()
+
+  initializer
+    x#set_position AXOStyle.Absolute ;
+    x#set_anti_x 0 ;
+    x#add_click_action (fun () -> self#hide) ;
+    c#set_background background ;
+    c#add_common ( x        :> AXOWidgets.common ) ;
+    c#add_common ( (new br) :> AXOWidgets.common ) ;
+    c#add_common ( content  :> AXOWidgets.common ) ;
+
+end
+
+(*****************)
+(*** Drop down ***)
+(*****************)
+(*TODO : drop down menu *)

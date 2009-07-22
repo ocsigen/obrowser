@@ -90,8 +90,14 @@ object
   method virtual set_x      : int -> unit
   (** change x *)
 
+  method virtual set_anti_x : int -> unit
+  (** change x : 0 being the right most position *)
+
   method virtual set_y      : int -> unit
   (** change y *)
+
+  method virtual set_anti_y : int -> unit
+ (** change y : 0 being the bottom position *)
 
   method virtual move_x     : int -> unit
   (** add to x *)
@@ -110,6 +116,21 @@ object
 
   method virtual set_position : AXOStyle.position -> unit
   (** set the position *)
+
+  method virtual set_z_index : int -> unit
+  (** Set the zIndex attribute *)
+
+  method virtual get_z_index : int
+  (** Get the zIndex attibute *)
+
+  method virtual auto_set_z_index : int
+  (** Set the zIndex according to [AXOJs.Misc.new_z_index] and returns it *)
+
+  method virtual set_background : AXOStyle.color -> unit
+  (** Set the background color for the widget *)
+
+  method virtual get_background : AXOStyle.color
+  (** Get the background color the widget currently has *)
 
 end
 
@@ -130,8 +151,12 @@ object (self)
     (self#obj >>> AXOStyle.style) # set_dim "height" (AXOStyle.px h)
   method set_x      (x : int) : unit =
     (self#obj >>> AXOStyle.style) # set_dim "left" (AXOStyle.px x)
+  method set_anti_x (x : int) : unit =
+    (self#obj >>> AXOStyle.style) # set_dim "right" (AXOStyle.px x)
   method set_y      (y : int) : unit =
     (self#obj >>> AXOStyle.style) # set_dim "top" (AXOStyle.px y)
+  method set_anti_y (y : int) : unit =
+    (self#obj >>> AXOStyle.style) # set_dim "bottom" (AXOStyle.px y)
 
   method move_x     (x : int) : unit = self#set_x (self#get_x + x)
   method move_y     (y : int) : unit = self#set_y (self#get_y + y)
@@ -140,7 +165,15 @@ object (self)
   method get_attribute n    = self#obj >>> AXOJs.Node.get_attribute n
   method remove_attribute n = self#obj >>> AXOJs.Node.remove_attribute n
 
-  method set_position p = ((self#obj) >>> AXOStyle.style) # set_position p
+  method set_position p   = ( self#obj >>> AXOStyle.style ) # set_position p
+
+  method set_z_index    z = ( self#obj >>> AXOStyle.style ) # set_z_index z
+  method get_z_index      = ( self#obj >>> AXOStyle.style ) # z_index
+  method auto_set_z_index = ( self#obj >>> AXOStyle.style ) # auto_set_z_index
+
+  method set_background c = (self#obj >>> AXOStyle.style)#set_background_color c
+  method get_background   = (self#obj >>> AXOStyle.style)#background_color
+
 
 end
 
@@ -272,14 +305,17 @@ object
   method virtual clear_click_actions : unit
   (** unbind all events *)
 
-  method virtual deactivate : unit
+  method virtual deactivate_button : unit
   (** temporarily deactivate events *)
 
-  method virtual activate   : unit
+  method virtual activate_button   : unit
   (** reset deactivated events *)
 
+  method virtual click      : unit
+  (** immediatly perform all activated click actions *)
+
 end
-class virtual button_plugin ?(activated = true) () =
+class virtual button_plugin activated_ =
 object (self)
 
   inherit common
@@ -287,33 +323,175 @@ object (self)
   inherit generic_button (* for method type checking *)
 
   val mutable actions = []
-  val mutable activated_ = activated
+  val mutable activated = activated_
 
   method add_click_action f =
     actions <- f :: (List.filter ((!=) f) actions) ;
-    if activated_ then self#obj >>> Button_click.bind f
+    if activated then self#obj >>> Button_click.bind f
   method remove_click_action f =
     actions <- List.filter ((!=) f) actions ;
-    if activated_ then self#obj >>> Button_click.unbind f
+    if activated then self#obj >>> Button_click.unbind f
   method clear_click_actions =
     actions <- [] ;
     self#obj >>> Button_click.clear ()
 
-  method deactivate =
-    if activated_ then self#obj >>> Button_click.clear () else ()
-  method activate =
-    if activated_
+  method deactivate_button =
+    if activated then self#obj >>> Button_click.clear () else ()
+  method activate_button =
+    if activated
     then ()
     else List.iter (fun f -> self#obj >>> Button_click.bind f) actions
+
+  method click = List.iter (fun a -> a ()) actions
 
 end
 
 class button_wrap ?(activated = true) obj_ =
 object
   inherit common_wrap obj_
-  inherit button_plugin ~activated ()
+  inherit button_plugin activated
 end
 
 
 
 
+(*********************)
+(*** Drag and drop ***)
+(*********************)
+
+(* shadow : use it to show a phantom copy of your dragged nodes *)
+module Dragg_n_drop_move =
+  AXOEvents.Make
+    (struct
+       type v = int * int
+       let name = "onmousemove"
+       let destruct obj =
+         (obj >>> get "clientX" >>> as_int,
+          obj >>> get "clientY" >>> as_int)
+       let default_value = None
+     end)
+module Dragg_n_drop_down =
+  AXOEvents.Make
+    (struct
+       type v = unit
+       let name = "onmousedown"
+       let destruct _ = ()
+       let default_value = None
+     end)
+module Dragg_n_drop_up =
+  AXOEvents.Make
+    (struct
+       type v = common
+       let name = "onmouseup"
+       let destruct obj = new common_wrap (obj >>> AXOEvents.get_target)
+       let default_value = None
+     end)
+
+class shadow
+    ?(style = "background-color: black; opacity: .3")
+    obj = (* a shadow takes the imitated obj as argument *)
+  let w = new widget_wrap (AXOHtml.Low.div ()) in
+object (self)
+
+
+  val mutable activated = false
+
+  method private move (x,y) = w#set_x (x + 2) ; w#set_y (y + 2)
+  method activate : unit =
+    w#set_width  ( obj >>> get "offsetWidth"  >>> as_int ) ;
+    w#set_height ( obj >>> get "offsetHeight" >>> as_int ) ;
+    if not activated
+    then (
+      body#obj >>> Dragg_n_drop_move.bind
+                                 (fun (x,y) -> self#move (x,y)) ;
+      body#add_common (w :> common) ;
+    )
+  method deactivate : unit =
+    if activated
+    then (
+      body#remove_common (w :> common) ;
+      body#obj >>> Dragg_n_drop_move.clear ()
+    )
+
+  initializer
+    w#set_position AXOStyle.Fixed ;
+    w#set_attribute "style" style
+
+end
+
+
+class virtual generic_dragg =
+object
+
+  inherit common
+
+  method virtual add_drop :
+         common -> ( common -> common -> unit ) -> unit
+  (** Add a common where it is possible to drop [self] to. The second argument
+    * is the action to be taken when such a case happen. This callback uses the
+    * dragged common as first argument and the dropped common as the second
+    * argument. There can be several actions on the same common.
+    * Note that actions added while a dragging is in progress won't be triggered
+    * this one time. The opposite is true for removed actions. *)
+
+  method virtual remove_drop_action :
+         common -> ( common -> common -> unit ) -> unit
+  (** Removes an action for a particular droppable common. *)
+
+  method virtual remove_drop     : common -> unit
+  (** Removes entirely an droppable common and all of his actions. *)
+
+  method virtual deactivate_dragg : unit
+  (** Temporarely deactivate dragg. Can be reactivated. *)
+
+  method virtual activate_dragg   : unit
+  (** Activate/Reactivate dragg. Note that draggs are not initialized with
+ * activation, they need to be manually activated. *)
+
+end
+class virtual dragg_plugin shadow =
+    let rec dragg_begin dragg drop_list shadow () =
+      List.iter
+        (fun (d,f) ->
+           d#obj >>> Dragg_n_drop_up.bind (dragg_end (f dragg) drop_list shadow)
+        )
+        !drop_list ;
+      body#obj >>> Dragg_n_drop_up.bind
+        (fun _ ->
+           shadow#deactivate ;
+           List.iter
+             (fun (d,_) -> d#obj >>> Dragg_n_drop_up.clear ())
+             !drop_list
+        ) ;
+      shadow#activate ;
+    and dragg_end f drop_list shadow target =
+      List.iter ( fun (d,_) -> if d = target then f d else () ) !drop_list ;
+    in
+object (self)
+
+  inherit common
+  inherit generic_dragg
+
+  val drop_list = ref []
+
+  method add_drop d f  =
+    drop_list := (d,f) :: !drop_list ;
+  method remove_drop d =
+    drop_list := List.filter (fun (dd,_) -> dd <> d) !drop_list
+
+  method remove_drop_action d f =
+    drop_list := List.filter (fun (dd,ff) -> (dd <> d) && (ff != f)) !drop_list
+
+  method deactivate_dragg =
+    self#obj >>> Dragg_n_drop_down.clear ()
+
+  method activate_dragg   =
+    self#obj >>> Dragg_n_drop_down.bind
+      (dragg_begin (self :> common) drop_list shadow)
+
+end
+class dragg_wrap ?shadow_style obj_ =
+object
+  inherit common_wrap obj_
+  inherit dragg_plugin (new shadow ?style:shadow_style obj_)
+end

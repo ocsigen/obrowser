@@ -137,7 +137,8 @@ let (alert, rich_alert) = (* does not interrupt the Js engine *)
     let mask = Node.element "div" in
     mask >>> Node.set_attribute "style"
       "position: fixed; right: 0px; top: 0px; width: 100%; \
-       height: 100%; background-color: grey; opacity: .4;" ;
+       height: 100%; background-color: grey; opacity: .4; \
+       z-index: 2147483646; " ;
     mask
   in
   let show panel =
@@ -158,7 +159,8 @@ let (alert, rich_alert) = (* does not interrupt the Js engine *)
       panel >>> Node.set_attribute "style"
         "position: fixed; left: 50%; bottom: 50%; \
          -moz-border-radius: 5px; padding: 10px; \
-         background-color: white; text-align: right;" ;
+         background-color: white; text-align: right;
+         z-index: 2147483647;" ;
     let close () =
       Node.body >>> Node.remove mask ;
       Node.body >>> Node.remove panel ;
@@ -216,5 +218,5 @@ let debug msg =
   * equivalent in the Firebug console. *)
 let auto_debug f =
   try f ()
-  with exc -> debug (Printexc.to_string exc)
+  with exc -> debug (Printexc.to_string exc) ; raise exc
 
