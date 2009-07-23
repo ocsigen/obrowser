@@ -95,37 +95,47 @@ module On_input_change =
         type v = string
         let name = "onchange"
         let destruct obj =
-          obj >>> AXOEvents.get_target >>> AXOJs.Node.get_attribute "value"
+          obj >>> AXOEvents.get_target >>> get "value" >>> as_string
         let default_value = None
       end )
 
 (* select *)
-class select =
+class [ 'a ] select string_of_t t_of_string (value : 'a) alts =
 object (self)
 
   inherit AXOWidgets.widget_container_wrap (AXOHtml.Low.select ()) as wc
 
   val mutable option_list = []
+  val mutable current = value
 
-  method add_option ?value ?label ?disabled ?selected txt =
-    let child =
-      new AXOWidgets.common_wrap
-        (AXOHtml.High.option ?value ?label ?disabled ?selected txt)
+  method get_value   = current
+  method set_value v = wc#set_attribute "value" (string_of_t v) ; current <- v
+  method private set_value_ s =
+    wc#set_attribute "value" s ; current <- (t_of_string s)
+
+  method add_option value =
+    let child = new AXOWidgets.common_wrap
+                  (AXOHtml.High.option (string_of_t value) )
     in
-      option_list <- ( child, txt ) :: option_list ;
+      option_list <- ( child, value ) :: option_list ;
       wc # add_common child ;
 
   method private remove_by f =
     let ( (child,_),new_option_list ) = LList.find_remove f option_list in
       wc # remove_common child ;
       option_list <- new_option_list ;
-  method remove_option_by_txt txt =
-      self#remove_by (fun (_,t) -> t = txt)
+  method remove_option value =
+      self#remove_by (fun (_,v) -> v = value)
 
   method set_editable b =
     if b
-    then wc#set_attribute "diasbled" "disabled"
-    else wc#remove_attribute "disabled"
+    then try wc#set_attribute "diasbled" "disabled" with _ -> ()
+    else try wc#remove_attribute "disabled" with _ -> ()
+
+  initializer
+    List.iter (fun v -> self#add_option v) ( value :: alts ) ;
+    wc#set_attribute "value" (string_of_t value) ;
+    wc#obj >>> On_input_change.bind (fun s -> self#set_value_ s)
 
 end
 
@@ -144,7 +154,7 @@ object (self)
   method set_value vv = self#set_attribute "value" vv ; v <- vv
 
   initializer
-    self#obj >>> On_input_change.bind ( fun sv -> self # set_value sv )
+    self#obj >>> On_input_change.bind (fun sv -> self#set_value sv )
 
 end
 class [ 'a ] typed_text_input
@@ -170,9 +180,7 @@ object (self)
   val mutable v = value
   
   method get_value    = v
-  method set_value vv =
-    try w#set_attribute "value" (string_of_t vv) ; v <- vv
-    with _ -> ()
+  method set_value vv = w#set_attribute "value" (string_of_t vv) ; v <- vv
 
   initializer
     w#obj >>> On_input_change.bind

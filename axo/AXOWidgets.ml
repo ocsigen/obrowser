@@ -40,6 +40,8 @@
 
  *)
 
+(* /!\ Not all plugins are compatible with each other /!\ *)
+
 open JSOO
 open AXOLang
 
@@ -344,6 +346,9 @@ object (self)
 
   method click = List.iter (fun a -> a ()) actions
 
+  initializer
+    ( self#obj >>> AXOStyle.style )#set_cursor "pointer"
+
 end
 
 class button_wrap ?(activated = true) obj_ =
@@ -488,6 +493,9 @@ object (self)
   method activate_dragg   =
     self#obj >>> Dragg_n_drop_down.bind
       (dragg_begin (self :> common) drop_list shadow)
+
+  initializer
+    (self#obj >>> AXOStyle.style)#set_cursor "move"
 
 end
 class dragg_wrap ?shadow_style obj_ =

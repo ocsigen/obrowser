@@ -99,6 +99,8 @@ module LList = struct
   let int32_interval_list ?(bump = Int32.one) ~min ~max () =
     interval_list ~bump:(Int32.add bump) ~min ~max ()
 
+  let t_opt_list_of_t_list l = None :: ( List.map (fun v -> Some v) l )
+
 end
 
 module LTree = struct

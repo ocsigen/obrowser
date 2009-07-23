@@ -78,6 +78,11 @@ object
   method set_background_color (c : color) : unit =
     sty >>> set "background" (string c)
 
+  method set_cursor ( c : string ) : unit =
+    sty >>> set "cursor" (string c)
+  method cursor : string =
+    sty >>> get "cursor" >>> as_string
+
 end
 
 (** [obj >>> style] gives an ocaml object of class style to perform attribute

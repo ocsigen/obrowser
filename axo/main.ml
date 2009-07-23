@@ -42,10 +42,8 @@ let test_tree =
 
 let content = new AXOToolkit.block_container
 
-let s = new AXOToolkit.select
-let _ = List.map
-          (fun t -> s # add_option t)
-          ["tata" ; "tete" ; "tyty" ; "tutu" ; "titi" ; "toto" ]
+let s = new AXOToolkit.select (fun v -> v) (fun v -> v) "tata"
+              ["tete" ; "tyty" ; "tutu" ; "titi" ; "toto" ]
 let _ = content # add_common (s :> AXOWidgets.common)
 
 let i = new AXOToolkit.typed_text_input

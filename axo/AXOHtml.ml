@@ -105,19 +105,28 @@ struct
   let set_opt_attrs attrs obj =
     List.fold_left (fun o (n,v) -> o >>> set_opt_attr n v) obj attrs
 
-  let a ?href ?attrs ?children () =
-    ( Low.a ?attrs ?children () ) >>> set_opt_attr "href" href
-  let img ?src ?alt ?attrs () = 
-    ( Low.img ?attrs () ) >>> set_opt_attrs [ ("src",src) ; ("alt",alt) ]
+  let a ?href ?name ?target ?attrs ?children () =
+    ( Low.a ?attrs ?children () ) >>> set_opt_attrs
+        [ "href",href ; "name",name ; "target",target ]
+  let img ~src ~alt ?height ?width ?attrs () = 
+    ( Low.img ?attrs () ) >>> set_opt_attrs [ "src",src ; "alt",alt ]
 
 
   let ul ?attrs lis = Low.ul ?attrs ~children:lis ()
   let ol ?attrs lis = Low.ol ?attrs ~children:lis ()
 
-  let tr ?align ?attrs tds =
-    ( Low.tr ?attrs ~children:tds () ) >>> set_opt_attr "align" align
-  let tbody ?attrs trs     = Low.tbody ?attrs ~children:trs ()
-  let colgroup ?attrs cols = Low.colgroup ?attrs ~children:cols ()
+  let tr ?align ?valign ?attrs tds =
+    ( Low.tr ?attrs ~children:tds () ) >>> set_opt_attrs
+        [ "align",align ; "valign",valign ]
+  let tbody ?align ?valign ?attrs trs =
+    ( Low.tbody ?attrs ~children:trs () ) >>> set_opt_attrs
+        [ "align",align ; "valign",valign ]
+  let col ?align ?valign ?span ?width ?attrs () =
+    ( Low.col ?attrs () ) >>> set_opt_attrs
+        [ "align",align ; "valign",valign ; "span",span ; "width",width ]
+  let colgroup ?align ?valign ?span ?width ?attrs cols =
+    ( Low.colgroup ?attrs ~children:cols () ) >>> set_opt_attrs
+        [ "align",align ; "valign",valign ; "span",span ; "width",width ]
   let table ?attrs ?caption ?colgroup ?thead ~tbody ?tfoot () =
     Low.table ?attrs
       ~children:(
