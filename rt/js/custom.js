@@ -142,7 +142,7 @@ RT.caml_int32_format = function (f, v) {
 // Caml name: Int32.of_string
 // Caml type: string -> int32
 RT.caml_int32_of_string = function (s) {
-    return mk_custom (RT.caml_int_of_string.call (this, s));
+    return mk_custom (int32_ops, RT.caml_int_of_string.call (this, s));
 }
 
 
