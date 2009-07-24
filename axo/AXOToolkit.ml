@@ -6,9 +6,9 @@ open AXOLang
 
 (* Some improved/new widgets *)
 
-(***********************)
-(*** Classic widgets ***)
-(***********************)
+(*********************)
+(*** Empty widgets ***)
+(*********************)
 class block_widget =
 object
   inherit AXOWidgets.widget_wrap (AXOHtml.Low.div ())
@@ -18,11 +18,45 @@ object
   inherit AXOWidgets.widget_wrap (AXOHtml.Low.span ())
 end
 
-(************)
-(*** text ***)
-(************)
+(********************)
+(*** text widgets ***)
+(********************)
+class virtual generic_text = (* interface *)
+object
+  inherit AXOWidgets.common
+  method virtual get_text : string
+  (** get the text content *)
+
+  method virtual set_text : string -> unit
+  (** set the content to a new one *)
+
+end
+class virtual text_plugin txt = (* plugin *)
+object (self)
+
+  inherit AXOWidgets.common
+  inherit generic_text
+  val mutable text = txt
+
+  method get_text   = text
+  method set_text t =
+    text <- t ;
+    self#obj >>> AXOJs.Node.empty ;
+    self#obj >>> AXOJs.Node.append ( AXOJs.Node.text t ) ;
+
+  initializer self#obj >>> AXOJs.Node.append (AXOJs.Node.text txt)
+
+end
+
+class text_wrap txt obj_ =
+object
+  inherit AXOWidgets.common_wrap obj_
+  inherit AXOWidgets.widget_plugin
+  inherit text_plugin txt
+end
+
 class inline_text txt =
-object inherit AXOWidgets.text_wrap  txt (AXOHtml.Low.span ()) end
+object inherit text_wrap  txt (AXOHtml.Low.span ()) end
 
 (**************************)
 (*** Classic containers ***)
@@ -36,9 +70,9 @@ object
   inherit AXOWidgets.container_wrap (AXOHtml.Low.span ())
 end
 
-(*************)
-(*** Mixed ***)
-(*************)
+(***************************************)
+(*** Container with widget abilities ***)
+(***************************************)
 class widget_container_wrap obj_ =
 object
   inherit AXOWidgets.common_wrap obj_
@@ -53,9 +87,9 @@ class block_widget_container = widget_container_wrap (AXOHtml.Low.div ())
 class inline_text_widget_button ?(activated = true) txt =
 object
   inherit AXOWidgets.common_wrap (AXOHtml.Low.span ())
-  inherit AXOWidgets.text_plugin txt
   inherit AXOWidgets.widget_plugin
   inherit AXOWidgets.button_plugin activated
+  inherit text_plugin txt
 end
 class cyclic_block_text_button ?(activated = true) hd_txt tl_txt =
   let q =
@@ -72,7 +106,7 @@ object (* OBOB proof *)
 
   inherit AXOWidgets.common_wrap ( AXOHtml.Low.div () )
   inherit AXOWidgets.button_plugin activated as b
-  inherit AXOWidgets.text_plugin (cycle ()) as t
+  inherit text_plugin (cycle ()) as t
 
   method clear_click_actions =
     b # clear_click_actions ;
@@ -205,6 +239,7 @@ end
 (***************)
 class block_foldable
   ?(folded = true)
+  ?(persistent_as_container = false)
   (button     : AXOWidgets.generic_button   )
   (persistent : AXOWidgets.generic_container)
   (foldable   : AXOWidgets.generic_container)
@@ -220,17 +255,28 @@ object (self)
   method get_persistent = persistent
   method get_foldable   = foldable
 
+  method private unfold =
+    (if persistent_as_container then persistent else foldable)#add_common
+      (foldable :> AXOWidgets.common) ;
+  method private fold =
+    (if persistent_as_container then persistent else foldable)#remove_common
+      (foldable :> AXOWidgets.common) ;
+    
+
   initializer
-    b # add_common (button     :> AXOWidgets.common) ;
     b # add_common (persistent :> AXOWidgets.common) ;
-    if folded
-    then ()
-    else b # add_common (foldable :> AXOWidgets.common) ;
+    (if persistent_as_container
+     then persistent#add_common
+            ~before:(List.hd persistent#get_content)
+            (button :> AXOWidgets.common)
+     else b#add_common (button     :> AXOWidgets.common)
+    ) ;
+    if folded then () else self#unfold ;
     button # add_click_action
       (fun () ->
          (if folded_
-          then ( b # add_common    (foldable :> AXOWidgets.common) ; )
-          else ( b # remove_common (foldable :> AXOWidgets.common) ; )
+          then self#unfold
+          else self#fold
          ) ;
          folded_ <- not folded_ ;
       ) ;
@@ -242,33 +288,21 @@ end
 (*************)
 (*** trees ***)
 (*************)
-let foldable_tree ?(depth = (-1)) tree elements container =
-  let before = None in
-  let rec aux t l container d =
-    let (but,kid,dom) = elements t l in
-    let fol = ref (d > depth) in
-    let nl =
-      List.map
-        (fun { LTree.content = t ; LTree.children = l } -> aux t l kid (succ d))
-        l
+let foldable_tree ?(depth = (-1)) ?persistent_as_container tree elements container =
+  let rec aux t l container d = (* the core function *)
+    let folded = d > depth in
+    let (but,com,kid) = elements t l folded
+    (* elements produces a (button,
+     *                      container (*filled with node's content*)
+     *                      container (*filled with node's children*),
+     *                     ) tuple*)
     in
-      if !fol then () else container#add_common ?before (dom :> AXOWidgets.common) ;
-      but#add_click_action
-        (fun _ ->
-           if !fol
-           then (
-             List.iter
-               (fun { LTree.content = (_,dom) } ->
-                  kid#add_common ?before (dom :> AXOWidgets.common))
-               nl ;
-             fol := not !fol
-           )
-           else (
-             kid#wipe_content ;
-             fol := not !fol
-           )
-        ) ;
-      LTree.node (t,dom) nl
+      List.iter
+        (fun { LTree.content = t ; LTree.children = l } ->
+             kid#add_common ?before:None
+             ((aux t l kid (succ d)) :> AXOWidgets.common ))
+        l ;
+      new block_foldable ~folded ?persistent_as_container but com kid
   in aux (LTree.get_content tree) (LTree.get_children tree) container 0
 
 
@@ -352,6 +386,23 @@ object (self)
     c#add_common ( content  :> AXOWidgets.common ) ;
 
 end
+
+
+(******************)
+(*** ul, ol, li ***)
+(******************)
+class ul_container =
+object
+  inherit AXOWidgets.common_wrap (AXOHtml.Low.ul ())
+  inherit AXOWidgets.container_plugin
+end
+class li_container =
+object
+  inherit AXOWidgets.common_wrap (AXOHtml.Low.li ())
+  inherit AXOWidgets.container_plugin
+end
+
+
 
 (*****************)
 (*** Drop down ***)

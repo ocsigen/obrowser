@@ -1,4 +1,4 @@
-(**This module allow easy creation of graphical widgets*)
+(**This module allow easy creation of "graphical" widgets*)
 
 (** Each widget kind is organised with :
  *
@@ -40,7 +40,8 @@
 
  *)
 
-(* /!\ Not all plugins are compatible with each other /!\ *)
+(* /!\       all plugins are compatible with each other       /!\ *)
+(* /!\ no plugin should be added if not completely compatible /!\ *)
 
 open JSOO
 open AXOLang
@@ -186,43 +187,6 @@ object
 end
 
 
-
-(********************)
-(*** text widgets ***)
-(********************)
-class virtual generic_text = (* interface *)
-object
-  inherit common
-  method virtual get_text : string
-  (** get the text content *)
-
-  method virtual set_text : string -> unit
-  (** set the content to a new one *)
-
-end
-class virtual text_plugin txt = (* plugin *)
-object (self)
-
-  inherit common
-  inherit generic_text
-  val mutable text = txt
-
-  method get_text   = text
-  method set_text t =
-    text <- t ;
-    self#obj >>> AXOJs.Node.empty ;
-    self#obj >>> AXOJs.Node.append ( AXOJs.Node.text t ) ;
-
-  initializer self#obj >>> AXOJs.Node.append (AXOJs.Node.text txt)
-
-end
-
-class text_wrap txt obj_ =
-object
-  inherit common_wrap obj_
-  inherit widget_plugin
-  inherit text_plugin txt
-end
 
 
 (******************)
@@ -503,3 +467,4 @@ object
   inherit common_wrap obj_
   inherit dragg_plugin (new shadow ?style:shadow_style obj_)
 end
+
