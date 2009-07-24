@@ -101,6 +101,13 @@ module LList = struct
 
   let t_opt_list_of_t_list l = None :: ( List.map (fun v -> Some v) l )
 
+  let map_list_of_array f a =
+    let rec aux accu i =
+     if i < 0
+     then accu
+     else aux (( f a.(i) ) :: accu) (pred i)
+    in aux [] (pred ( Array.length a ))
+
 end
 
 module LTree = struct

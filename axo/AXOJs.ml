@@ -10,6 +10,7 @@
 
 open JSOO
 (* allow the use of (>>>) ; "call_method" ; "get" ; "set" and "eval" *)
+type obj = JSOO.obj
 
 (** Use GET and POST method for server communication.
  * [http_get url] (and [http_post url arguments]) returns [(code,message)] where
@@ -103,6 +104,16 @@ struct
   (* bulk add/remove *)
   let empty n = List.iter (fun c -> n >>> remove c) (n >>> children)
   let replace_all n c = empty n ; append n c
+
+  (* whole (sub)tree operations *)
+  let iter_width f n =
+    n >>> f ;
+    n >>> iter_rec f
+  let rec iter_depth f n =
+    n >>> f ;
+    for i = 0 to n_children n -1 do
+      (n >>> child i) >>> iter_depth f
+    done
 
 end
 

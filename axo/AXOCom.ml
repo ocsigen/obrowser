@@ -93,7 +93,7 @@ let dynload_post url args
   let (code, msg) as res = http_post url args in
     match code / 100 with
       | 1 -> on_1xx res
-      | 2 -> parse res
+      | 2 -> parse msg
       | 3 -> on_3xx res
       | 4 -> on_4xx res
       | 5 -> on_5xx res
