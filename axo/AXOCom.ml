@@ -99,7 +99,22 @@ let dynload_post url args
       | 5 -> on_5xx res
       | _ -> AXOJs.alert ("Server sent " ^ (string_of_int code)) ; failwith msg
 
-(** [parse_xml str] makes a DOM tree out of an xml tree using the browser engine
-  * Note that it's only experimental and should be tested before serious use. *)
+(** [parse_xml str] makes a DOM tree out of an xml tree using the browser engine *)
 let parse_xml = Js.dom_of_xml
 
+(** [print_xml obj] results in a string using the browser engine. *)
+let print_xml = Js.xml_of_dom
+
+
+(** Firefox doesn't fail nor raise an exception when a parsing error occurs. It
+  * just returns a "<parsererror>" XML document. The following function just
+  * checks for this result. *)
+let check_for_error dom =
+  let ddom = dom >>> JSOO.get "documentElement" in
+  let h = (ddom >>> JSOO.get "tagName") >>> JSOO.as_string in
+    if h = "parsererror"
+    then
+      failwith (  "parsererror : "
+                ^ (ddom >>> JSOO.get "nodeName" >>> JSOO.as_string))
+    else
+      ()

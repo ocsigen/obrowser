@@ -251,16 +251,28 @@ RT.caml_js_http_post = function (vurl, type, data) {
 // Type:      string -> JSOO.obj
 RT.caml_js_dom_of_xml = function (str) 
 {
+  var sstr = string_from_value (str);
   try { //IE
     xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
     xmlDoc.async = "false";
-    xmlDoc.loadXML(str);
+    xmlDoc.loadXML(sstr);
     return xmlDoc; 
   } catch(e) {
     try {
       parser = new DOMParser();
-      xmlDoc = parser.parseFromString(str,"text/xml");
+      xmlDoc = parser.parseFromString(sstr,"text/xml");
       return xmlDoc;
     } catch(e) { throw new Error ("unable to parse : " + e.message) }
   }
+}
+
+// Caml name: xml_of_dom
+// Type:      JSOO.obj > string
+RT.caml_js_xml_of_dom = function (o)
+{
+  try {
+    var serializer = new XMLSerializer();
+    var prettyString = XML(serializer.serializeToString(o)).toXMLString();
+    return (value_from_string (prettyString)) ;
+  } catch(e) { throw new Error ("unable to pretty print : " + e.message) }
 }
