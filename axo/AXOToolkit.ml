@@ -1,10 +1,9 @@
-(* This module agregates usual constructions. If code can be factored, the
-* common part should be place in the Widgets module *)
+(* This module agregates usual constructions. If anything come out to be
+* compatible with all of AXOWidgets' widgets, it can (and should) be moved there. *)
 
 open JSOO
 open AXOLang
 
-(* Some improved/new widgets *)
 
 (*********************)
 (*** Empty widgets ***)
@@ -18,9 +17,19 @@ object
   inherit AXOWidgets.widget_wrap (AXOHtml.Low.span ())
 end
 
-(********************)
-(*** text widgets ***)
-(********************)
+
+(**********)
+(*** BR ***)
+(**********)
+class br = object inherit AXOWidgets.common_wrap (AXOHtml.Low.br ()) end
+
+
+
+(************)
+(*** text ***)
+(************)
+(* As it's not compatible with [container]s it cannot be considered a proper
+ * widget. *)
 class virtual generic_text = (* interface *)
 object
   inherit AXOWidgets.common
@@ -68,6 +77,37 @@ end
 class inline_container =
 object
   inherit AXOWidgets.container_wrap (AXOHtml.Low.span ())
+end
+class virtual vbox_plugin =
+object ( self )
+
+  inherit AXOWidgets.common
+  inherit AXOWidgets.generic_container
+  val mutable content = []
+  method get_content   = fst (List.split content)
+  method wipe_content  = content <- [] ;
+                         self#obj >>> AXOJs.Node.empty ;
+  method add_common ?before wi =
+    let br = new br in
+      match before with
+        | None ->
+            content <-    (wi, br)
+                       :: (snd (LList.find_remove
+                                  (fun (wii,_) -> wii = wi)
+                                  content)
+                          ) ;
+            self#obj >>> AXOJs.Node.append wi#obj ;
+            self#obj >>> AXOJs.Node.append br#obj ;
+        | Some wii ->
+            content <- LList.insert_after_ content (wi,br)
+                         (fun (wiii,_) -> wii = wiii)  ;
+            self#obj >>> AXOJs.Node.insert_before wi#obj wii#obj ;
+            self#obj >>> AXOJs.Node.insert_before wi#obj br#obj ;
+  method remove_common wi =
+    let ((wi,br),c) = LList.find_remove (fun (wii,_) -> wi = wii) content in
+    content <- c ;
+    self#obj >>> AXOJs.Node.remove wi#obj ;
+    self#obj >>> AXOJs.Node.remove br#obj ;
 end
 
 (***************************************)
@@ -320,11 +360,6 @@ end
 
 
 
-
-(**********)
-(*** BR ***)
-(**********)
-class br = object inherit AXOWidgets.common_wrap (AXOHtml.Low.br ()) end
 
 (************)
 (*** link ***)

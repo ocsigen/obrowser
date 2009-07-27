@@ -1,42 +1,41 @@
 (**This module allow easy creation of "graphical" widgets*)
 
 (** Each widget kind is organised with :
- *
- * a virtual "interface" ( called generic_* ) with detailed comments on expected methods behaviour
- *
- * a half virtual plugin ( called *_plugin )
- *
- * a wrapper to be used to avoid code duplication in implementation
- * *)
+
+ a virtual "interface" ( called generic_* ) with detailed comments on expected methods behaviour
+ a half virtual plugin ( called *_plugin )
+ a wrapper to be used to avoid code duplication in implementation
+
+*)
 
 
 (* To have an implementation of a widget/button/... one can use
 
  -the default wrappers :
-     class block_widget = object inherit widget_wrap (AXOHtml.Low.div ()) end
-     let w = new block_widget
+     [class block_widget = object inherit widget_wrap (AXOHtml.Low.div ()) end
+      let w = new block_widget]
   or directly :
-     let w = new widget_wrap (AXOHtml.Low.div ())
+     [let w = new widget_wrap (AXOHtml.Low.div ())]
 
  -the plugins : (using several plugins allow one to get a powerful class/object)
-     class block_text_button_widget activated txt =
-       object
-         inherit common_wrap (AXOHtml.Low.div ())
-         inherit button_plugin activated ()
-         inherit text_plugin txt
-         inherit widget_plugin
-       end
-     let tbw = new block_text_button_widget false "btw"
+     [class block_text_button_widget activated txt =
+        object
+          inherit common_wrap (AXOHtml.Low.div ())
+          inherit button_plugin activated ()
+          inherit text_plugin txt
+          inherit widget_plugin
+        end
+      let tbw = new block_text_button_widget false "tbw"]
 
  -custom wrappers : (create a wrapper from plugins)
-     class text_button_widget_wrap activated txt obj_ =
-       object
-         inherit common_wrap obj_
-         inherit button_plugin activated ()
-         inherit text_plugin txt
-         inherit widget_plugin
-       end
-     let btw = new text_button_widget_wrap true "btw" (AXOHtml.Low.span ())
+     [class text_button_widget_wrap activated txt obj_ =
+        object
+          inherit common_wrap obj_
+          inherit button_plugin activated ()
+          inherit text_plugin txt
+          inherit widget_plugin
+        end
+      let btw = new text_button_widget_wrap true "btw" (AXOHtml.Low.span ())]
 
  *)
 
@@ -52,7 +51,7 @@ class virtual common =
 object
   method virtual obj : JSOO.obj
     (** This method should return the DOM object the widget is built upon. It
-      * should always return the very same object. *)
+        should always return the very same object. *)
 end
 
 (*This class allow the wraping of an obj into a common-compatible ocamlobject*)
@@ -67,22 +66,22 @@ end
 (*** Simple widgets ***)
 (**********************)
 class virtual generic_widget = (* interface *)
+(** The class [widget] provides some attribute manipulation methods. *)
 object
 
   inherit common
 
   method virtual get_width  : int
-  (** the width of the widget *)
+  (** the width of the widget (in px) *)
 
   method virtual get_height : int
-  (** the heigth of the widget *)
+  (** the heigth of the widget (in px) *)
 
   method virtual get_x      : int
-  (** the x position of the widget *)
+  (** the x position of the widget (from the left border) *)
 
   method virtual get_y      : int
-  (** the y position of the widget
-    * /!\(starting at the top of the container the obj is in)*)
+  (** the y position of the widget (from the top border ) *)
 
   method virtual set_width  : int -> unit
   (** change width *)
@@ -91,16 +90,16 @@ object
   (** change height *)
 
   method virtual set_x      : int -> unit
-  (** change x *)
+  (** change x with 0 being the left most position *)
 
   method virtual set_anti_x : int -> unit
-  (** change x : 0 being the right most position *)
+  (** change x with 0 being the right most position *)
 
   method virtual set_y      : int -> unit
-  (** change y *)
+  (** change y with 0 being the top position *)
 
   method virtual set_anti_y : int -> unit
- (** change y : 0 being the bottom position *)
+ (** change y with 0 being the bottom position *)
 
   method virtual move_x     : int -> unit
   (** add to x *)
@@ -193,21 +192,22 @@ end
 (*** Containers ***)
 (******************)
 class virtual generic_container =
+(** A [container] is a node where you can put widgets into *)
 object
 
   inherit common
 
   method virtual get_content  : common list
-  (** get the commons put in the container *)
+  (** get the commons previously put in the container *)
 
   method virtual wipe_content : unit
   (** remove everything from the container *)
 
   method virtual add_common   : ?before:common -> common -> unit
-  (** add a common *)
+  (** add a common (or a coerced widget) to the container *)
 
   method virtual remove_common: common -> unit
-  (** remove a common *)
+  (** remove a common from the container *)
 
 end
 class virtual container_plugin =
@@ -258,15 +258,17 @@ module Button_click = (*TODO: hide this (via .mli) to prevent low level access t
      end)
 
 class virtual generic_button =
+(** A [button] is a widget with click capabilities *)
 object
 
   inherit common
 
   method virtual add_click_action    :(unit -> unit) -> unit
-  (**bind an event *)
+  (** bind an event that will be called when the button is clicked.
+      Call order is unspecified. *)
 
   method virtual remove_click_action :(unit -> unit) -> unit
-  (**unbind an event*)
+  (** unbind an event so it won't be called again *)
 
   method virtual clear_click_actions : unit
   (** unbind all events *)
@@ -328,7 +330,6 @@ end
 (*** Drag and drop ***)
 (*********************)
 
-(* shadow : use it to show a phantom copy of your dragged nodes *)
 module Dragg_n_drop_move =
   AXOEvents.Make
     (struct
@@ -356,6 +357,7 @@ module Dragg_n_drop_up =
        let default_value = None
      end)
 
+(* shadow : to show a phantom copy of your dragged nodes *)
 class shadow
     ?(style = "background-color: black; opacity: .3")
     obj = (* a shadow takes the imitated obj as argument *)
@@ -390,6 +392,8 @@ end
 
 
 class virtual generic_dragg =
+(** A [dragg] is a widget you can assign droppable widgets to.
+    Once a widget is assigned you can dragg and drop the [dragg] to it. *)
 object
 
   inherit common
@@ -397,11 +401,11 @@ object
   method virtual add_drop :
          common -> ( common -> common -> unit ) -> unit
   (** Add a common where it is possible to drop [self] to. The second argument
-    * is the action to be taken when such a case happen. This callback uses the
-    * dragged common as first argument and the dropped common as the second
-    * argument. There can be several actions on the same common.
-    * Note that actions added while a dragging is in progress won't be triggered
-    * this one time. The opposite is true for removed actions. *)
+      is the action to be taken when such a case happen. This callback uses the
+      dragged common as first argument and the dropped common as the second
+      argument. There can be several actions on the same common.
+      Note that actions added while a dragging is in progress won't be triggered
+      this one time. The opposite is true for removed actions. *)
 
   method virtual remove_drop_action :
          common -> ( common -> common -> unit ) -> unit
@@ -415,7 +419,7 @@ object
 
   method virtual activate_dragg   : unit
   (** Activate/Reactivate dragg. Note that draggs are not initialized with
- * activation, they need to be manually activated. *)
+      activation, they need to be manually activated. *)
 
 end
 class virtual dragg_plugin shadow =

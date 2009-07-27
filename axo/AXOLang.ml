@@ -80,6 +80,15 @@ module LList = struct
           else aux ( hd :: acc ) tl
     in aux [] l
 
+  let insert_after_ l element func =
+    let rec aux acc = function
+      | [] -> raise Not_found
+      | hd :: tl ->
+          if func hd
+          then rev_append acc (hd :: element :: tl)
+          else aux ( hd :: acc ) tl
+    in aux [] l
+
   let find_remove f l =
     let rec aux acc = function
       | [] -> raise Not_found
