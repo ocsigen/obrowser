@@ -14,7 +14,7 @@ main.exe: ../rt/caml/stdlib.cma $(CMOS) $(TEST)
 
 AXO.cma: ../rt/caml/stdlib.cma $(CMOS)
 	@echo "[OCAMLC] $@"
-	@CAMLLIB=../rt/caml ocamlc -a -linkall -o $@ $(CMOS)
+	@CAMLLIB=../rt/caml ocamlc -a -o $@ $(CMOS)
 
 %.cmi: %.mli ../rt/caml/stdlib.cma
 	@echo "[OCAMLC] $@"
