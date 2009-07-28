@@ -253,6 +253,7 @@ module Button_click = (*TODO: hide this (via .mli) to prevent low level access t
     struct
        type v = unit
        let name = "onclick"
+       let name_modifier = Some "_for_buttons_"
        let destruct = fun _ -> ()
        let default_value = Some ()
      end)
@@ -335,6 +336,7 @@ module Dragg_n_drop_move =
     (struct
        type v = int * int
        let name = "onmousemove"
+       let name_modifier = Some "_for_dragg_n_drop_"
        let destruct obj =
          (obj >>> get "clientX" >>> as_int,
           obj >>> get "clientY" >>> as_int)
@@ -345,6 +347,7 @@ module Dragg_n_drop_down =
     (struct
        type v = unit
        let name = "onmousedown"
+       let name_modifier = Some "_for_dragg_n_drop_"
        let destruct _ = ()
        let default_value = None
      end)
@@ -353,6 +356,7 @@ module Dragg_n_drop_up =
     (struct
        type v = common
        let name = "onmouseup"
+       let name_modifier = Some "_for_dragg_n_drop_"
        let destruct obj = new common_wrap (obj >>> AXOEvents.get_target)
        let default_value = None
      end)

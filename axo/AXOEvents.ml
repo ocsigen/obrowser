@@ -2,10 +2,14 @@
 * the end of the module as example.*)
 
 open JSOO
+open AXOLang
 
 module type PARAMS = sig
   type v (* event valuation *)
   val name : string
+  val name_modifier : string option
+    (** A custom tag to ensure your bindings can't be unbound by another module.
+        It changes the internal representation of bounded handlers. *)
   val destruct : obj -> v
     (** /!\ The [obj] the [destruct] function is called upon is an event object
      * (and not the DOM object the event was fired upon ; to get the target node
@@ -20,6 +24,7 @@ struct
   open Params
   exception Cannot_destruct of exn
   let handlers_field = "caml_" ^ name ^ "_handlers"
+                     ^ (LOption.unopt ~default:"" name_modifier)
 
   let bind f obj =
     let handlers =
@@ -75,6 +80,7 @@ module Onclick =
     struct
        type v = unit
        let name = "onclick"
+       let name_modifier = None
        let destruct = fun _ -> ()
        let default_value = Some ()
      end)
@@ -84,6 +90,7 @@ module Mouse_up =
     struct
       type v = int * int
       let name = "onmouseup"
+      let name_modifier = None
       let destruct obj =
         (obj >>> get "clientX" >>> as_int,
          obj >>> get "clientY" >>> as_int)
@@ -96,6 +103,7 @@ module Mouse_down =
     struct
       type v = int * int
       let name = "onmousedown"
+      let name_modifier = None
       let destruct obj =
         (obj >>> get "clientX" >>> as_int,
          obj >>> get "clientY" >>> as_int)

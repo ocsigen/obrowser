@@ -54,7 +54,7 @@ let _ = content # add_common (i :> AXOWidgets.common)
 
 
 let f = new AXOToolkit.block_foldable ~folded:false
-          ((new AXOToolkit.cyclic_block_text_button "Fold" ["Unfold"])
+          ((new AXOToolkit.cyclic_inline_text_button "Fold" ["Unfold"])
                                                    :> AXOWidgets.generic_button)
           ((new AXOToolkit.inline_container) :> AXOWidgets.generic_container)
           (content :> AXOWidgets.generic_container)

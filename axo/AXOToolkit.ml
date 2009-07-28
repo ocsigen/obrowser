@@ -4,6 +4,7 @@
 open JSOO
 open AXOLang
 
+let text t = new AXOWidgets.common_wrap (AXOJs.Node.text t)
 
 (*********************)
 (*** Empty widgets ***)
@@ -78,10 +79,10 @@ class inline_container =
 object
   inherit AXOWidgets.container_wrap (AXOHtml.Low.span ())
 end
-class virtual vbox_plugin =
+class vbox =
 object ( self )
 
-  inherit AXOWidgets.common
+  inherit AXOWidgets.common_wrap (AXOHtml.Low.div ())
   inherit AXOWidgets.generic_container
   val mutable content = []
   method get_content   = fst (List.split content)
@@ -92,10 +93,7 @@ object ( self )
       match before with
         | None ->
             content <-    (wi, br)
-                       :: (snd (LList.find_remove
-                                  (fun (wii,_) -> wii = wi)
-                                  content)
-                          ) ;
+                       :: (List.filter (fun (wii,_) -> wii = wi) content);
             self#obj >>> AXOJs.Node.append wi#obj ;
             self#obj >>> AXOJs.Node.append br#obj ;
         | Some wii ->
@@ -124,6 +122,12 @@ class block_widget_container = widget_container_wrap (AXOHtml.Low.div ())
 (*************************)
 (*** Some more buttons ***)
 (*************************)
+class inline_text_button ?(activated = true) txt =
+object
+  inherit AXOWidgets.common_wrap (AXOHtml.Low.span ())
+  inherit AXOWidgets.button_plugin activated
+  inherit text_plugin txt
+end
 class inline_text_widget_button ?(activated = true) txt =
 object
   inherit AXOWidgets.common_wrap (AXOHtml.Low.span ())
@@ -131,7 +135,7 @@ object
   inherit AXOWidgets.button_plugin activated
   inherit text_plugin txt
 end
-class cyclic_block_text_button ?(activated = true) hd_txt tl_txt =
+class virtual cyclic_text_button_plugin activated hd_txt tl_txt =
   let q =
     let q = Queue.create () in
       List.iter (fun t -> Queue.push t q) ( hd_txt :: tl_txt ) ;
@@ -144,7 +148,7 @@ class cyclic_block_text_button ?(activated = true) hd_txt tl_txt =
   in
 object (* OBOB proof *)
 
-  inherit AXOWidgets.common_wrap ( AXOHtml.Low.div () )
+  inherit AXOWidgets.common
   inherit AXOWidgets.button_plugin activated as b
   inherit text_plugin (cycle ()) as t
 
@@ -157,7 +161,14 @@ object (* OBOB proof *)
     b # add_click_action (fun () -> t # set_text (cycle ()))
 
 end
+class cyclic_inline_text_button ?(activated = true) hd_txt tl_txt =
+object
 
+  inherit AXOWidgets.common_wrap (AXOHtml.Low.span ())
+  inherit cyclic_text_button_plugin
+    activated hd_txt tl_txt
+
+end
 
 
 (******************)
@@ -168,6 +179,7 @@ module On_input_change =
     ( struct
         type v = string
         let name = "onchange"
+        let name_modifier = Some "_for_input_"
         let destruct obj =
           obj >>> AXOEvents.get_target >>> get "value" >>> as_string
         let default_value = None
@@ -296,21 +308,18 @@ object (self)
   method get_foldable   = foldable
 
   method private unfold =
-    (if persistent_as_container then persistent else foldable)#add_common
+    (if persistent_as_container then persistent else b)#add_common
       (foldable :> AXOWidgets.common) ;
   method private fold =
-    (if persistent_as_container then persistent else foldable)#remove_common
+    (if persistent_as_container then persistent else b)#remove_common
       (foldable :> AXOWidgets.common) ;
     
 
   initializer
+    (if persistent_as_container then persistent else b)#add_common
+      (button :> AXOWidgets.common)
+    ;
     b # add_common (persistent :> AXOWidgets.common) ;
-    (if persistent_as_container
-     then persistent#add_common
-            ~before:(List.hd persistent#get_content)
-            (button :> AXOWidgets.common)
-     else b#add_common (button     :> AXOWidgets.common)
-    ) ;
     if folded then () else self#unfold ;
     button # add_click_action
       (fun () ->
@@ -333,8 +342,8 @@ let foldable_tree ?(depth = (-1)) ?persistent_as_container tree elements contain
     let folded = d > depth in
     let (but,com,kid) = elements t l folded
     (* elements produces a (button,
-     *                      container (*filled with node's content*)
-     *                      container (*filled with node's children*),
+     *                      container (* with node's content *)
+     *                      container (* for node's children *),
      *                     ) tuple*)
     in
       List.iter
@@ -380,7 +389,7 @@ end
 (*************)
 (*** popup ***)
 (*************)
-class popup ?(background = "white") ?(place = fun _ -> None) content =
+class popup ?(background = "white") content =
   let c = new block_widget_container in
   let m = new mask in
   let x = new inline_text_widget_button "CLOSE" in
@@ -388,14 +397,14 @@ object (self)
 
   val mutable showed = false
 
-  method show =
+  method show place =
     if showed
     then ()
     else (
       ignore (m#auto_set_z_index) ;
       AXOWidgets.body#add_common ( m :> AXOWidgets.common ) ;
       ignore (c#auto_set_z_index) ;
-      (match place () with
+      (match place with
          | None -> c#set_position AXOStyle.Fixed ; c#set_x 10 ; c#set_y 10 ;
          | Some (p, x, y) ->    c#set_position p ; c#set_x x  ; c#set_y y  ;
       ) ;
@@ -436,6 +445,13 @@ object
   inherit AXOWidgets.common_wrap (AXOHtml.Low.li ())
   inherit AXOWidgets.container_plugin
 end
+class li_widget_container =
+object
+  inherit AXOWidgets.common_wrap (AXOHtml.Low.li ())
+  inherit AXOWidgets.container_plugin
+  inherit AXOWidgets.widget_plugin
+end
+
 
 
 
