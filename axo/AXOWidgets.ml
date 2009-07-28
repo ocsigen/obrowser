@@ -2,7 +2,8 @@
 
 (** Each widget kind is organised with :
 
- a virtual "interface" ( called generic_* ) with detailed comments on expected methods behaviour
+ a virtual "interface" ( called generic_* ) 
+    with detailed comments on expected methods behaviour
  a half virtual plugin ( called *_plugin )
  a wrapper to be used to avoid code duplication in implementation
 
@@ -46,7 +47,7 @@ open JSOO
 open AXOLang
 
 (* Common denominator to every class coded here.
-*  TODO: use the friend-methods hack showed in the Manual to hide this method *)
+ * TODO: use the friend-methods hack showed in the Manual to hide this method *)
 class virtual common =
 object
   method virtual obj : JSOO.obj
@@ -139,7 +140,6 @@ end
 class virtual widget_plugin = (* plugin *)
 object (self)
 
-  inherit common
   inherit generic_widget
   
   method get_width  : int = self#obj >>> get "offsetWidth"  >>> as_int
@@ -197,19 +197,23 @@ object
 
   inherit common
 
-  method virtual get_content  : common list
+  method virtual get_content   : common list
   (** get the commons previously put in the container *)
 
-  method virtual wipe_content : unit
+  method virtual wipe_content  : unit
   (** remove everything from the container *)
 
-  method virtual add_common   : ?before:common -> common -> unit
-  (** add a common (or a coerced widget) to the container *)
+  method virtual add_common    : ?before:common -> common -> unit
+  (** add a common (or a coerced widget) to the container.
+      By default it is at the end.
+      Use the optional argument [?before] if want to put it somewhere else.
+  *)
 
-  method virtual remove_common: common -> unit
+  method virtual remove_common : common -> unit
   (** remove a common from the container *)
 
 end
+
 class virtual container_plugin =
 object (self)
 
@@ -264,11 +268,11 @@ object
 
   inherit common
 
-  method virtual add_click_action    :(unit -> unit) -> unit
+  method virtual add_click_action    : (unit -> unit) -> unit
   (** bind an event that will be called when the button is clicked.
       Call order is unspecified. *)
 
-  method virtual remove_click_action :(unit -> unit) -> unit
+  method virtual remove_click_action : (unit -> unit) -> unit
   (** unbind an event so it won't be called again *)
 
   method virtual clear_click_actions : unit
@@ -284,6 +288,7 @@ object
   (** immediatly perform all activated click actions *)
 
 end
+
 class virtual button_plugin activated_ =
 object (self)
 
@@ -342,6 +347,7 @@ module Dragg_n_drop_move =
           obj >>> get "clientY" >>> as_int)
        let default_value = None
      end)
+
 module Dragg_n_drop_down =
   AXOEvents.Make
     (struct
@@ -351,6 +357,7 @@ module Dragg_n_drop_down =
        let destruct _ = ()
        let default_value = None
      end)
+
 module Dragg_n_drop_up =
   AXOEvents.Make
     (struct
@@ -372,6 +379,7 @@ object (self)
   val mutable activated = false
 
   method private move (x,y) = w#set_x (x + 2) ; w#set_y (y + 2)
+
   method activate : unit =
     w#set_width  ( obj >>> get "offsetWidth"  >>> as_int ) ;
     w#set_height ( obj >>> get "offsetHeight" >>> as_int ) ;
@@ -381,6 +389,7 @@ object (self)
                                  (fun (x,y) -> self#move (x,y)) ;
       body#add_common (w :> common) ;
     )
+
   method deactivate : unit =
     if activated
     then (
@@ -396,7 +405,8 @@ end
 
 
 class virtual generic_dragg =
-(** A [dragg] is a widget you can assign droppable widgets to.
+(** A [dragg] is a draggable widget.
+    You can assign any widgets as targets to drop the [dragg] into.
     Once a widget is assigned you can dragg and drop the [dragg] to it. *)
 object
 
@@ -426,7 +436,9 @@ object
       activation, they need to be manually activated. *)
 
 end
+
 class virtual dragg_plugin shadow =
+
     let rec dragg_begin dragg drop_list shadow () =
       List.iter
         (fun (d,f) ->
@@ -444,6 +456,7 @@ class virtual dragg_plugin shadow =
     and dragg_end f drop_list shadow target =
       List.iter ( fun (d,_) -> if d = target then f d else () ) !drop_list ;
     in
+
 object (self)
 
   inherit common
@@ -470,6 +483,7 @@ object (self)
     (self#obj >>> AXOStyle.style)#set_cursor "move"
 
 end
+
 class dragg_wrap ?shadow_style obj_ =
 object
   inherit common_wrap obj_

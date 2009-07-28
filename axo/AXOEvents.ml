@@ -1,8 +1,10 @@
 (** This module provides ways to tamper with events. One can use common cases at
-* the end of the module as example.*)
+ * the end of the module as example. *)
 
 open JSOO
 open AXOLang
+
+exception Cannot_destruct of exn
 
 module type PARAMS = sig
   type v (* event valuation *)
@@ -11,18 +13,24 @@ module type PARAMS = sig
     (** A custom tag to ensure your bindings can't be unbound by another module.
         It changes the internal representation of bounded handlers. *)
   val destruct : obj -> v
-    (** /!\ The [obj] the [destruct] function is called upon is an event object
+    (** Converts the [obj] describing the event to a caml value.
+     * /!\ The [obj] the [destruct] function is called upon is an event object
      * (and not the DOM object the event was fired upon ; to get the target node
-     * of the event use [get_target]).*)
+     * of the event use [get_target]). 
+     *)
   val default_value : v option
-    (* an error message is produced if default value is None
-     * and the destruction failed *)
+    (** The value to send if an exception occurs during the conversion
+     *  of the value, if any.
+     *  If the default value is [None] 
+     *  and the destruction failed with exception [e],
+     *  the exception [Cannot_destruct e] is raised.
+     *)
 end
 
 module Make = functor (Params : PARAMS) ->
 struct
   open Params
-  exception Cannot_destruct of exn
+
   let handlers_field = "caml_" ^ name ^ "_handlers"
                      ^ (LOption.unopt ~default:"" name_modifier)
 
@@ -65,10 +73,11 @@ struct
       obj >>> set name (inject Nil)
 end
 
-(**[get_target evt] get the DOM node originaly associated to the event. *)
+(** [get_target evt] get the DOM node originaly associated to the event. *)
 let get_target evt = evt >>> JSOO.get "target"
 
-(**[get_current_target evt] get the DOM node currently associated to the event *)
+(** [get_current_target evt] get the DOM node 
+    currently associated to the event *)
 let get_current_target evt = evt >>> JSOO.get "currentTerget"
 
 (**[stop_propagation evt] prevent the event for going up in the DOM tree. *)
