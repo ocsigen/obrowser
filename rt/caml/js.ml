@@ -19,6 +19,7 @@ let http_get url = snd (http_get_with_status url)
 external http_post : string -> string -> string -> (int * string) = "caml_js_http_post"
 
 external dom_of_xml : string -> JSOO.obj = "caml_js_dom_of_xml"
+external pretty_xml_of_dom : JSOO.obj -> string = "caml_js_pretty_xml_of_dom"
 external xml_of_dom : JSOO.obj -> string = "caml_js_xml_of_dom"
 
 external alert : string -> unit = "caml_js_alert"

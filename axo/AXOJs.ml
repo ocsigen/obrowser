@@ -19,6 +19,11 @@ type obj = JSOO.obj
 let http_get = Js.http_get_with_status
 let http_post = Js.http_post
 
+(** Use these to convert from xml to dom and the other way around. *)
+let dom_of_xml        = Js.dom_of_xml
+let xml_of_dom        = Js.xml_of_dom
+let pretty_xml_of_dom = Js.pretty_xml_of_dom
+
 (** the next values are intended to give arguments to method called with the
  * [JSOO.call_method] function.*)
 let null   = JSOO.null                     (* To send null     *)

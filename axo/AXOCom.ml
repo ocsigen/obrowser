@@ -100,10 +100,13 @@ let dynload_post url args
       | _ -> AXOJs.alert ("Server sent " ^ (string_of_int code)) ; failwith msg
 
 (** [parse_xml str] makes a DOM tree out of an xml tree using the browser engine *)
-let parse_xml = Js.dom_of_xml
+let parse_xml = AXOJs.dom_of_xml
 
 (** [print_xml obj] results in a string using the browser engine. *)
-let print_xml = Js.xml_of_dom
+let print_xml = AXOJs.xml_of_dom
+
+(** [pretty_print_xml obj] gives a xml string using the browser engine. *)
+let pretty_print_xml = AXOJs.pretty_xml_of_dom
 
 
 (** Firefox doesn't fail nor raise an exception when a parsing error occurs. It

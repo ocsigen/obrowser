@@ -266,13 +266,24 @@ RT.caml_js_dom_of_xml = function (str)
   }
 }
 
-// Caml name: xml_of_dom
-// Type:      JSOO.obj > string
-RT.caml_js_xml_of_dom = function (o)
+// Caml name: pretty_xml_of_dom
+// Type:      JSOO.obj -> string
+RT.caml_js_pretty_xml_of_dom = function (o)
 {
   try {
     var serializer = new XMLSerializer();
     var prettyString = XML(serializer.serializeToString(o)).toXMLString();
     return (value_from_string (prettyString)) ;
   } catch(e) { throw new Error ("unable to pretty print : " + e.message) }
+}
+
+// Caml name: xml_of_dom
+// Type:      JSOO.obj -> string
+RT.caml_js_xml_of_dom = function (o)
+{
+  try {
+    var serializer = new XMLSerializer();
+    var xml = serializer.serializeToString(o);
+    return (value_from_string (xml)) ;
+  } catch (e) { throw new Error ("unable to print : " + e.message) }
 }
