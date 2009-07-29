@@ -175,7 +175,7 @@ let (alert, rich_alert) = (* does not interrupt the Js engine *)
       panel >>> Node.set_attribute "style"
         "position: fixed; left: 50%; bottom: 50%; \
          -moz-border-radius: 5px; padding: 10px; \
-         background-color: white; text-align: right;
+         background-color: white; text-align: right; \
          z-index: 2147483647;" ;
     let close () =
       Node.body >>> Node.remove mask ;
@@ -199,7 +199,8 @@ let (alert, rich_alert) = (* does not interrupt the Js engine *)
       panel >>> Node.set_attribute "style"
         "position: fixed; left: 50%; bottom: 50%; \
          -moz-border-radius: 5px; padding: 10px; \
-         background-color: white; text-align: right;" ;
+         background-color: white; text-align: right; \
+         z-index : 2147483647;" ;
     let close () =
       Node.body >>> Node.remove mask ;
       Node.body >>> Node.remove panel ;
