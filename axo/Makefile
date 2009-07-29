@@ -1,16 +1,11 @@
 
 
-SOURCES= AXOJs.ml AXOLang.ml AXOCom.ml AXOHtml.ml AXOStyle.ml AXOEvents.ml AXOWidgets.ml AXOToolkit.ml
+SOURCES= AXOJs.ml AXOLang.ml AXOCom.ml AXOHtml.ml AXOEvents.ml AXOWidgets.ml AXOToolkit.ml
 CMOS=$(patsubst %.ml, %.cmo, $(SOURCES))
-TEST= main.cmo
 
 .PHONY: clean all depend
 
-all: main.exe.uue vm.js AXO.cma
-
-main.exe: ../rt/caml/stdlib.cma $(CMOS) $(TEST)
-	@echo "[OCAMLC] $@"
-	@CAMLLIB=../rt/caml ocamlc $(CMOS) $(TEST) -o $@
+all:vm.js AXO.cma
 
 AXO.cma: ../rt/caml/stdlib.cma $(CMOS)
 	@echo "[OCAMLC] $@"
@@ -23,14 +18,6 @@ AXO.cma: ../rt/caml/stdlib.cma $(CMOS)
 %.cmo: %.ml ../rt/caml/stdlib.cma
 	@echo "[OCAMLC] $@"
 	@CAMLLIB=../rt/caml ocamlc -c $<
-
-$(TEST): $(CMOS)
-	@echo "[OCAMLC] $@"
-	@CAMLLIB=../rt/caml ocamlc -c main.ml
-
-%.uue: %
-	@echo "[UUENCODE] $@"
-	@uuencode $^ stdout > $@
 
 vm.js: ../vm.js
 	@echo "[CP] $@"

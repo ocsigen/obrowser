@@ -66,6 +66,35 @@ end
 (**********************)
 (*** Simple widgets ***)
 (**********************)
+
+
+(** Position attribute enumeration *)
+type position =
+  | Absolute
+  | Fixed
+  | Relative
+let string_of_position = function
+  | Absolute -> "absolute"
+  | Fixed    -> "fixed"
+  | Relative -> "relative"
+let position_of_string = function
+  | "absolute" -> Absolute
+  | "fixed"    -> Fixed
+  | _          -> Relative
+
+(** As there are many ways of giving a color proerty in css, it is very hardto
+  * give a better type for color. A private type with a Regexp-check constructor
+  * could be used... *)
+type color = string
+
+let rgb r g b = ((  "rgb("
+                  ^ string_of_int r ^ ","
+                  ^ string_of_int g ^ ","
+                  ^ string_of_int b ^ ")"
+                 ) : color)
+let hex r g b = (( "#" ^ Printf.sprintf "%X%X%X" r g b) : color )
+
+
 class virtual generic_widget = (* interface *)
 (** The class [widget] provides some attribute manipulation methods. *)
 object
@@ -117,8 +146,11 @@ object
   method virtual remove_attribute : string -> unit
   (** remove an attribute *)
 
-  method virtual set_position : AXOStyle.position -> unit
+  method virtual set_position : position -> unit
   (** set the position *)
+
+  method virtual get_position : position
+  (** get the current value of the position *)
 
   method virtual set_z_index : int -> unit
   (** Set the zIndex attribute *)
@@ -129,36 +161,57 @@ object
   method virtual auto_set_z_index : int
   (** Set the zIndex according to [AXOJs.Misc.new_z_index] and returns it *)
 
-  method virtual set_background : AXOStyle.color -> unit
+  method virtual set_background : color -> unit
   (** Set the background color for the widget *)
 
-  method virtual get_background : AXOStyle.color
+  method virtual get_background : color
   (** Get the background color the widget currently has *)
+
+  method virtual set_margin_left : int -> unit
+  (** Set the left margin for the widget *)
+
+  method virtual set_margin_right : int -> unit
+  (** Set the right margin for the widget *)
+
+  method virtual set_margin_top : int -> unit
+  (** Set the top margin for the widget *)
+
+  method virtual set_margin_bottom : int -> unit
+  (** Set the bottom margin for the widget *)
+
+  method virtual set_style_property : string -> string -> unit
+  (** [set_style_property name value] set the style property [name] to [value].
+    * It's equivalent to the [node.style.name = value] Javascript statement. *)
+
+  method virtual get_style_property : string -> string
+  (** [get_style_property name] returns the value of the property whose name
+    * matches [name]. *)
 
 end
 
 class virtual widget_plugin = (* plugin *)
+  let string_of_px i = string_of_int i ^ "px" in
 object (self)
 
   inherit generic_widget
-  
+
   method get_width  : int = self#obj >>> get "offsetWidth"  >>> as_int
   method get_height : int = self#obj >>> get "offsetHeight" >>> as_int
   method get_x      : int = self#obj >>> get "offsetLeft"   >>> as_int
   method get_y      : int = self#obj >>> get "offsetTop"    >>> as_int
 
   method set_width  (w : int) : unit =
-    (self#obj >>> AXOStyle.style) # set_dim "width" (AXOStyle.px w)
+    self#set_style_property "width" (string_of_px w)
   method set_height (h : int) : unit =
-    (self#obj >>> AXOStyle.style) # set_dim "height" (AXOStyle.px h)
+    self#set_style_property "height" (string_of_px h)
   method set_x      (x : int) : unit =
-    (self#obj >>> AXOStyle.style) # set_dim "left" (AXOStyle.px x)
+    self#set_style_property "left" (string_of_px x)
   method set_anti_x (x : int) : unit =
-    (self#obj >>> AXOStyle.style) # set_dim "right" (AXOStyle.px x)
+    self#set_style_property "right" (string_of_px x)
   method set_y      (y : int) : unit =
-    (self#obj >>> AXOStyle.style) # set_dim "top" (AXOStyle.px y)
+    self#set_style_property "top" (string_of_px y)
   method set_anti_y (y : int) : unit =
-    (self#obj >>> AXOStyle.style) # set_dim "bottom" (AXOStyle.px y)
+    self#set_style_property "bottom" (string_of_px y)
 
   method move_x     (x : int) : unit = self#set_x (self#get_x + x)
   method move_y     (y : int) : unit = self#set_y (self#get_y + y)
@@ -167,15 +220,34 @@ object (self)
   method get_attribute n    = self#obj >>> AXOJs.Node.get_attribute n
   method remove_attribute n = self#obj >>> AXOJs.Node.remove_attribute n
 
-  method set_position p   = ( self#obj >>> AXOStyle.style ) # set_position p
+  method set_position p =
+    self#set_style_property "position" (string_of_position p)
+  method get_position   =
+    (self#get_style_property "position") >>> position_of_string
 
-  method set_z_index    z = ( self#obj >>> AXOStyle.style ) # set_z_index z
-  method get_z_index      = ( self#obj >>> AXOStyle.style ) # z_index
-  method auto_set_z_index = ( self#obj >>> AXOStyle.style ) # auto_set_z_index
+  method set_z_index    z = self#set_style_property "zIndex" (string_of_int z)
+  method get_z_index      = self#get_style_property "zIndex" >>> int_of_string
+  method auto_set_z_index =
+    let z = AXOJs.Misc.new_z_index () in self#set_z_index z ; z
 
-  method set_background c = (self#obj >>> AXOStyle.style)#set_background_color c
-  method get_background   = (self#obj >>> AXOStyle.style)#background_color
+  method set_background c =
+    self#set_style_property "background" c
+  method get_background   =
+    self#get_style_property "background"
 
+  method set_margin_left (m : int) : unit =
+    self#set_style_property "marginLeft" (string_of_int m)
+  method set_margin_right (m : int) : unit =
+    self#set_style_property "marginRight" (string_of_int m)
+  method set_margin_top (m : int) : unit =
+    self#set_style_property "marginRight" (string_of_int m)
+  method set_margin_bottom (m : int) : unit =
+    self#set_style_property "marginRight" (string_of_int m)
+
+  method set_style_property name value =
+    self#obj >>> get "style" >>> set name (string value)
+  method get_style_property name       =
+    self#obj >>> get "style" >>> get name >>> as_string
 
 end
 
@@ -319,7 +391,7 @@ object (self)
   method click = List.iter (fun a -> a ()) actions
 
   initializer
-    ( self#obj >>> AXOStyle.style )#set_cursor "pointer"
+    self#obj >>> get "style" >>> set "cursor" (JSOO.string "pointer")
 
 end
 
@@ -398,7 +470,7 @@ object (self)
     )
 
   initializer
-    w#set_position AXOStyle.Fixed ;
+    w#set_position Fixed ;
     w#set_attribute "style" style
 
 end
@@ -480,7 +552,7 @@ object (self)
       (dragg_begin (self :> common) drop_list shadow)
 
   initializer
-    (self#obj >>> AXOStyle.style)#set_cursor "move"
+    self#obj >>> get "style" >>> set "cursor" (JSOO.string "move")
 
 end
 

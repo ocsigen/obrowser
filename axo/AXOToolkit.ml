@@ -405,7 +405,7 @@ object (self)
       AXOWidgets.body#add_common ( m :> AXOWidgets.common ) ;
       ignore (c#auto_set_z_index) ;
       (match place with
-         | None -> c#set_position AXOStyle.Fixed ; c#set_x 10 ; c#set_y 10 ;
+         | None -> c#set_position AXOWidgets.Fixed ; c#set_x 10 ; c#set_y 10 ;
          | Some (p, x, y) ->    c#set_position p ; c#set_x x  ; c#set_y y  ;
       ) ;
       AXOWidgets.body#add_common ( c :> AXOWidgets.common ) ;
@@ -421,7 +421,7 @@ object (self)
     else ()
 
   initializer
-    x#set_position AXOStyle.Absolute ;
+    x#set_position AXOWidgets.Absolute ;
     x#set_anti_x 0 ;
     x#add_click_action (fun () -> self#hide) ;
     c#set_background background ;
