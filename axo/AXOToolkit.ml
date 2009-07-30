@@ -19,10 +19,13 @@ object
 end
 
 
-(**********)
-(*** BR ***)
-(**********)
-class br = object inherit AXOWidgets.common_wrap (AXOHtml.Low.br ()) end
+(******************************)
+(*** BR & other "constants" ***)
+(******************************)
+class br =
+object inherit AXOWidgets.common_wrap (AXOHtml.Low.br ()) end
+class nbsp =
+object inherit AXOWidgets.common_wrap (AXOJs.Node.text "&nbsp;") end
 
 
 
@@ -67,6 +70,8 @@ end
 
 class inline_text txt =
 object inherit text_wrap  txt (AXOHtml.Low.span ()) end
+class block_text txt =
+object inherit text_wrap  txt (AXOHtml.Low.div ()) end
 
 (**************************)
 (*** Classic containers ***)
@@ -111,6 +116,11 @@ end
 (***************************************)
 (*** Container with widget abilities ***)
 (***************************************)
+class virtual generic_widget_container =
+object
+  inherit AXOWidgets.generic_container
+  inherit AXOWidgets.generic_widget
+end
 class widget_container_wrap obj_ =
 object
   inherit AXOWidgets.common_wrap obj_
@@ -118,6 +128,7 @@ object
   inherit AXOWidgets.container_plugin
 end
 class block_widget_container = widget_container_wrap (AXOHtml.Low.div ())
+class inline_widget_container = widget_container_wrap (AXOHtml.Low.div ())
 
 (*************************)
 (*** Some more buttons ***)
@@ -224,6 +235,19 @@ object (self)
     wc#obj >>> On_input_change.bind (fun s -> self#set_value_ s)
 
 end
+class [ 'a ] auto_update_select string_of_t t_of_string (value : 'a) alts
+  name url args =
+object (self)
+  inherit [ 'a ] select string_of_t t_of_string value alts as s
+  initializer
+    s#obj >>> On_input_change.bind
+         (fun v ->
+            AXOCom.alert_on_code
+              ( AXOCom.http_post url ((name, v) :: args) )
+         )
+
+end
+
 
 (* input *)
 class text_input value =
@@ -296,11 +320,16 @@ class block_foldable
   (persistent : AXOWidgets.generic_container)
   (foldable   : AXOWidgets.generic_container)
   =
-  let b = new block_container in
+  let box =
+    if persistent_as_container
+    then persistent
+    else new block_container
+  in
 object (self)
 
   inherit AXOWidgets.common
-  method obj = b # obj
+  method obj = box # obj
+  inherit AXOWidgets.widget_plugin
 
   val mutable folded_ = folded
 
@@ -308,18 +337,20 @@ object (self)
   method get_foldable   = foldable
 
   method private unfold =
-    (if persistent_as_container then persistent else b)#add_common
-      (foldable :> AXOWidgets.common) ;
+    box#add_common (foldable :> AXOWidgets.common) ;
   method private fold =
-    (if persistent_as_container then persistent else b)#remove_common
-      (foldable :> AXOWidgets.common) ;
+    box#remove_common (foldable :> AXOWidgets.common) ;
     
 
   initializer
-    (if persistent_as_container then persistent else b)#add_common
-      (button :> AXOWidgets.common)
+      box#add_common
+        ?before:(try Some (List.hd box#get_content) with Failure "hd" -> None)
+        (button :> AXOWidgets.common)
     ;
-    b # add_common (persistent :> AXOWidgets.common) ;
+    if persistent_as_container
+    then ()
+    else box#add_common (persistent :> AXOWidgets.common)
+    ;
     if folded then () else self#unfold ;
     button # add_click_action
       (fun () ->
@@ -440,6 +471,12 @@ object
   inherit AXOWidgets.common_wrap (AXOHtml.Low.ul ())
   inherit AXOWidgets.container_plugin
 end
+class ul_widget_container =
+object
+  inherit AXOWidgets.common_wrap (AXOHtml.Low.ul ())
+  inherit AXOWidgets.container_plugin
+  inherit AXOWidgets.widget_plugin
+end
 class li_container =
 object
   inherit AXOWidgets.common_wrap (AXOHtml.Low.li ())
@@ -452,6 +489,82 @@ object
   inherit AXOWidgets.widget_plugin
 end
 
+
+(***************)
+(*** movable ***)
+(***************)
+module Movable_move =
+  AXOEvents.Make
+    (struct
+       type v = int * int
+       let name = "onmousemove"
+       let name_modifier = Some "_for_movable_"
+       let destruct obj =
+         (obj >>> get "clientX" >>> as_int,
+          obj >>> get "clientY" >>> as_int)
+       let default_value = None
+     end)
+
+module Movable_down =
+  AXOEvents.Make
+    (struct
+       type v = int * int
+       let name = "onmousedown"
+       let name_modifier = Some "_for_movable_"
+       let destruct obj =
+         (obj >>> get "clientX" >>> as_int,
+          obj >>> get "clientY" >>> as_int)
+       let default_value = None
+     end)
+
+module Movable_up =
+  AXOEvents.Make
+    (struct
+       type v = int * int
+       let name = "onmouseup"
+       let name_modifier = Some "_for_movable_"
+       let destruct obj =
+         (obj >>> get "clientX" >>> as_int,
+          obj >>> get "clientY" >>> as_int)
+       let default_value = None
+     end)
+class movable handle content_ =
+object
+
+  inherit block_widget_container as container
+
+  (* temporary values to remember the coordinates of the mouse when the move
+  * begun. *)
+  val mutable mx = 0
+  val mutable my = 0
+
+  initializer
+    (* First we make sure the container and the handle are ok *)
+    handle#obj >>> get "style" >>> set "cursor" (JSOO.string "move") ;
+    container#add_common (handle   :> AXOWidgets.common) ;
+    container#add_common (content_ :> AXOWidgets.common) ;
+    container#set_position AXOWidgets.Absolute ;
+    container#set_style_property "border" "1px" ;
+    (* Then we define the handlers *)
+    let rec move_handler (x,y) =
+      let vx = x - mx and vy = y - my in
+      mx <- x ; my <- y ;
+      container#move_x vx ;
+      container#move_y vy ;
+    and up_handler _ =
+      AXOJs.Node.window >>> Movable_move.unbind move_handler ;
+      AXOJs.Node.window >>> Movable_up.unbind up_handler ;
+    in
+    (* Then we bind the mousedown event *)
+    handle#obj >>> Movable_down.bind
+      (fun (sx,sy) ->
+         mx <- sx ; my <- sy ;
+         container#auto_set_z_index >>> ignore ;
+         AXOJs.Node.window >>> Movable_move.bind move_handler ;
+         AXOJs.Node.window >>> Movable_up.bind up_handler
+      )
+
+end
 
 
 

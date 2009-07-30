@@ -1,4 +1,4 @@
-(**This module allow easy creation of "graphical" widgets*)
+(** This module allow easy creation of "graphical" widgets *)
 
 (** Each widget kind is organised with :
 
@@ -38,6 +38,8 @@
         end
       let btw = new text_button_widget_wrap true "btw" (AXOHtml.Low.span ())]
 
+ This organisation is heavily based on multiple inheritance.
+
  *)
 
 (* /!\       all plugins are compatible with each other       /!\ *)
@@ -46,7 +48,7 @@
 open JSOO
 open AXOLang
 
-(* Common denominator to every class coded here.
+(* Common denominator to every class coded in this module.
  * TODO: use the friend-methods hack showed in the Manual to hide this method *)
 class virtual common =
 object
@@ -55,7 +57,7 @@ object
         should always return the very same object. *)
 end
 
-(*This class allow the wraping of an obj into a common-compatible ocamlobject*)
+(* This class allow the wraping of an obj into a common-compatible ocamlobject *)
 class common_wrap obj_ =
 object
   inherit common
@@ -63,10 +65,13 @@ object
 end
 
 
-(**********************)
-(*** Simple widgets ***)
-(**********************)
+(** {2 Simple widgets} *)
+(** Inheriting from [widget] provides a complete set of methods for attributes
+  * and style manipulation. As it is based on Dom/XHTML/CSS properties, one
+  * should be familiar with concepts of {em position}, {em Dom tree} and the
+  * such. *)
 
+(** {4 types for attribute manipulation } *)
 
 (** Position attribute enumeration *)
 type position =
@@ -96,7 +101,6 @@ let hex r g b = (( "#" ^ Printf.sprintf "%X%X%X" r g b) : color )
 
 
 class virtual generic_widget = (* interface *)
-(** The class [widget] provides some attribute manipulation methods. *)
 object
 
   inherit common
@@ -104,62 +108,80 @@ object
   method virtual get_width  : int
   (** the width of the widget (in px) *)
 
-  method virtual get_height : int
-  (** the heigth of the widget (in px) *)
-
-  method virtual get_x      : int
-  (** the x position of the widget (from the left border) *)
-
-  method virtual get_y      : int
-  (** the y position of the widget (from the top border ) *)
-
   method virtual set_width  : int -> unit
   (** change width *)
+
+  method virtual get_height : int
+  (** the heigth of the widget (in px) *)
 
   method virtual set_height : int -> unit
   (** change height *)
 
+  method virtual get_x      : int
+  (** the distance between the widget and the left border of the first
+  * positioned parent. *)
+
   method virtual set_x      : int -> unit
-  (** change x with 0 being the left most position *)
+  (** set the distance between the widget and the left border of the first
+  * positioned parent to the given value. *)
 
   method virtual set_anti_x : int -> unit
-  (** change x with 0 being the right most position *)
+  (** set the distance between the widget and the right border of the first
+  * positioned parent to the given value. *)
+
+  method virtual get_y      : int
+  (** the distance between the widget and the top border of the first
+    * positioned parent *)
 
   method virtual set_y      : int -> unit
-  (** change y with 0 being the top position *)
+  (** set the distance between the widget and the top border of the first
+  * positioned parent to the given value. *)
 
   method virtual set_anti_y : int -> unit
- (** change y with 0 being the bottom position *)
+  (** set the distance between the widget and the bottom border of the first
+  * positioned parent to the given value. *)
 
   method virtual move_x     : int -> unit
-  (** add to x *)
+  (** increase the distance between the widget and the left border of the first
+  * positioned parent by a given amount. It automatically decreases the distance
+  * between the widget and the right border of the first positioned parent
+  * accordingly. Argument can be less than zero. *)
 
   method virtual move_y     : int -> unit
-  (** add to y *)
+  (** increase the distance between the widget and the top border of the first
+  * positioned parent by a given amount. It automatically decreases the distance
+  * between the widget and the bottom border of the first positioned parent
+  * accordingly. Argument can be less than zero. *)
 
   method virtual set_attribute : string -> string -> unit
-  (** set an attribute *)
+  (** [set_attribute name value] sets the attribute [name] to [value]. It is
+  * mid-level and should be used carefully. *)
 
   method virtual get_attribute : string -> string
-  (** get an attribute *)
+  (** [get_attribute name] returns the value held by the node's [name]
+  * attribute. *)
 
   method virtual remove_attribute : string -> unit
-  (** remove an attribute *)
+  (** [remove_attribute name] wipes the value help by the node's [name]
+  * attribute out. *)
 
   method virtual set_position : position -> unit
-  (** set the position *)
+  (** change the {em position} attribute to the given value. *)
 
   method virtual get_position : position
-  (** get the current value of the position *)
+  (** get the current value of the {em position} attribute. *)
 
   method virtual set_z_index : int -> unit
-  (** Set the zIndex attribute *)
+  (** Set the zIndex attribute. Use it to place overlaping widgets above or
+  * bellow one another. *)
 
   method virtual get_z_index : int
   (** Get the zIndex attibute *)
 
   method virtual auto_set_z_index : int
-  (** Set the zIndex according to [AXOJs.Misc.new_z_index] and returns it *)
+  (** Set the zIndex according to [AXOJs.Misc.new_z_index] and returns it. If
+    * the only method used to set zIndex's is this one, it places the widget on
+    * top of the others. *)
 
   method virtual set_background : color -> unit
   (** Set the background color for the widget *)
@@ -236,13 +258,13 @@ object (self)
     self#get_style_property "background"
 
   method set_margin_left (m : int) : unit =
-    self#set_style_property "marginLeft" (string_of_int m)
+    self#set_style_property "marginLeft" (string_of_px m)
   method set_margin_right (m : int) : unit =
-    self#set_style_property "marginRight" (string_of_int m)
+    self#set_style_property "marginRight" (string_of_px m)
   method set_margin_top (m : int) : unit =
-    self#set_style_property "marginRight" (string_of_int m)
+    self#set_style_property "marginRight" (string_of_px m)
   method set_margin_bottom (m : int) : unit =
-    self#set_style_property "marginRight" (string_of_int m)
+    self#set_style_property "marginRight" (string_of_px m)
 
   method set_style_property name value =
     self#obj >>> get "style" >>> set name (string value)
@@ -264,7 +286,7 @@ end
 (*** Containers ***)
 (******************)
 class virtual generic_container =
-(** A [container] is a node where you can put widgets into *)
+(** A [container] is a node you can put common's into. It provides *)
 object
 
   inherit common

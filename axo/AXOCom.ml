@@ -4,7 +4,7 @@
 open AXOLang
 
 (* internal only : replace every occurence of a char with a string
-* TODO : use regexp with escaping for special characters. Current implementation in O(length)*)
+* TODO: use regexp with escaping for special characters. Current implementation in O(length)*)
 let seek_and_destroy seek destroy str =
   let rec aux str =                    
     try                                
@@ -29,7 +29,7 @@ let urlencode_string str = (*TODO: improve performances ( O(21*length) ~ 0(lengt
   List.fold_left (fun a (s,d) -> seek_and_destroy s d a)
     str percent_assoc
    
-(* internal only : takes a list of (name,value) and makes it url-friendly*)
+(* internal only : takes a list of (name,value) and makes it url-friendly *)
 let urlencode args =
  String.concat "&"
    (List.map
