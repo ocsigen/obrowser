@@ -127,14 +127,14 @@ module Misc =
   (** Several useful things. May need improvements/completion *)
 struct
 
-  let navigator_id =
-    JSOO.eval "navigator.appName"
+  let navigator_id () = JSOO.eval "navigator.appName"
   let disable_selection () =
     JSOO.eval "document.onmousedown = function() {return false;}"
   let (new_z_index, current_z_index) = (* use it as a unique zIndex well *)
     let zindex = ref 0 in
       ((fun () -> incr zindex ; !zindex),
-       (fun () -> !zindex)) 
+       (fun () -> !zindex))
+  let get_location () = JSOO.eval "window.location"
 
 end
 

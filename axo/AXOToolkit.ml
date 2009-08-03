@@ -163,11 +163,6 @@ object (* OBOB proof *)
   inherit AXOWidgets.button_plugin activated as b
   inherit text_plugin (cycle ()) as t
 
-  method clear_click_actions =
-    b # clear_click_actions ;
-    b # add_click_action
-      (fun () -> t # set_text (cycle ()))
-
   initializer 
     b # add_click_action (fun () -> t # set_text (cycle ()))
 
@@ -179,6 +174,33 @@ object
   inherit cyclic_text_button_plugin
     activated hd_txt tl_txt
 
+end
+class virtual cyclic_img_button_plugin activated hd_srcs tl_srcs =
+  let q =
+    let q = Queue.create () in
+      List.iter (fun t -> Queue.push t q) ( hd_srcs :: tl_srcs ) ;
+      q
+  in
+  let cycle () =
+    let res = Queue.pop q in
+      Queue.push res q ;
+      res
+  in
+object (* OBOB proof *)
+
+  inherit AXOWidgets.common
+  inherit AXOWidgets.button_plugin activated as b
+  inherit text_plugin (cycle ()) as t
+
+  initializer 
+    b # add_click_action (fun () -> t # set_text (cycle ()))
+
+end
+class img_button ?(activated = true) ?(alt = "") src =
+object
+  inherit AXOWidgets.common_wrap (AXOHtml.High.img ~src ~alt ())
+  inherit AXOWidgets.button_plugin activated
+  inherit AXOWidgets.widget_plugin
 end
 
 
@@ -456,6 +478,7 @@ object (self)
     x#set_anti_x 0 ;
     x#add_click_action (fun () -> self#hide) ;
     c#set_background background ;
+    c#set_style_property "padding" "2px" ;
     c#add_common ( x        :> AXOWidgets.common ) ;
     c#add_common ( (new br) :> AXOWidgets.common ) ;
     c#add_common ( content  :> AXOWidgets.common ) ;

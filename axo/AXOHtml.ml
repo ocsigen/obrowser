@@ -102,14 +102,18 @@ struct
     match value with
       | None -> obj
       | Some v -> obj >>> AXOJs.Node.set_attribute name v ; obj
+  let set_attr name value obj =
+    obj >>> AXOJs.Node.set_attribute name value ; obj
   let set_opt_attrs attrs obj =
     List.fold_left (fun o (n,v) -> o >>> set_opt_attr n v) obj attrs
+  let set_attrs attrs obj =
+    List.fold_left (fun o (n,v) -> o >>> set_attr n v) obj attrs
 
   let a ?href ?name ?target ?attrs ?children () =
     ( Low.a ?attrs ?children () ) >>> set_opt_attrs
         [ "href",href ; "name",name ; "target",target ]
   let img ~src ~alt ?height ?width ?attrs () = 
-    ( Low.img ?attrs () ) >>> set_opt_attrs [ "src",src ; "alt",alt ]
+    ( Low.img ?attrs () ) >>> set_attrs [ "src",src ; "alt",alt ]
 
 
   let ul ?attrs lis = Low.ul ?attrs ~children:lis ()

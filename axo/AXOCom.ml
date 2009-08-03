@@ -118,6 +118,6 @@ let check_for_error dom =
     if h = "parsererror"
     then
       failwith (  "parsererror : "
-                ^ (ddom >>> JSOO.get "nodeName" >>> JSOO.as_string))
+                ^ (ddom >>> JSOO.get "textContent" >>> JSOO.as_string))
     else
       ()
