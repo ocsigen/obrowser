@@ -3,8 +3,8 @@
 
 open AXOLang
 
-(* internal only : replace every occurence of a char with a string
-* TODO: use regexp with escaping for special characters. Current implementation in O(length)*)
+(*
+(* internal only : replace every occurence of a char with a string *)
 let seek_and_destroy seek destroy str =
   let rec aux str =                    
     try                                
@@ -23,11 +23,13 @@ let percent_assoc = (*/!\ '%' must be first ; ' ' must be after '+' !*)
    ('&', "%26") ; ('=', "%3D") ; ('+', "%2B") ; ('$', "%24") ; (',', "%2C") ;
    ('/', "%2F") ; ('?', "%3F") ; ('#', "%23") ; ('[', "%5B") ; (']', "%5D") ;
    (' ', "+")   ]
-
+ *)
 (* internal only : encode a string according to percent-encoding system *)
-let urlencode_string str = (*TODO: improve performances ( O(21*length) ~ 0(length) but still...) *)
-  List.fold_left (fun a (s,d) -> seek_and_destroy s d a)
-    str percent_assoc
+let urlencode_string str =
+  AXOJs.Node.window >>> JSOO.call_method "escape" [| JSOO.string str |]
+                    >>> JSOO.as_string
+(*  List.fold_left (fun a (s,d) -> seek_and_destroy s d a)
+    str percent_assoc *)
    
 (* internal only : takes a list of (name,value) and makes it url-friendly *)
 let urlencode args =
@@ -72,6 +74,8 @@ let alert_on_code
      ?(on_5xx = fun (_,m) -> AXOJs.alert m)
      res =
   match (fst res) / 100 with
+    | 0 -> AXOJs.alert "Server is offline or couldn't be reached" ;
+           failwith (snd res)
     | 1 -> on_1xx res
     | 2 -> on_2xx res
     | 3 -> on_3xx res
@@ -92,6 +96,8 @@ let dynload_post url args
       parse =
   let (code, msg) as res = http_post url args in
     match code / 100 with
+      | 0 -> AXOJs.alert "Server is offline or couldn't be reached" ;
+             failwith msg
       | 1 -> on_1xx res
       | 2 -> parse msg
       | 3 -> on_3xx res
@@ -121,3 +127,21 @@ let check_for_error dom =
                 ^ (ddom >>> JSOO.get "textContent" >>> JSOO.as_string))
     else
       ()
+
+(*
+(** Tamper url fragment (see http://ajaxpatterns.org/Unique_URLs ) for reasons
+  * to use this 'hack' *)
+let write_fragment s =
+  AXOJs.Node.window >>> JSOO.get "location" >>> JSOO.set "hash" s
+let read_fragment () =
+  AXOJs.Node.window >>> JSOO.get "location" >>> JSOO.get "hash"
+let init_on_fragment_change_listener =
+let register_on_fragment_change_function =
+  let fresh = let c = ref 0 in fun () -> incr c ; !c in
+  let closures = JSOO.eval "[]" in
+  let ids = ref [] in
+  let interval = 500 in
+  (fun f ->
+  
+  )
+ *)

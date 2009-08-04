@@ -173,7 +173,7 @@ let (alert, rich_alert) = (* does not interrupt the Js engine *)
       panel >>> Node.append (Node.element "br") ;
       panel >>> Node.append button ;
       panel >>> Node.set_attribute "style"
-        "position: fixed; left: 50%; bottom: 50%; \
+        "position: fixed; right: 10%; top:  10%; \
          -moz-border-radius: 5px; padding: 10px; \
          background-color: white; text-align: right; \
          z-index: 2147483647;" ;
@@ -197,7 +197,7 @@ let (alert, rich_alert) = (* does not interrupt the Js engine *)
       panel >>> Node.append (Node.element "br") ;
       panel >>> Node.append button ;
       panel >>> Node.set_attribute "style"
-        "position: fixed; left: 50%; bottom: 50%; \
+        "position: fixed; right: 10%; top: 10%; \
          -moz-border-radius: 5px; padding: 10px; \
          background-color: white; text-align: right; \
          z-index : 2147483647;" ;

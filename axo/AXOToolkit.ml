@@ -4,7 +4,6 @@
 open JSOO
 open AXOLang
 
-let text t = new AXOWidgets.common_wrap (AXOJs.Node.text t)
 
 (*********************)
 (*** Empty widgets ***)
@@ -25,30 +24,20 @@ end
 class br =
 object inherit AXOWidgets.common_wrap (AXOHtml.Low.br ()) end
 class nbsp =
-object inherit AXOWidgets.common_wrap (AXOJs.Node.text "&nbsp;") end
+object inherit AXOWidgets.common_wrap (AXOJs.Node.element "&nbsp;") end
 
 
 
 (************)
 (*** text ***)
 (************)
-(* As it's not compatible with [container]s it cannot be considered a proper
- * widget. *)
-class virtual generic_text = (* interface *)
-object
-  inherit AXOWidgets.common
-  method virtual get_text : string
-  (** get the text content *)
+(* simple static text 'common' *)
+let text t = new AXOWidgets.common_wrap (AXOJs.Node.text t)
 
-  method virtual set_text : string -> unit
-  (** set the content to a new one *)
-
-end
-class virtual text_plugin txt = (* plugin *)
+class text_widget_wrap txt obj_ =
 object (self)
-
-  inherit AXOWidgets.common
-  inherit generic_text
+  inherit AXOWidgets.common_wrap obj_
+  inherit AXOWidgets.widget_plugin
   val mutable text = txt
 
   method get_text   = text
@@ -61,17 +50,10 @@ object (self)
 
 end
 
-class text_wrap txt obj_ =
-object
-  inherit AXOWidgets.common_wrap obj_
-  inherit AXOWidgets.widget_plugin
-  inherit text_plugin txt
-end
-
-class inline_text txt =
-object inherit text_wrap  txt (AXOHtml.Low.span ()) end
-class block_text txt =
-object inherit text_wrap  txt (AXOHtml.Low.div ()) end
+class inline_widget_text txt =
+object inherit text_widget_wrap txt (AXOHtml.Low.span ()) end
+class block_widget_text txt =
+object inherit text_widget_wrap txt (AXOHtml.Low.div ()) end
 
 (**************************)
 (*** Classic containers ***)
@@ -116,37 +98,41 @@ end
 (***************************************)
 (*** Container with widget abilities ***)
 (***************************************)
-class virtual generic_widget_container =
-object
-  inherit AXOWidgets.generic_container
-  inherit AXOWidgets.generic_widget
-end
 class widget_container_wrap obj_ =
 object
   inherit AXOWidgets.common_wrap obj_
-  inherit AXOWidgets.widget_plugin
   inherit AXOWidgets.container_plugin
+  inherit AXOWidgets.widget_plugin
 end
-class block_widget_container = widget_container_wrap (AXOHtml.Low.div ())
-class inline_widget_container = widget_container_wrap (AXOHtml.Low.div ())
+class block_widget_container =
+object
+  inherit widget_container_wrap (AXOHtml.Low.div ())
+end
+class inline_widget_container =
+object
+  inherit widget_container_wrap (AXOHtml.Low.div ())
+end
+class widget_vbox =
+object
+  inherit vbox
+  inherit AXOWidgets.widget_plugin
+end
 
 (*************************)
 (*** Some more buttons ***)
 (*************************)
 class inline_text_button ?(activated = true) txt =
 object
-  inherit AXOWidgets.common_wrap (AXOHtml.Low.span ())
+  inherit text_widget_wrap txt (AXOHtml.Low.span ())
   inherit AXOWidgets.button_plugin activated
-  inherit text_plugin txt
 end
 class inline_text_widget_button ?(activated = true) txt =
 object
-  inherit AXOWidgets.common_wrap (AXOHtml.Low.span ())
+  inherit text_widget_wrap txt (AXOHtml.Low.span ())
   inherit AXOWidgets.widget_plugin
   inherit AXOWidgets.button_plugin activated
-  inherit text_plugin txt
 end
-class virtual cyclic_text_button_plugin activated hd_txt tl_txt =
+class virtual cyclic_text_button_wrap activated hd_txt tl_txt obj_ =
   let q =
     let q = Queue.create () in
       List.iter (fun t -> Queue.push t q) ( hd_txt :: tl_txt ) ;
@@ -159,9 +145,8 @@ class virtual cyclic_text_button_plugin activated hd_txt tl_txt =
   in
 object (* OBOB proof *)
 
-  inherit AXOWidgets.common
+  inherit text_widget_wrap (cycle ()) obj_ as t
   inherit AXOWidgets.button_plugin activated as b
-  inherit text_plugin (cycle ()) as t
 
   initializer 
     b # add_click_action (fun () -> t # set_text (cycle ()))
@@ -170,12 +155,11 @@ end
 class cyclic_inline_text_button ?(activated = true) hd_txt tl_txt =
 object
 
-  inherit AXOWidgets.common_wrap (AXOHtml.Low.span ())
-  inherit cyclic_text_button_plugin
-    activated hd_txt tl_txt
+  inherit cyclic_text_button_wrap
+    activated hd_txt tl_txt (AXOHtml.Low.span ())
 
 end
-class virtual cyclic_img_button_plugin activated hd_srcs tl_srcs =
+class cyclic_img_button ?(activated = true) alt hd_srcs tl_srcs =
   let q =
     let q = Queue.create () in
       List.iter (fun t -> Queue.push t q) ( hd_srcs :: tl_srcs ) ;
@@ -186,14 +170,14 @@ class virtual cyclic_img_button_plugin activated hd_srcs tl_srcs =
       Queue.push res q ;
       res
   in
-object (* OBOB proof *)
+object (self)
 
-  inherit AXOWidgets.common
+  inherit AXOWidgets.common_wrap (AXOHtml.High.img ~src:(cycle ()) ~alt ())
   inherit AXOWidgets.button_plugin activated as b
-  inherit text_plugin (cycle ()) as t
+  inherit AXOWidgets.widget_plugin
 
   initializer 
-    b # add_click_action (fun () -> t # set_text (cycle ()))
+    b # add_click_action (fun () -> self#set_attribute "src" (cycle ()))
 
 end
 class img_button ?(activated = true) ?(alt = "") src =
@@ -265,7 +249,8 @@ object (self)
     s#obj >>> On_input_change.bind
          (fun v ->
             AXOCom.alert_on_code
-              ( AXOCom.http_post url ((name, v) :: args) )
+              ( AXOCom.http_post url
+                  ( (name, string_of_t (t_of_string v)) :: args) )
          )
 
 end
@@ -442,32 +427,28 @@ end
 (*************)
 (*** popup ***)
 (*************)
-class popup ?(background = "white") content =
-  let c = new block_widget_container in
+class popup ?(background = "white") cont =
   let m = new mask in
   let x = new inline_text_widget_button "CLOSE" in
-object (self)
+object (self) (*TODO: restrict access to the container part of self by forcing type in .mli *)
 
+  inherit block_widget_container as c
   val mutable showed = false
 
-  method show place =
+  method show =
     if showed
     then ()
     else (
       ignore (m#auto_set_z_index) ;
       AXOWidgets.body#add_common ( m :> AXOWidgets.common ) ;
       ignore (c#auto_set_z_index) ;
-      (match place with
-         | None -> c#set_position AXOWidgets.Fixed ; c#set_x 10 ; c#set_y 10 ;
-         | Some (p, x, y) ->    c#set_position p ; c#set_x x  ; c#set_y y  ;
-      ) ;
-      AXOWidgets.body#add_common ( c :> AXOWidgets.common ) ;
+      AXOWidgets.body#add_common ( self :> AXOWidgets.common ) ;
       showed <- not showed ;
     )
   method hide =
     if showed
     then (
-      AXOWidgets.body#remove_common ( c :> AXOWidgets.common ) ;
+      AXOWidgets.body#remove_common ( self :> AXOWidgets.common ) ;
       AXOWidgets.body#remove_common ( m :> AXOWidgets.common ) ;
       showed <- not showed ;
     )
@@ -481,7 +462,7 @@ object (self)
     c#set_style_property "padding" "2px" ;
     c#add_common ( x        :> AXOWidgets.common ) ;
     c#add_common ( (new br) :> AXOWidgets.common ) ;
-    c#add_common ( content  :> AXOWidgets.common ) ;
+    c#add_common ( cont     :> AXOWidgets.common ) ;
 
 end
 
