@@ -412,12 +412,24 @@ end
 (*** link ***)
 (************)
 (*TODO: make a link_widget with multiple inheritance *)
-(*TODO: make an image_link *)
 class link ?href txt = (*TODO: add set_text and get_text method *)
 object (self)
 
   inherit AXOWidgets.common_wrap
     (AXOHtml.High.a ?href ~children:[AXOHtml.Low.string txt] ())
+
+  method set_href href = self#obj >>> AXOJs.Node.set_attribute "href" href
+  method get_href      = self#obj >>> AXOJs.Node.get_attribute "href"
+
+end
+class img_link ?href ~src ~alt =
+object (self)
+
+  inherit AXOWidgets.widget_wrap
+    (AXOHtml.High.a ?href
+       ~children:[AXOHtml.High.img ~src ~alt ()]
+       ()
+    )
 
   method set_href href = self#obj >>> AXOJs.Node.set_attribute "href" href
   method get_href      = self#obj >>> AXOJs.Node.get_attribute "href"

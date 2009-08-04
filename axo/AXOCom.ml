@@ -128,20 +128,46 @@ let check_for_error dom =
     else
       ()
 
-(*
+
+
 (** Tamper url fragment (see http://ajaxpatterns.org/Unique_URLs ) for reasons
   * to use this 'hack' *)
 let write_fragment s =
   AXOJs.Node.window >>> JSOO.get "location" >>> JSOO.set "hash" s
 let read_fragment () =
-  AXOJs.Node.window >>> JSOO.get "location" >>> JSOO.get "hash"
-let init_on_fragment_change_listener =
-let register_on_fragment_change_function =
-  let fresh = let c = ref 0 in fun () -> incr c ; !c in
-  let closures = JSOO.eval "[]" in
-  let ids = ref [] in
-  let interval = 500 in
-  (fun f ->
-  
+  AXOJs.Node.window >>> JSOO.get "location"
+                    >>> JSOO.get "hash"
+                    >>> JSOO.as_string
+
+(** This three functions are for managing fragment changes and the effect they
+  * have. None of those have been tested and there are some obvious problems
+  * that need to be corrected before serious use ("aux" should be made thread
+  * friendly and "JSOO.wrap_event" is not the function to call here).
+  *
+  * The first is for initiating the listener loop (it starts an infinite loop)
+  * The second is for adding (binding) an event.
+  * The third for withdrawing (unbinding) an event.
+  * *)
+let init_fragment_polling,
+    add_on_fragment_change_event,
+    remove_on_fragment_change_event
+    =
+  let last_hash = ref (read_fragment ()) in
+  let closures = ref [] in
+  let rec aux _ =
+    if !last_hash = read_fragment ()
+    then ()
+    else (
+      List.iter (fun f -> f ()) !closures ;
+      last_hash := read_fragment () ;
+    ) ;
+    AXOJs.Node.window >>> JSOO.call_method "setTimeout"
+      [| (JSOO.wrap_event aux) ; JSOO.int 500 |]
+  in
+  (
+   (fun () -> aux (JSOO.inject JSOO.Nil)),
+   (fun f -> closures := f :: (List.filter ((!=) f) !closures)),
+   (fun f -> closures := List.filter ((!=) f) !closures)
   )
- *)
+
+
