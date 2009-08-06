@@ -369,13 +369,63 @@ object (self)
       ) ;
 
 end
+class dynamic_block_foldable
+  ?(persistent_as_container = false)
+  (button     : AXOWidgets.generic_button   )
+  (persistent : AXOWidgets.generic_container)
+  (foldable   : unit -> AXOWidgets.generic_container)
+  =
+  let box =
+    if persistent_as_container
+    then persistent
+    else new block_container
+  in
+object (self)
+
+  method obj = box # obj
+  inherit AXOWidgets.widget_plugin
+
+  val mutable folded_ = true
+  val mutable current_foldable = None
+
+  method get_persistent = persistent
+  method get_last_foldable = current_foldable
+
+  method private unfold =
+    current_foldable <- Some (foldable ()) ;
+    box#add_common (LOption.unopt current_foldable :> AXOWidgets.common) ;
+  method private fold =
+    box#remove_common (LOption.unopt current_foldable :> AXOWidgets.common) ;
+    
+
+  initializer
+      box#add_common
+        ?before:(try Some (List.hd box#get_content) with Failure "hd" -> None)
+        (button :> AXOWidgets.common)
+    ;
+    if persistent_as_container
+    then ()
+    else box#add_common (persistent :> AXOWidgets.common)
+    ;
+    button # add_click_action
+      (fun () ->
+         (if folded_
+          then self#unfold
+          else self#fold
+         ) ;
+         folded_ <- not folded_ ;
+      ) ;
+
+end
 
 
 
 (*************)
 (*** trees ***)
 (*************)
-let foldable_tree ?(depth = (-1)) ?persistent_as_container tree elements container =
+let foldable_tree ?(depth = (-1)) ?persistent_as_container
+  tree elements container
+  =
   let rec aux t l container d = (* the core function *)
     let folded = d > depth in
     let (but,com,kid) = elements t l folded
@@ -417,6 +467,17 @@ object (self)
 
   inherit AXOWidgets.common_wrap
     (AXOHtml.High.a ?href ~children:[AXOHtml.Low.string txt] ())
+
+  method set_href href = self#obj >>> AXOJs.Node.set_attribute "href" href
+  method get_href      = self#obj >>> AXOJs.Node.get_attribute "href"
+
+end
+class link_widget ?href txt = (*TODO: add set_text and get_text method *)
+object (self)
+
+  inherit AXOWidgets.common_wrap
+    (AXOHtml.High.a ?href ~children:[AXOHtml.Low.string txt] ())
+  inherit AXOWidgets.widget_plugin
 
   method set_href href = self#obj >>> AXOJs.Node.set_attribute "href" href
   method get_href      = self#obj >>> AXOJs.Node.get_attribute "href"
@@ -550,7 +611,7 @@ object
   inherit block_widget_container as container
 
   (* temporary values to remember the coordinates of the mouse when the move
-  * begun. *)
+  * is initiated. *)
   val mutable mx = 0
   val mutable my = 0
 

@@ -199,4 +199,9 @@ module LTree = struct
       | { children = c } :: tl -> aux c || auxaux tl
     in aux (get_children parent)
 
+  let sort ?(comp = compare) t =
+    let rec aux { content = n ; children = c } =
+      node n (List.map aux (List.sort comp c))
+    in aux t
+
 end
