@@ -19,6 +19,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
+
 (** This module allows easy creation of "graphical" widgets *)
 
 (** Each widget kind is organised with :
