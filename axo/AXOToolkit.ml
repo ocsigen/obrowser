@@ -185,25 +185,37 @@ object
     activated hd_txt tl_txt (AXOHtml.Low.span ())
 
 end
+
+
+(* The lazyness prevents reloading *)
 class cyclic_img_button ?(activated = true) alt hd_srcs tl_srcs =
+  let c = new inline_container in
   let q =
     let q = Queue.create () in
-      List.iter (fun t -> Queue.push t q) ( hd_srcs :: tl_srcs ) ;
+      List.iter
+        (fun src ->
+           Queue.push
+             (lazy (new AXOWidgets.common_wrap (AXOHtml.High.img ~src ~alt ())))
+             q
+        )
+        ( hd_srcs :: tl_srcs ) ;
       q
   in
   let cycle () =
     let res = Queue.pop q in
       Queue.push res q ;
-      res
+      c#wipe_content ;
+      c#add_common (Lazy.force res)
   in
 object (self)
 
-  inherit AXOWidgets.common_wrap (AXOHtml.High.img ~src:(cycle ()) ~alt ())
+  method obj = c#obj
   inherit AXOWidgets.button_plugin activated as b
   inherit AXOWidgets.widget_plugin
 
   initializer 
-    b # add_click_action (fun () -> self#set_attribute "src" (cycle ()))
+    cycle () ;
+    b # add_click_action ( fun () -> cycle () ) ;
 
 end
 class img_button ?(activated = true) ?(alt = "") src =
