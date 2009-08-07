@@ -32,11 +32,13 @@ open AXOLang
 (*********************)
 class block_widget =
 object
-  inherit AXOWidgets.widget_wrap (AXOHtml.Low.div ())
+  inherit AXOWidgets.common_wrap (AXOHtml.Low.div ())
+  inherit AXOWidgets.widget_plugin
 end
 class inline_widget =
 object
-  inherit AXOWidgets.widget_wrap (AXOHtml.Low.span ())
+  inherit AXOWidgets.common_wrap (AXOHtml.Low.span ())
+  inherit AXOWidgets.widget_plugin
 end
 
 
@@ -82,11 +84,13 @@ object inherit text_widget_wrap txt (AXOHtml.Low.div ()) end
 (**************************)
 class block_container =
 object
-  inherit AXOWidgets.container_wrap (AXOHtml.Low.div ())
+  inherit AXOWidgets.common_wrap (AXOHtml.Low.div ())
+  inherit AXOWidgets.container_plugin
 end
 class inline_container =
 object
-  inherit AXOWidgets.container_wrap (AXOHtml.Low.span ())
+  inherit AXOWidgets.common_wrap (AXOHtml.Low.span ())
+  inherit AXOWidgets.container_plugin
 end
 class vbox =
 object ( self )
@@ -228,39 +232,41 @@ module On_input_change =
 class [ 'a ] select string_of_t t_of_string (value : 'a) alts =
 object (self)
 
-  inherit AXOWidgets.widget_container_wrap (AXOHtml.Low.select ()) as wc
+  inherit AXOWidgets.common_wrap (AXOHtml.Low.select ())
+  inherit AXOWidgets.widget_plugin
+  inherit AXOWidgets.container_plugin
 
   val mutable option_list = []
   val mutable current = value
 
   method get_value   = current
-  method set_value v = wc#set_attribute "value" (string_of_t v) ; current <- v
+  method set_value v = self#set_attribute "value" (string_of_t v) ; current <- v
   method private set_value_ s =
-    wc#set_attribute "value" s ; current <- (t_of_string s)
+    self#set_attribute "value" s ; current <- (t_of_string s)
 
   method add_option value =
     let child = new AXOWidgets.common_wrap
                   (AXOHtml.High.option (string_of_t value) )
     in
       option_list <- ( child, value ) :: option_list ;
-      wc # add_common child ;
+      self # add_common child ;
 
   method private remove_by f =
     let ( (child,_),new_option_list ) = LList.find_remove f option_list in
-      wc # remove_common child ;
+      self # remove_common child ;
       option_list <- new_option_list ;
   method remove_option value =
       self#remove_by (fun (_,v) -> v = value)
 
   method set_editable b =
     if b
-    then try wc#set_attribute "diasbled" "disabled" with _ -> ()
-    else try wc#remove_attribute "disabled" with _ -> ()
+    then try self#set_attribute "diasbled" "disabled" with _ -> ()
+    else try self#remove_attribute "disabled" with _ -> ()
 
   initializer
     List.iter (fun v -> self#add_option v) ( value :: alts ) ;
-    wc#set_attribute "value" (string_of_t value) ;
-    wc#obj >>> On_input_change.bind (fun s -> self#set_value_ s)
+    self#set_attribute "value" (string_of_t value) ;
+    self#obj >>> On_input_change.bind (fun s -> self#set_value_ s)
 
 end
 class [ 'a ] auto_update_select string_of_t t_of_string (value : 'a) alts
@@ -282,11 +288,12 @@ end
 class text_input value =
 object (self)
 
-  inherit AXOWidgets.widget_wrap
+  inherit AXOWidgets.common_wrap
          ( AXOHtml.Low.input
              ~attrs:[("type", "text") ; ("value", value)]
              ()
          )
+  inherit AXOWidgets.widget_plugin
 
   val mutable v = value
   method get_value    = v
@@ -303,7 +310,7 @@ class [ 'a ] typed_text_input
   string_of_t t_of_string (value : 'a) =
 object (self)
 
-  inherit AXOWidgets.widget_wrap
+  inherit AXOWidgets.common_wrap
          ( AXOHtml.Low.input
              ~attrs:(
                LOption.optionnaly_add_to_list
@@ -314,24 +321,28 @@ object (self)
                  )
              )
              ()
-         ) as w
+         )
+  inherit AXOWidgets.widget_plugin
 
   val mutable v = value
   
   method get_value    = v
-  method set_value vv = w#set_attribute "value" (string_of_t vv) ; v <- vv
+  method set_value vv = self#set_attribute "value" (string_of_t vv) ; v <- vv
 
   initializer
-    w#obj >>> On_input_change.bind
-      (let bgcol = ref (try w # get_background with _ -> "") in
+    self#obj >>> On_input_change.bind
+      (let bgcol =
+         ref (try self # get_style_property "background" with _ -> "")
+       in
        fun sv ->
          try
            self # set_value (t_of_string sv) ;
-           w#set_background !bgcol ;
+           self#set_style_property "background" !bgcol ;
          with _ ->
            self # set_value v ;
-           bgcol := (try w # get_background with _ -> "") ;
-           LOption.cb_on_opted (w # set_background) parse_error_color ;
+           bgcol := (try self # get_style_property "background" with _ -> "") ;
+           LOption.cb_on_opted (self # set_style_property "background")
+                parse_error_color ;
            LOption.cb_on_opted AXOJs.alert parse_error_message ;
       )
 
@@ -508,11 +519,12 @@ end
 class img_link ?href ~src ~alt =
 object (self)
 
-  inherit AXOWidgets.widget_wrap
+  inherit AXOWidgets.common_wrap
     (AXOHtml.High.a ?href
        ~children:[AXOHtml.High.img ~src ~alt ()]
        ()
     )
+  inherit AXOWidgets.widget_plugin
 
   method set_href href = self#obj >>> AXOJs.Node.set_attribute "href" href
   method get_href      = self#obj >>> AXOJs.Node.get_attribute "href"
@@ -534,9 +546,9 @@ object (self) (*TODO: restrict access to the container part of self by forcing t
     if showed
     then ()
     else (
-      ignore (m#auto_set_z_index) ;
+      m#set_style_property "zIndex" (string_of_int (AXOJs.Misc.new_z_index ()));
       AXOWidgets.body#add_common ( m :> AXOWidgets.common ) ;
-      ignore (c#auto_set_z_index) ;
+      c#set_style_property "zIndex" (string_of_int (AXOJs.Misc.new_z_index ()));
       AXOWidgets.body#add_common ( self :> AXOWidgets.common ) ;
       showed <- not showed ;
     )
@@ -550,10 +562,11 @@ object (self) (*TODO: restrict access to the container part of self by forcing t
     else ()
 
   initializer
-    x#set_position AXOWidgets.Absolute ;
-    x#set_anti_x 0 ;
+    x#set_style_property "position"
+           (AXOWidgets.string_of_position AXOWidgets.Absolute) ;
+    x#set_style_property "right" "0px" ;
     x#add_click_action (fun () -> self#hide) ;
-    c#set_background background ;
+    c#set_style_property "background" background ;
     c#set_style_property "padding" "2px" ;
     c#add_common ( x        :> AXOWidgets.common ) ;
     c#add_common ( (new br) :> AXOWidgets.common ) ;
@@ -642,14 +655,20 @@ object
     handle#obj >>> get "style" >>> set "cursor" (JSOO.string "move") ;
     container#add_common (handle   :> AXOWidgets.common) ;
     container#add_common (content_ :> AXOWidgets.common) ;
-    container#set_position AXOWidgets.Absolute ;
+    container#set_style_property "position" (AXOWidgets.string_of_position AXOWidgets.Absolute) ;
     container#set_style_property "border" "1px" ;
     (* Then we define the handlers *)
     let rec move_handler (x,y) =
       let vx = x - mx and vy = y - my in
       mx <- x ; my <- y ;
-      container#move_x vx ;
-      container#move_y vy ;
+      container#set_style_property "left"
+        (AXOWidgets.px_string
+           ((container#get_style_property "offsetLeft" >>> int_of_string) + vx)
+        ) ;
+      container#set_style_property "top"
+        (AXOWidgets.px_string
+           ((container#get_style_property "offsetTop" >>> int_of_string) + vy)
+        ) ;
     and up_handler _ =
       AXOJs.Node.window >>> Movable_move.unbind move_handler ;
       AXOJs.Node.window >>> Movable_up.unbind up_handler ;
@@ -658,7 +677,8 @@ object
     handle#obj >>> Movable_down.bind
       (fun (sx,sy) ->
          mx <- sx ; my <- sy ;
-         container#auto_set_z_index >>> ignore ;
+         container#set_style_property "zIndex"
+                  (string_of_int (AXOJs.Misc.new_z_index ())) ;
          AXOJs.Node.window >>> Movable_move.bind move_handler ;
          AXOJs.Node.window >>> Movable_up.bind up_handler
       )

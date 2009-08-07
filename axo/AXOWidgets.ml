@@ -121,11 +121,17 @@ let rgb r g b = ((  "rgb("
                  ) : color)
 let hex r g b = (( "#" ^ Printf.sprintf "%X%X%X" r g b) : color )
 
+let px_string i = string_of_int i ^ "px"
+let pct_string i = string_of_int i ^ "%"
 
 class virtual generic_widget = (* interface *)
 object
 
   inherit common
+
+(* These methods are commented to improve speed. It makes the loading of AXO
+ * much faster, but deacreases safety (because there are less wraping for
+ * automated type conversion)
 
   method virtual get_width  : int
   (** the width of the widget (in px) *)
@@ -183,10 +189,6 @@ object
   (** [get_attribute name] returns the value held by the node's [name]
   * attribute. *)
 
-  method virtual remove_attribute : string -> unit
-  (** [remove_attribute name] wipes the value help by the node's [name]
-  * attribute out. *)
-
   method virtual set_position : position -> unit
   (** change the {em position} attribute to the given value. *)
 
@@ -222,6 +224,19 @@ object
 
   method virtual set_margin_bottom : int -> unit
   (** Set the bottom margin for the widget *)
+ *)
+
+  method virtual remove_attribute : string -> unit
+  (** [remove_attribute name] wipes the value help by the node's [name]
+  * attribute out. *)
+
+  method virtual set_attribute : string -> string -> unit
+  (** [set_attribute name value] sets the attribute [name] to [value]. It is
+  * mid-level and should be used carefully. *)
+
+  method virtual get_attribute : string -> string
+  (** [get_attribute name] returns the value held by the node's [name]
+  * attribute. *)
 
   method virtual set_style_property : string -> string -> unit
   (** [set_style_property name value] set the style property [name] to [value].
@@ -234,11 +249,11 @@ object
 end
 
 class virtual widget_plugin = (* plugin *)
-  let string_of_px i = string_of_int i ^ "px" in
+ (* let string_of_px i = string_of_int i ^ "px" in *)
 object (self)
 
   inherit generic_widget
-
+(*
   method get_width  : int = self#obj >>> get "offsetWidth"  >>> as_int
   method get_height : int = self#obj >>> get "offsetHeight" >>> as_int
   method get_x      : int = self#obj >>> get "offsetLeft"   >>> as_int
@@ -259,10 +274,6 @@ object (self)
 
   method move_x     (x : int) : unit = self#set_x (self#get_x + x)
   method move_y     (y : int) : unit = self#set_y (self#get_y + y)
-
-  method set_attribute n v  = self#obj >>> AXOJs.Node.set_attribute n v
-  method get_attribute n    = self#obj >>> AXOJs.Node.get_attribute n
-  method remove_attribute n = self#obj >>> AXOJs.Node.remove_attribute n
 
   method set_position p =
     self#set_style_property "position" (string_of_position p)
@@ -287,6 +298,11 @@ object (self)
     self#set_style_property "marginRight" (string_of_px m)
   method set_margin_bottom (m : int) : unit =
     self#set_style_property "marginRight" (string_of_px m)
+ *)
+
+  method set_attribute n v  = self#obj >>> AXOJs.Node.set_attribute n v
+  method get_attribute n    = self#obj >>> AXOJs.Node.get_attribute n
+  method remove_attribute n = self#obj >>> AXOJs.Node.remove_attribute n
 
   method set_style_property name value =
     self#obj >>> get "style" >>> set name (string value)
@@ -295,12 +311,13 @@ object (self)
 
 end
 
+(*
 class widget_wrap obj_ = (* for wraping a JSOO.obj into a widget *)
 object
   inherit common_wrap obj_
   inherit widget_plugin
 end
-
+ *)
 
 
 
@@ -349,12 +366,17 @@ object (self)
                             self#obj >>> AXOJs.Node.remove wi#obj ;
 end
 
+let body =
+  object
+    inherit common_wrap AXOJs.Node.body
+    inherit container_plugin
+  end
+(*
 class container_wrap obj_ =
 object (self)
   inherit common_wrap obj_
   inherit container_plugin
 end
-let body = new container_wrap AXOJs.Node.body
 
 (*** mixed container and widgets ***)
 class widget_container_wrap obj_ =
@@ -363,7 +385,7 @@ object
   inherit container_plugin
   inherit widget_plugin
 end
-
+ *)
 
 (**************)
 (*** button ***)
@@ -438,13 +460,13 @@ object (self)
     self#obj >>> get "style" >>> set "cursor" (JSOO.string "pointer")
 
 end
-
+(*
 class button_wrap ?(activated = true) obj_ =
 object
   inherit common_wrap obj_
   inherit button_plugin activated
 end
-
+ *)
 
 
 
@@ -488,21 +510,28 @@ module Dragg_n_drop_up =
 class shadow
     ?(style = "background-color: black; opacity: .3")
     obj = (* a shadow takes the imitated obj as argument *)
-  let w = new widget_wrap (AXOHtml.Low.div ()) in
+  let w = object
+            inherit common_wrap (AXOHtml.Low.div ())
+            inherit widget_plugin
+          end
+  in
 object (self)
 
 
   val mutable activated = false
 
-  method private move (x,y) = w#set_x (x + 2) ; w#set_y (y + 2)
+  method private move (x,y) =
+    w#set_style_property "left" (string_of_int (x + 2) ^ "px") ;
+    w#set_style_property "top"  (string_of_int (y + 2) ^ "px") ;
 
   method activate : unit =
-    w#set_width  ( obj >>> get "offsetWidth"  >>> as_int ) ;
-    w#set_height ( obj >>> get "offsetHeight" >>> as_int ) ;
+    w#set_style_property "width"
+      ( obj >>> get "offsetWidth"  >>> as_int >>> px_string ) ;
+    w#set_style_property "height"
+      ( obj >>> get "offsetHeight" >>> as_int >>> px_string ) ;
     if not activated
     then (
-      body#obj >>> Dragg_n_drop_move.bind
-                                 (fun (x,y) -> self#move (x,y)) ;
+      body#obj >>> Dragg_n_drop_move.bind (fun (x,y) -> self#move (x,y)) ;
       body#add_common (w :> common) ;
     )
 
@@ -514,8 +543,8 @@ object (self)
     )
 
   initializer
-    w#set_position Fixed ;
-    w#set_attribute "style" style
+    w#set_attribute "style" style ;
+    w#set_style_property "position" (string_of_position Fixed) ;
 
 end
 
@@ -599,10 +628,10 @@ object (self)
     self#obj >>> get "style" >>> set "cursor" (JSOO.string "move")
 
 end
-
+(*
 class dragg_wrap ?shadow_style obj_ =
 object
   inherit common_wrap obj_
   inherit dragg_plugin (new shadow ?style:shadow_style obj_)
 end
-
+ *)
