@@ -25,26 +25,18 @@
 
 open JSOO
 open AXOLang
+let (@@) f g = fun x -> f (g x)
 
-
-(*********************)
-(*** Empty widgets ***)
-(*********************)
+(** Empty widget : can be used for graphic purpose... There is no methods to change the content, it can only be stylised ! *)
 class block_widget =
 object
   inherit AXOWidgets.common_wrap (AXOHtml.Low.div ())
   inherit AXOWidgets.widget_plugin
 end
-class inline_widget =
-object
-  inherit AXOWidgets.common_wrap (AXOHtml.Low.span ())
-  inherit AXOWidgets.widget_plugin
-end
 
 
-(******************************)
-(*** BR & other "constants" ***)
-(******************************)
+
+(** BR & other "constants" : make childless nodes *)
 class br =
 object inherit AXOWidgets.common_wrap (AXOHtml.Low.br ()) end
 class nbsp =
@@ -52,12 +44,12 @@ object inherit AXOWidgets.common_wrap (AXOJs.Node.element "&nbsp;") end
 
 
 
-(************)
-(*** text ***)
-(************)
+(** Text *)
+
 (* simple static text 'common' *)
 let text t = new AXOWidgets.common_wrap (AXOJs.Node.text t)
 
+(** text_widget : widgets with a text content that can be changed afterward *)
 class text_widget_wrap txt obj_ =
 object (self)
   inherit AXOWidgets.common_wrap obj_
@@ -73,15 +65,14 @@ object (self)
   initializer self#obj >>> AXOJs.Node.append (AXOJs.Node.text txt)
 
 end
-
 class inline_widget_text txt =
 object inherit text_widget_wrap txt (AXOHtml.Low.span ()) end
 class block_widget_text txt =
 object inherit text_widget_wrap txt (AXOHtml.Low.div ()) end
 
-(**************************)
-(*** Classic containers ***)
-(**************************)
+
+
+(** Classic containers : blocks, inline and vbox*)
 class block_container =
 object
   inherit AXOWidgets.common_wrap (AXOHtml.Low.div ())
@@ -92,38 +83,38 @@ object
   inherit AXOWidgets.common_wrap (AXOHtml.Low.span ())
   inherit AXOWidgets.container_plugin
 end
-class vbox =
+class vbox = (* a different implementation of generic_container inserting br's between elements *)
 object ( self )
 
   inherit AXOWidgets.common_wrap (AXOHtml.Low.div ())
   inherit AXOWidgets.generic_container
   val mutable content = []
+
   method get_content   = fst (List.split content)
   method wipe_content  = content <- [] ;
                          self#obj >>> AXOJs.Node.empty ;
+
   method add_common ?before wi =
     let br = new br in
-      match before with
-        | None ->
-            content <-    (wi, br)
-                       :: (List.filter (fun (wii,_) -> wii = wi) content);
-            self#obj >>> AXOJs.Node.append wi#obj ;
-            self#obj >>> AXOJs.Node.append br#obj ;
-        | Some wii ->
-            content <- LList.insert_after_ content (wi,br)
-                         (fun (wiii,_) -> wii = wiii)  ;
-            self#obj >>> AXOJs.Node.insert_before wi#obj wii#obj ;
-            self#obj >>> AXOJs.Node.insert_before wi#obj br#obj ;
+    match before with
+      | None ->
+          content <- (wi, br) :: (List.filter ( ((=) wi) @@ fst ) content) ;
+          self#obj >>> AXOJs.Node.append wi#obj ;
+          self#obj >>> AXOJs.Node.append br#obj ;
+      | Some wii ->
+          content <- LList.insert_after_ content (wi,br) ( ((=) wii) @@ fst ) ;
+          self#obj >>> AXOJs.Node.insert_before wi#obj wii#obj ;
+          self#obj >>> AXOJs.Node.insert_before wi#obj br#obj ;
   method remove_common wi =
-    let ((wi,br),c) = LList.find_remove (fun (wii,_) -> wi = wii) content in
+    let ((wi,br),c) = LList.find_remove ( ((=) wi) @@ fst ) content in
     content <- c ;
     self#obj >>> AXOJs.Node.remove wi#obj ;
     self#obj >>> AXOJs.Node.remove br#obj ;
 end
 
-(***************************************)
-(*** Container with widget abilities ***)
-(***************************************)
+
+
+(** Container with widget abilities (AKA stylish containers)*)
 class widget_container_wrap obj_ =
 object
   inherit AXOWidgets.common_wrap obj_
@@ -144,20 +135,19 @@ object
   inherit AXOWidgets.widget_plugin
 end
 
-(*************************)
-(*** Some more buttons ***)
-(*************************)
-class inline_text_button ?(activated = true) txt =
-object
-  inherit text_widget_wrap txt (AXOHtml.Low.span ())
-  inherit AXOWidgets.button_plugin activated
-end
+
+
+(** Some buttons : image and text buttons... *)
+
+(** simple text_widget with buttons capabilities *)
 class inline_text_widget_button ?(activated = true) txt =
 object
   inherit text_widget_wrap txt (AXOHtml.Low.span ())
   inherit AXOWidgets.widget_plugin
   inherit AXOWidgets.button_plugin activated
 end
+
+(** text buttons that changes its content when clicked *)
 class virtual cyclic_text_button_wrap activated hd_txt tl_txt obj_ =
   let q =
     let q = Queue.create () in
@@ -180,14 +170,12 @@ object (* OBOB proof *)
 end
 class cyclic_inline_text_button ?(activated = true) hd_txt tl_txt =
 object
-
   inherit cyclic_text_button_wrap
     activated hd_txt tl_txt (AXOHtml.Low.span ())
-
 end
 
-
-(* The lazyness prevents reloading *)
+(** image buttons *)
+(* The lazyness prevents reloading at each cycle *)
 class cyclic_img_button ?(activated = true) alt hd_srcs tl_srcs =
   let c = new inline_container in
   let q =
@@ -226,9 +214,8 @@ object
 end
 
 
-(******************)
-(*** user_input ***)
-(******************)
+
+(** User input : select/text input (with auto updating)... *)
 module On_input_change =
   AXOEvents.Make
     ( struct
@@ -240,7 +227,7 @@ module On_input_change =
         let default_value = None
       end )
 
-(* select *)
+(* select input *)
 class [ 'a ] select string_of_t t_of_string (value : 'a) alts =
 object (self)
 
@@ -295,8 +282,7 @@ object (self)
 
 end
 
-
-(* input *)
+(* text input *)
 class text_input value =
 object (self)
 
@@ -362,9 +348,15 @@ end
 
 
 
-(***************)
-(*** Folding ***)
-(***************)
+(** Folding : a foldable block. *)
+
+(* Arguments are
+   [?folded] (default to true) should the foldable start as folded
+   [?persistent_as_container] (default to false) should the foldable part be inserted in the persistent part or in a new container
+   [button] the button the fold/unfold action is to be binded to
+   [persistent] the part that never get folded (can be used for title...)
+   [foldable] the part that gets folded/unfolded when the button is clicked
+*)
 class block_foldable
   ?(folded = true)
   ?(persistent_as_container = false)
@@ -414,60 +406,18 @@ object (self)
       ) ;
 
 end
-class dynamic_block_foldable
-  ?(persistent_as_container = false)
-  (button     : AXOWidgets.generic_button   )
-  (persistent : AXOWidgets.generic_container)
-  (foldable   : unit -> AXOWidgets.generic_container)
-  =
-  let box =
-    if persistent_as_container
-    then persistent
-    else new block_container
-  in
-object (self)
-
-  method obj = box # obj
-  inherit AXOWidgets.widget_plugin
-
-  val mutable folded_ = true
-  val mutable current_foldable = None
-
-  method get_persistent = persistent
-  method get_last_foldable = current_foldable
-
-  method private unfold =
-    current_foldable <- Some (foldable ()) ;
-    box#add_common (LOption.unopt current_foldable :> AXOWidgets.common) ;
-  method private fold =
-    box#remove_common (LOption.unopt current_foldable :> AXOWidgets.common) ;
-    
-
-  initializer
-      box#add_common
-        ?before:(try Some (List.hd box#get_content) with Failure "hd" -> None)
-        (button :> AXOWidgets.common)
-    ;
-    if persistent_as_container
-    then ()
-    else box#add_common (persistent :> AXOWidgets.common)
-    ;
-    button # add_click_action
-      (fun () ->
-         (if folded_
-          then self#unfold
-          else self#fold
-         ) ;
-         folded_ <- not folded_ ;
-      ) ;
-
-end
 
 
 
-(*************)
-(*** trees ***)
-(*************)
+(** tree : a function to represent a foldable tree *)
+
+(* Arguments are :
+   [?depth] (default to -1) the depth the tree is to be unfolded at startup (when negative, infinite)
+   [?persistent_as_container] (default to false) should the childrens be inserted in the parent node ?
+   [tree] the tree (of type AXOLang.LTree.tree) to be shown
+   [elements] a function that takes the current tree node, the current tree node's children and a boolean indicating the folded (true)/unfolded (false) state of the node and returning a 3-uple with (the folding/unfolding button, the node container, the node children's container) ; the node children's container will be populated with their own buttons and container
+   [container] where to place the resulting tree
+*)
 let foldable_tree ?(depth = (-1)) ?persistent_as_container
   tree elements container
   =
@@ -488,9 +438,8 @@ let foldable_tree ?(depth = (-1)) ?persistent_as_container
   in aux (LTree.get_content tree) (LTree.get_children tree) container 0
 
 
-(************)
-(*** Mask ***)
-(************)
+
+(** Mask : makes a black semi-transparent fullsized panel. *)
 class mask =
 object (self)
   inherit block_widget
@@ -502,22 +451,10 @@ end
 
 
 
+(** links *)
 
-(************)
-(*** link ***)
-(************)
-(*TODO: make a link_widget with multiple inheritance *)
-class link ?href txt = (*TODO: add set_text and get_text method *)
-object (self)
-
-  inherit AXOWidgets.common_wrap
-    (AXOHtml.High.a ?href ~children:[AXOHtml.Low.string txt] ())
-
-  method set_href href = self#obj >>> AXOJs.Node.set_attribute "href" href
-  method get_href      = self#obj >>> AXOJs.Node.get_attribute "href"
-
-end
-class link_widget ?href txt = (*TODO: add set_text and get_text method *)
+(* text link with widget capabilities *)
+class link_widget ?href txt =
 object (self)
 
   inherit AXOWidgets.common_wrap
@@ -528,6 +465,8 @@ object (self)
   method get_href      = self#obj >>> AXOJs.Node.get_attribute "href"
 
 end
+
+(* image link *)
 class img_link ?href ~src ~alt =
 object (self)
 
@@ -543,9 +482,9 @@ object (self)
 
 end
 
-(*************)
-(*** popup ***)
-(*************)
+
+
+(** popup : to make popup with content *)
 class popup ?(background = "white") cont =
   let m = new mask in
   let x = new inline_text_widget_button "CLOSE" in
@@ -587,24 +526,13 @@ object (self) (*TODO: restrict access to the container part of self by forcing t
 end
 
 
-(******************)
-(*** ul, ol, li ***)
-(******************)
-class ul_container =
-object
-  inherit AXOWidgets.common_wrap (AXOHtml.Low.ul ())
-  inherit AXOWidgets.container_plugin
-end
+
+(** ul, ol, li *)
 class ul_widget_container =
 object
   inherit AXOWidgets.common_wrap (AXOHtml.Low.ul ())
   inherit AXOWidgets.container_plugin
   inherit AXOWidgets.widget_plugin
-end
-class li_container =
-object
-  inherit AXOWidgets.common_wrap (AXOHtml.Low.li ())
-  inherit AXOWidgets.container_plugin
 end
 class li_widget_container =
 object
@@ -614,9 +542,12 @@ object
 end
 
 
-(***************)
-(*** movable ***)
-(***************)
+
+(** movable : a movable structure (can be made into a window)
+  * /!\ slow when populated with lots of nodes
+  * *)
+
+(* custom Events... *)
 module Movable_move =
   AXOEvents.Make
     (struct
@@ -628,7 +559,6 @@ module Movable_move =
           obj >>> get "clientY" >>> as_int)
        let default_value = None
      end)
-
 module Movable_down =
   AXOEvents.Make
     (struct
@@ -640,7 +570,6 @@ module Movable_down =
           obj >>> get "clientY" >>> as_int)
        let default_value = None
      end)
-
 module Movable_up =
   AXOEvents.Make
     (struct
@@ -652,6 +581,12 @@ module Movable_up =
           obj >>> get "clientY" >>> as_int)
        let default_value = None
      end)
+
+(* the movable class. Arguments are :
+   [handle] where to bind the "grip, move and let go" mouse chain of event
+   [content] what to move
+   the handle and the content will be both placed into a container and moved together
+*)
 class movable handle content_ =
 object
 
@@ -699,7 +634,5 @@ end
 
 
 
-(*****************)
-(*** Drop down ***)
-(*****************)
+(** Drop down *)
 (*TODO : drop down menu *)
