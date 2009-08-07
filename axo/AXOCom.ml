@@ -25,34 +25,16 @@
 
 open AXOLang
 
-(*
-(* internal only : replace every occurence of a char with a string *)
-let seek_and_destroy seek destroy str =
-  let rec aux str =                    
-    try                                
-      let i = String.index str seek in 
-          (String.sub str 0 i)         
-        ^ destroy                      
-        ^ (aux (String.sub str (succ i) ((String.length str) - (succ i))))
-    with Not_found -> str                                                 
-  in aux str  
-
-
-(* internal only : associate a char and it's percent-encoding *)
-let percent_assoc = (*/!\ '%' must be first ; ' ' must be after '+' !*)
-  [('%', "%25") ; ('!', "%21") ; ('*', "%2A") ; ('"', "%22") ; ('\'', "%27");
-   ('(', "%28") ; (')', "%29") ; (';', "%3B") ; (':', "%3A") ; ('@', "%40") ;
-   ('&', "%26") ; ('=', "%3D") ; ('+', "%2B") ; ('$', "%24") ; (',', "%2C") ;
-   ('/', "%2F") ; ('?', "%3F") ; ('#', "%23") ; ('[', "%5B") ; (']', "%5D") ;
-   (' ', "+")   ]
- *)
 (* internal only : encode a string according to percent-encoding system *)
 let urlencode_string str =
   AXOJs.Node.window >>> JSOO.call_method "escape" [| JSOO.string str |]
                     >>> JSOO.as_string
-(*  List.fold_left (fun a (s,d) -> seek_and_destroy s d a)
-    str percent_assoc *)
-   
+
+(* decode a string according to percent encoding system *)
+let urldecode_string str =
+  AXOJs.Node.window >>> JSOO.call_method "unescape" [| JSOO.string str |]
+                    >>> JSOO.as_string
+
 (* internal only : takes a list of (name,value) and makes it url-friendly *)
 let urlencode args =
  String.concat "&"
@@ -161,35 +143,95 @@ let read_fragment () =
                     >>> JSOO.get "hash"
                     >>> JSOO.as_string
 
-(** This three functions are for managing fragment changes and the effect they
-  * have. None of those have been tested and there are some obvious problems
-  * that need to be corrected before serious use ("aux" should be made thread
-  * friendly and "JSOO.wrap_event" is not the function to call here).
-  *
-  * The first is for initiating the listener loop (it starts an infinite loop)
-  * The second is for adding (binding) an event.
-  * The third for withdrawing (unbinding) an event.
-  * *)
-let init_fragment_polling,
-    add_on_fragment_change_event,
-    remove_on_fragment_change_event
-    =
-  let last_hash = ref (read_fragment ()) in
-  let closures = ref [] in
-  let rec aux _ =
-    if !last_hash = read_fragment ()
-    then ()
-    else (
-      List.iter (fun f -> f ()) !closures ;
-      last_hash := read_fragment () ;
-    ) ;
-    AXOJs.Node.window >>> JSOO.call_method "setTimeout"
-      [| (JSOO.wrap_event aux) ; JSOO.int 500 |]
-  in
-  (
-   (fun () -> aux (JSOO.inject JSOO.Nil)),
-   (fun f -> closures := f :: (List.filter ((!=) f) !closures)),
-   (fun f -> closures := List.filter ((!=) f) !closures)
-  )
+module Url = struct
+
+  (** This three functions are for managing fragment changes and the effect they
+    * have. None of those have been tested and there are some obvious problems
+    * that need to be corrected before serious use ("aux" should be made thread
+    * friendly and "JSOO.wrap_event" is not the function to call here).
+    *
+    * The first is for initiating the listener loop (it starts an infinite loop)
+    * The second is for adding (binding) an event.
+    * The third for withdrawing (unbinding) an event.
+    * *)
+  let init_fragment_polling,
+      add_on_fragment_change_event,
+      remove_on_fragment_change_event
+      =
+    let last_hash = ref (read_fragment ()) in
+    let closures = ref [] in
+    let rec aux _ =
+      if !last_hash = read_fragment ()
+      then ()
+      else (
+        List.iter (fun f -> f ()) !closures ;
+        last_hash := read_fragment () ;
+      ) ;
+      AXOJs.Node.window >>> JSOO.call_method "setTimeout"
+        [| (JSOO.wrap_event aux) ; JSOO.int 500 |]
+    in
+    (
+     (fun () -> aux (JSOO.inject JSOO.Nil)),
+     (fun f -> closures := f :: (List.filter ((!=) f) !closures)),
+     (fun f -> closures := List.filter ((!=) f) !closures)
+    )
 
 
+  (* This is just for local uses. *)
+  let get_location () = JSOO.eval "window.location"
+
+  (* For the following functions, we give the result you can expect them to give when they are called on "http://www.toto.org:8000/blah/blih?tutu=3#part_two".
+     Some functions are named with an ending underscore. It's the mark of low level. *)
+
+  (** Read the current fragment. *)
+  let get_fragment_ () =
+    urldecode_string ((get_location ()) >>> JSOO.get "hash" >>> JSOO.as_string)
+  (* returns "part_two" *)
+
+  (** Read the current host name *)
+  let get_host_ () =
+    urldecode_string ((get_location ()) >>> JSOO.get "hostname" >>> JSOO.as_string)
+  (* returns "www.toto.org" *)
+
+  (** Read the current port *)
+  let get_port_ () = (get_location ()) >>> JSOO.get "port" >>> JSOO.as_int
+  (* return 8000 *)
+
+  (** Read the protocol *)
+  let get_protocol_ () =
+    urldecode_string ((get_location ()) >>> JSOO.get "protocol" >>> JSOO.as_string)
+  (* return "http:" *)
+
+  (** Read the arguments *)
+  let get_arguments_ () =
+    urldecode_string ((get_location ()) >>> JSOO.get "search" >>> JSOO.as_string)
+  (* return "?tutu" *)
+
+  (** Read the path *)
+  let get_path_ () =
+    urldecode_string ((get_location ()) >>> JSOO.get "pathname" >>> JSOO.as_string)
+  (* return "/blah/blih" *)
+
+  (** Get the value of the specified argument or raise Not_found if there is no argument with the given name. *)
+  let get_argument name =
+    try
+      urldecode_string ( 
+        (Regexp.exec
+           (Regexp.make ((urlencode_string name) ^ "=([^&]*)"))
+           ((get_location ()) >>> JSOO.get "search" >>> JSOO.as_string)
+        ).(1)
+      )
+    with
+      | Invalid_argument _ -> raise Not_found
+
+  (** Get the path as a string list *)
+  let get_path () =
+    List.map urldecode_string
+      (Array.to_list
+         (Regexp.split
+           (Regexp.make "/")
+           ((get_location ()) >>> JSOO.get "pathname" >>> JSOO.as_string)
+        )
+      )
+
+end

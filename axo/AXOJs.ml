@@ -156,7 +156,6 @@ struct
     let zindex = ref 0 in
       ((fun () -> incr zindex ; !zindex),
        (fun () -> !zindex))
-  let get_location () = JSOO.eval "window.location"
 
 end
 
