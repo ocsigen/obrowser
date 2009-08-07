@@ -419,22 +419,20 @@ end
    [container] where to place the resulting tree
 *)
 let foldable_tree ?(depth = (-1)) ?persistent_as_container
+  ?(separators = ( fun _ _ _ -> None ))
   tree elements container
   =
   let rec aux t l container d = (* the core function *)
     let folded = d > depth in
-    let (but,com,kid) = elements t l folded
-    (* elements produces a (button,
-     *                      container (* with node's content *)
-     *                      container (* for node's children *),
-     *                     ) tuple*)
-    in
+    let (but,com,kid) = elements t l folded in
       List.iter
         (fun { LTree.content = t ; LTree.children = l } ->
              kid#add_common ?before:None
              ((aux t l kid (succ d)) :> AXOWidgets.common ))
         l ;
-      new block_foldable ~folded ?persistent_as_container but com kid
+      let b = new block_foldable ~folded ?persistent_as_container but com kid in
+      LOption.cb_on_opted com#add_common (separators t l folded) ;
+      b
   in aux (LTree.get_content tree) (LTree.get_children tree) container 0
 
 

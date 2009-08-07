@@ -117,6 +117,12 @@ module LList = struct
       | hd :: tl -> if f hd then (hd,rev_append acc tl) else aux (hd :: acc) tl
     in aux [] l
 
+  let find_opt f l =
+    let rec aux = function
+      | [] -> None
+      | hd :: tl -> if f hd then Some hd else aux tl
+    in aux l
+
   let interval_list ?(comp = compare) ~bump ~min ~max () =
     let rec aux accu curr =
       if (comp curr max) > 0
@@ -225,5 +231,14 @@ module LTree = struct
     let rec aux { content = n ; children = c } =
       node n (List.map aux (List.sort comp c))
     in aux t
+
+  let fold f v t =
+    let rec aux v = function
+      | { content = c ; children = [] } -> f v c
+      | { content = c ; children = l } ->
+          let v = f v c in
+          List.fold_left aux v l
+    in
+      aux v t
 
 end
