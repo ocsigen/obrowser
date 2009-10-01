@@ -7,8 +7,7 @@
 /*                                                                     */
 /***********************************************************************/
 
-function GraphicsWin (vm, div, width, height) {
-    this._div = div;
+function GraphicsWin (vm, width, height) {
     this._color = 0;
     this._w = width;
     this._h = height;
@@ -18,7 +17,6 @@ function GraphicsWin (vm, div, width, height) {
     this._canvas.setAttribute ("width", width);
     this._canvas.setAttribute ("height", height);
     this._canvas.setAttribute ("style", "background-color:white; margin:5px; border:1px black solid; margin:2px;");
-    div.appendChild (this._canvas);
     
     this.st = { button: false, x: 0, y: 0,keypressed: false, key: 0 };
     var win = this;

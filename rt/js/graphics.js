@@ -12,9 +12,8 @@
 // Caml name: raw_open_graph
 // Type:      int -> int -> Js.Node.t
 RT.caml_gr_open_graph = function (width, height) {
-    var div = document.createElement ("div");
-    this.graphics_win = new GraphicsWin (this, div, width, height);
-    return box_abstract (div);
+    this.graphics_win = new GraphicsWin (this, width, height);
+    return this.graphics_win.get_canvas ();
 }
 
 // Caml name: raw_close_graph
@@ -192,7 +191,7 @@ RT.caml_gr_draw_arc_nat = function (x,y,rx,ry,a1,a2) {
     if (this.graphics_win) {
 	var ctx = this.graphics_win.get_context ();
 	ctx.beginPath ();
-	ctx.arc (x, y, rx, a1, a2, false);
+	ctx.arc (x, y, rx, a1 * Math.PI / 180, a2 * Math.PI / 180, false);
 	ctx.stroke ();
     }
     return UNIT;
@@ -240,14 +239,15 @@ RT.caml_gr_fill_poly = function (p) {
 // Caml name: raw_fill_arc
 // Type:      int -> int -> int -> int -> int -> int -> unit
 RT.caml_gr_fill_arc = function (a) {
-    return RT.caml_gr_fill_arc_nat (a[0],a[1],a[2],a[3],a[4],a[5]);
+    return RT.caml_gr_fill_arc_nat.call (this,a[0],a[1],a[2],a[3],a[4],a[5]);
 }
 RT.caml_gr_fill_arc_nat = function (x,y,rx,ry,a1,a2) {
     if (this.graphics_win) {
 	var ctx = this.graphics_win.get_context ();
 	ctx.beginPath ();
-	ctx.arc (x, y, rx, a1, a2, false);
+	ctx.arc (x, y, rx, a1 * Math.PI / 180, a2 * Math.PI / 180, false);
 	ctx.fill ();
+	ctx.stroke ();
     }
     return UNIT;
 }
