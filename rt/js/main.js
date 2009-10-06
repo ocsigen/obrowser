@@ -46,6 +46,7 @@ var RT = [];
 #include <rtjs.js>
 #include <jsoo.js>
 #include <regexp.js>
+#include <camlinternalOO.js>
 
 #ifdef DEBUG
 function debug (msg) {
@@ -1027,31 +1028,29 @@ var i_tbl = {
 	c.stack[--c.sp] = c.accu;
 	c.accu = c.cur_code.get (c.pc);
 	c.pc += 2;
-	/* no cache implemented (yet) */
 	var meths = c.stack[c.sp].get (0);
 	var li = 3;
 	var hi = meths.get (0) * 2 + 1;
 	while (li < hi) {
 	    var mi = ((li + hi) >> 1) | 1;
 	    if (c.accu < meths.get (mi))
-		hi = mi - 2;
+	 	hi = mi - 2;
 	    else
-		li = mi;
+	 	li = mi;
 	} 
 	c.accu = meths.get (li - 1);
 	return true;
     },
     IGETDYNMET: function (vm, c) {
-	/* no cache implemented (yet) */
 	var meths = c.stack[c.sp].get (0);
 	var li = 3;
 	var hi = meths.get (0) * 2 + 1;
 	while (li < hi) {
 	    var mi = ((li + hi) >> 1) | 1;
 	    if (c.accu < meths.get (mi))
-		hi = mi - 2;
+	 	hi = mi - 2;
 	    else
-		li = mi;
+	 	li = mi;
 	} 
 	c.accu = meths.get (li - 1);
 	return true;
@@ -1101,6 +1100,21 @@ var i_tbl = {
 //     return i_tbl [c.cur_code.get (c.pc++)] (this, c);
 // }
 
+var rinst = [0,0,0,0,0];
+
+function rins (i) {
+    rinst[0] = rinst[1];
+    rinst[1] = rinst[2];
+    rinst[2] = rinst[3];
+    rinst[3] = rinst[4];
+    rinst[4] = i;
+}
+
+function dins() {
+    for (var  i =  0 ;i < 5;i++)
+	console.debug (i + " >> " + instr_name[rinst[i]]);
+}
+
 #define INLINED_STEP_LOOP {						\
     if (vm.ctx == null) break;						\
     var c = vm.ctx;							\
@@ -1119,7 +1133,10 @@ var i_tbl = {
 	    /* SLEEP, WAIT & WAIT_RES */				\
 	    break;							\
     }									\
+					try { \
+					    rins(c.cur_code.get (c.pc)); \
     if (! i_tbl [c.cur_code.get (c.pc++)] (vm, c)) break;		\
+					} catch(e) { console.debug ("PAF!");console.debug (c); dins(); throw (e);} \
 }
 
 

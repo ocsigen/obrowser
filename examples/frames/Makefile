@@ -7,11 +7,11 @@ all: main.exe.uue vm.js
 
 main.exe: $(CMOS) ../../rt/caml/stdlib.cma
 	@echo "[OCAMLC] $@"
-	@CAMLLIB=../../rt/caml ocamlc $(CMOS) -o $@
+	@CAMLLIB=../../rt/caml ocamlc -I ../../axo AXO.cma $(CMOS) -o $@
 
 %.cmo: %.ml ../../rt/caml/stdlib.cma
 	@echo "[OCAMLC] $@"
-	@CAMLLIB=../../rt/caml ocamlc -c $<
+	@CAMLLIB=../../rt/caml ocamlc -I ../../axo/ -c $<
 
 %.uue: %
 	@echo "[UUENCODE] $@"

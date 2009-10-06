@@ -87,186 +87,35 @@ let public_method_label s : tag =
 
 (**** Sparse array ****)
 
-module Vars = Map.Make(struct type t = string let compare = compare end)
-type vars = int Vars.t
-
-module Meths = Map.Make(struct type t = string let compare = compare end)
-type meths = label Meths.t
-module Labs = Map.Make(struct type t = label let compare = compare end)
-type labs = bool Labs.t
-
 (* The compiler assumes that the first field of this structure is [size]. *)
-type table =
- { mutable size: int;
-   mutable methods: closure array;
-   mutable methods_by_name: meths;
-   mutable methods_by_label: labs;
-   mutable previous_states:
-     (meths * labs * (label * item) list * vars *
-      label list * string list) list;
-   mutable hidden_meths: (label * item) list;
-   mutable vars: vars;
-   mutable initializers: (obj -> unit) list }
+type table
 
-let dummy_table =
-  { methods = [| dummy_item |];
-    methods_by_name = Meths.empty;
-    methods_by_label = Labs.empty;
-    previous_states = [];
-    hidden_meths = [];
-    vars = Vars.empty;
-    initializers = [];
-    size = 0 }
+let dummy_table = magic [| |]
 
-let table_count = ref 0
-
-(* dummy_met should be a pointer, so use an atom *)
-let dummy_met : item = obj (Obj.new_block 0 0)
-(* if debugging is needed, this could be a good idea: *)
-(* let dummy_met () = failwith "Undefined method" *)
-
-let rec fit_size n =
-  if n <= 2 then n else
-  fit_size ((n+1)/2) * 2
-
-let new_table pub_labels =
-  incr table_count;
-  let len = Array.length pub_labels in
-  let methods = Array.create (len*2+2) dummy_met in
-  methods.(0) <- magic len;
-  methods.(1) <- magic (fit_size len * Sys.word_size / 8 - 1);
-  for i = 0 to len - 1 do methods.(i*2+3) <- magic pub_labels.(i) done;
-  { methods = methods;
-    methods_by_name = Meths.empty;
-    methods_by_label = Labs.empty;
-    previous_states = [];
-    hidden_meths = [];
-    vars = Vars.empty;
-    initializers = [];
-    size = initial_object_size }
-
-let resize array new_size =
-  let old_size = Array.length array.methods in
-  if new_size > old_size then begin
-    let new_buck = Array.create new_size dummy_met in
-    Array.blit array.methods 0 new_buck 0 old_size;
-    array.methods <- new_buck
- end
-
-let put array label element =
-  resize array (label + 1);
-  array.methods.(label) <- element
+external new_table : label array -> table = "oo_new_table"
+external put : table -> int -> 'a = "oo_put"
 
 (**** Classes ****)
-
-let method_count = ref 0
-let inst_var_count = ref 0
 
 (* type t *)
 type meth = item
 
-let new_method table =
-  let index = Array.length table.methods in
-  resize table (index + 1);
-  index
-
-let get_method_label table name =
-  try
-    Meths.find name table.methods_by_name
-  with Not_found ->
-    let label = new_method table in
-    table.methods_by_name <- Meths.add name label table.methods_by_name;
-    table.methods_by_label <- Labs.add label true table.methods_by_label;
-    label
+external new_method : table -> int = "oo_new_method"
+external get_method_label : table -> string -> label = "oo_get_method_label"
 
 let get_method_labels table names =
   Array.map (get_method_label table) names
 
-let set_method table label element =
-  incr method_count;
-  if Labs.find label table.methods_by_label then
-    put table label element
-  else
-    table.hidden_meths <- (label, element) :: table.hidden_meths
+external set_method : table -> label -> 'a -> unit = "oo_set_method"
+external get_method : table -> label -> 'a = "oo_get_method"
 
-let get_method table label =
-  try List.assoc label table.hidden_meths
-  with Not_found -> table.methods.(label)
+external narrow : table -> 'a array -> 'b array -> 'c array -> unit = "oo_narrow"
+external widen : table -> unit = "oo_widen"
+  
+external new_slot : table -> int = "oo_new_slot"
+external new_variable : table -> string -> int = "oo_new_variable"
 
-let to_list arr =
-  if arr == magic 0 then [] else Array.to_list arr
-
-let narrow table vars virt_meths concr_meths =
-  let vars = to_list vars
-  and virt_meths = to_list virt_meths
-  and concr_meths = to_list concr_meths in
-  let virt_meth_labs = List.map (get_method_label table) virt_meths in
-  let concr_meth_labs = List.map (get_method_label table) concr_meths in
-  table.previous_states <-
-     (table.methods_by_name, table.methods_by_label, table.hidden_meths,
-      table.vars, virt_meth_labs, vars)
-     :: table.previous_states;
-  table.vars <-
-    Vars.fold
-      (fun lab info tvars ->
-        if List.mem lab vars then Vars.add lab info tvars else tvars)
-      table.vars Vars.empty;
-  let by_name = ref Meths.empty in
-  let by_label = ref Labs.empty in
-  List.iter2
-    (fun met label ->
-       by_name := Meths.add met label !by_name;
-       by_label :=
-          Labs.add label
-            (try Labs.find label table.methods_by_label with Not_found -> true)
-            !by_label)
-    concr_meths concr_meth_labs;
-  List.iter2
-    (fun met label ->
-       by_name := Meths.add met label !by_name;
-       by_label := Labs.add label false !by_label)
-    virt_meths virt_meth_labs;
-  table.methods_by_name <- !by_name;
-  table.methods_by_label <- !by_label;
-  table.hidden_meths <-
-     List.fold_right
-       (fun ((lab, _) as met) hm ->
-          if List.mem lab virt_meth_labs then hm else met::hm)
-       table.hidden_meths
-       []
-
-let widen table =
-  let (by_name, by_label, saved_hidden_meths, saved_vars, virt_meths, vars) =
-    List.hd table.previous_states
-  in
-  table.previous_states <- List.tl table.previous_states;
-  table.vars <-
-     List.fold_left
-       (fun s v -> Vars.add v (Vars.find v table.vars) s)
-       saved_vars vars;
-  table.methods_by_name <- by_name;
-  table.methods_by_label <- by_label;
-  table.hidden_meths <-
-     List.fold_right
-       (fun ((lab, _) as met) hm ->
-          if List.mem lab virt_meths then hm else met::hm)
-       table.hidden_meths
-       saved_hidden_meths
-
-let new_slot table =
-  let index = table.size in
-  table.size <- index + 1;
-  index
-
-let new_variable table name =
-  try Vars.find name table.vars
-  with Not_found ->
-    let index = new_slot table in
-    if name <> "" then table.vars <- Vars.add name index table.vars;
-    index
-
-let to_array arr =
-  if arr = Obj.magic 0 then [||] else arr
+let to_array a = if a = magic 0 then [||] else magic a
 
 let new_methods_variables table meths vals =
   let meths = to_array meths in
@@ -280,42 +129,22 @@ let new_methods_variables table meths vals =
   done;
   res
 
-let get_variable table name =
-  try Vars.find name table.vars with Not_found -> assert false
+external get_variable : table -> string -> int = "oo_get_variable"
 
 let get_variables table names =
   Array.map (get_variable table) names
 
+external initializers : table -> (obj -> unit) list ref = "oo_initializers"
+
 let add_initializer table f =
-  table.initializers <- f::table.initializers
+  initializers table := f :: !(initializers table)
 
-(*
-module Keys = Map.Make(struct type t = tag array let compare = compare end)
-let key_map = ref Keys.empty
-let get_key tags : item =
-  try magic (Keys.find tags !key_map : tag array)
-  with Not_found ->
-    key_map := Keys.add tags tags !key_map;
-    magic tags
-*)
-
-let create_table public_methods =
-  if public_methods == magic 0 then new_table [||] else
-  (* [public_methods] must be in ascending order for bytecode *)
-  let tags = Array.map public_method_label public_methods in
-  let table = new_table tags in
-  Array.iteri
-    (fun i met ->
-      let lab = i*2+2 in
-      table.methods_by_name  <- Meths.add met lab table.methods_by_name;
-      table.methods_by_label <- Labs.add lab true table.methods_by_label)
-    public_methods;
-  table
+external create_table : string array -> table = "oo_create_table"
+external init_class_raw : table -> unit = "oo_init_class_raw"
 
 let init_class table =
-  inst_var_count := !inst_var_count + table.size - 1;
-  table.initializers <- List.rev table.initializers;
-  resize table (3 + magic table.methods.(1) * 16 / Sys.word_size)
+  initializers table := List.rev !(initializers table);
+  init_class_raw table
 
 let inherits cla vals virt_meths concr_meths (_, super, _, env) top =
   narrow cla vals virt_meths concr_meths;
@@ -350,20 +179,23 @@ let dummy_class loc =
 
 (**** Objects ****)
 
+external raw_size : table -> int = "oo_size"
+external raw_methods : table -> 'a array = "oo_methods"
+
 let create_object table =
   (* XXX Appel de [obj_block] *)
-  let obj = Obj.new_block Obj.object_tag table.size in
+  let obj = Obj.new_block Obj.object_tag (raw_size table) in
   (* XXX Appel de [caml_modify] *)
-  Obj.set_field obj 0 (Obj.repr table.methods);
+  Obj.set_field obj 0 (Obj.repr (raw_methods table));
   set_id obj last_id;
   (Obj.obj obj)
 
 let create_object_opt obj_0 table =
   if (Obj.magic obj_0 : bool) then obj_0 else begin
     (* XXX Appel de [obj_block] *)
-    let obj = Obj.new_block Obj.object_tag table.size in
+    let obj = Obj.new_block Obj.object_tag (raw_size table) in
     (* XXX Appel de [caml_modify] *)
-    Obj.set_field obj 0 (Obj.repr table.methods);
+    Obj.set_field obj 0 (Obj.repr (raw_methods table));
     set_id obj last_id;
     (Obj.obj obj)
   end
@@ -374,13 +206,14 @@ let rec iter_f obj =
   | f::l -> f obj; iter_f obj l
 
 let run_initializers obj table =
-  let inits = table.initializers in
+  let inits = !(initializers table) in
   if inits <> [] then
     iter_f obj inits
 
+
 let run_initializers_opt obj_0 obj table =
   if (Obj.magic obj_0 : bool) then obj else begin
-    let inits = table.initializers in
+    let inits = !(initializers table) in
     if inits <> [] then iter_f obj inits;
     obj
   end
@@ -489,10 +322,10 @@ let send_meth m n c =
 let new_cache table =
   let n = new_method table in
   let n =
-    if n mod 2 = 0 || n > 2 + magic table.methods.(1) * 16 / Sys.word_size
+    if n mod 2 = 0 || n > 2 + magic (raw_methods table).(1) * 16 / Sys.word_size
     then n else new_method table
   in
-  table.methods.(n) <- Obj.magic 0;
+  (raw_methods table).(n) <- Obj.magic 0;
   n
 
 type impl =
@@ -584,5 +417,7 @@ type stats =
   { classes: int; methods: int; inst_vars: int; }
 
 let stats () =
-  { classes = !table_count;
-    methods = !method_count; inst_vars = !inst_var_count; }
+  assert false
+;;
+(*  { classes = !table_count;
+    methods = !method_count; inst_vars = !inst_var_count; } *)

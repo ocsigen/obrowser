@@ -4,6 +4,9 @@ open Events
 open Style
 open Geometry
 
+let _ = eval "document.body" >>> append (new AXOToolkit.text_input "bob") # obj
+
+
 let size = 80
 let id = ref 0
 let max_z = ref 0
