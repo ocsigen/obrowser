@@ -83,8 +83,8 @@ For our own code (rt/js/):
 From mozilla (rt/plugin/) :
   Not distributed yet
 For the tutorial (tutorial/):
-  The tutorial is distributed under the terms of the GNU Free
-  Documentation License version 1.2 or newer at your option,
+  The tutorial is distributed under the terms of the GNU
+  General Public License version 3 or newer at your option,
   see tutorial/LICENSE. However, the included examples are
   distributed as explained in the following paragraph.
 For the examples (examples/):
