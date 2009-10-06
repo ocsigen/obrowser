@@ -5,11 +5,11 @@ CMOS=$(patsubst %.ml, %.cmo, $(SOURCES))
 
 all: main.exe.uue vm.js
 
-main.exe: $(CMOS) ../../rt/caml/stdlib.cma
+main.exe: $(CMOS) ../../rt/caml/stdlib.cma ../../axo/AXO.cma
 	@echo "[OCAMLC] $@"
 	@CAMLLIB=../../rt/caml ocamlc -I ../../axo AXO.cma $(CMOS) -o $@
 
-%.cmo: %.ml ../../rt/caml/stdlib.cma
+%.cmo: %.ml ../../rt/caml/stdlib.cma  ../../axo/AXO.cma
 	@echo "[OCAMLC] $@"
 	@CAMLLIB=../../rt/caml ocamlc -I ../../axo/ -c $<
 
@@ -26,6 +26,9 @@ vm.js: ../../vm.js
 
  ../../rt/caml/stdlib.cma:  ../../rt/caml/*.ml*
 	@cd ../.. && $(MAKE) rt/caml/stdlib.cma
+
+../../axo/AXO.cma: ../../axo/*.ml
+	@cd ../.. && $(MAKE) AXO
 
 clean:
 	@echo "[CLEAN]"
