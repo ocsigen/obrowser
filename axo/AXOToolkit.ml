@@ -631,6 +631,17 @@ object
 end
 
 
-
+(*
 (** Drop down *)
-(*TODO : drop down menu *)
+class drop_down_menu title items =
+  let button = new inline_text_widget_button title in
+  let foldable =
+    let f = new in
+    List.iter f#add_common items ;
+    f#set_style_property "position" (AXOWidgets.string_of_position AXOWidgets.Absolute) ;
+    f
+  in
+object
+  inherit block_foldable button foldable persistent
+end
+*)

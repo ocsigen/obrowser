@@ -252,11 +252,10 @@ object
 end
 
 class virtual widget_plugin = (* plugin *)
- (* let string_of_px i = string_of_int i ^ "px" in *)
+  let string_of_px i = string_of_int i ^ "px" in
 object (self)
 
   inherit generic_widget
-(*
   method get_width  : int = self#obj >>> get "offsetWidth"  >>> as_int
   method get_height : int = self#obj >>> get "offsetHeight" >>> as_int
   method get_x      : int = self#obj >>> get "offsetLeft"   >>> as_int
@@ -301,7 +300,6 @@ object (self)
     self#set_style_property "marginRight" (string_of_px m)
   method set_margin_bottom (m : int) : unit =
     self#set_style_property "marginRight" (string_of_px m)
- *)
 
   method set_attribute n v  = self#obj >>> AXOJs.Node.set_attribute n v
   method get_attribute n    = self#obj >>> AXOJs.Node.get_attribute n
