@@ -129,9 +129,13 @@ object
 
   inherit common
 
-(* These methods are commented to improve speed. It makes the loading of AXO
- * much faster, but deacreases safety (because there are less wraping for
- * automated type conversion)
+(* These methods <s>are</s> were commented to improve speed. It <s>makes</s>
+ * made the loading of AXO much faster, but <s>deacreases</s> decreased safety
+ * (because there are less wraping for automated type conversion)
+
+ * They now are enabled to stress test the camlinternalOO implementation.
+
+*)
 
   method virtual get_width  : int
   (** the width of the widget (in px) *)
@@ -224,7 +228,6 @@ object
 
   method virtual set_margin_bottom : int -> unit
   (** Set the bottom margin for the widget *)
- *)
 
   method virtual remove_attribute : string -> unit
   (** [remove_attribute name] wipes the value help by the node's [name]

@@ -103,7 +103,7 @@ let get_target evt = evt >>> JSOO.get "target"
 let get_current_target evt = evt >>> JSOO.get "currentTerget"
 
 (**[stop_propagation evt] prevent the event for going up in the DOM tree. *)
-let stop_propagation evt = evt >>> JSOO.call_method "staopPropagation" [| |]
+let stop_propagation evt = evt >>> JSOO.call_method "stopPropagation" [| |]
 
 
 module Onclick =

@@ -64,7 +64,7 @@ struct
   (* Standard nodes *)
   let window = eval "window"
   let document = eval "document"    
-  let body = document >>> get "body" (**Unspecified behaviour on bodyless documents*)
+  let body = document >>> get "body" (** Unspecified behaviour on bodyless documents *)
 
   (* creating new nodes : HL versions in Html *)
   let text content =
@@ -169,8 +169,8 @@ let blunt_alert = Js.alert
   * instead of a simple text. It allows the use of images, tables, link... in
   * the alert. *)
 let (alert, rich_alert) = (* does not interrupt the Js engine *)
-  let q = Queue.create () in
-  let mask =
+  let q = Queue.create () in (* for queuing alerts *)
+  let mask = (* the shade panel between the content and the alert box *)
     let mask = Node.element "div" in
     mask >>> Node.set_attribute "style"
       "position: fixed; right: 0px; top: 0px; width: 100%; \
@@ -246,7 +246,7 @@ let (alert, rich_alert) = (* does not interrupt the Js engine *)
         else (Queue.push res q)))
 
 
-(** The next two functions are NOT TO BE CALLED WITOUT Firebug ON *)
+(** The next two functions are NOT TO BE CALLED WITHOUT Firebug ON *)
 
 (** [debug s] write a message in the Firebug console (if aviable) *)
 let debug msg =

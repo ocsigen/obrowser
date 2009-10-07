@@ -160,7 +160,7 @@ module Url = struct
       =
     let last_hash = ref (read_fragment ()) in
     let closures = ref [] in
-    let rec aux _ =
+    let rec aux _ = (*TODO: use lwt instead ! *)
       if !last_hash = read_fragment ()
       then ()
       else (
