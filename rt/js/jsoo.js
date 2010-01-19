@@ -9,8 +9,12 @@ RT["jsoo_new"] = function (o) {
 // Caml name:  eval
 // Caml type:  string -> obj
 RT["jsoo_eval"] = function (s) {
-    var code = string_from_value (s) ;
-    return eval (code);
+    try {
+	var code = string_from_value (s) ;
+	return eval (code);
+    } catch (e) {
+	this.failwith("jsoo_call: " + e.message);
+    }
 }
 
 // Caml name:  get
@@ -67,11 +71,15 @@ RT["jsoo_inject"] = function (o) {
 	return unbox_float (o.get(0));
     return o.get (0);
 }
-    
+
 // Caml name:  call
 // Caml type:  obj -> obj array -> obj -> obj
 RT["jsoo_call"] = function (d, args, o) {
-    return o.apply (d, args.content) ;
+    try {
+	return o.apply (d, args.content) ;
+    } catch (e) {
+	this.failwith("jsoo_call: " + e.message);
+    }
 }
 
 // Caml name:  wrap_event

@@ -7,7 +7,8 @@ all: vm.js \
      inline_img.exe.uue \
      clock.exe.uue \
      colorpicker.exe.uue \
-     prod_cons.exe.uue
+     prod_cons.exe.uue \
+     distrib
 
 tutorial.exe:  syntax_common.cmo \
                    syntax_xml.cmo \
@@ -40,6 +41,9 @@ vm.js: ../vm.js
  ../rt/caml/stdlib.cma:  ../rt/caml/*.ml*
 	@cd .. && $(MAKE) rt/caml/stdlib.cma
 
+distrib:
+	ln -s .. distrib
+
 clean:
 	@echo "[CLEAN]"
-	@rm -f *.cm* *~ *.uue *.exe vm.js
+	@rm -f *.cm* *~ *.uue *.exe vm.js distrib

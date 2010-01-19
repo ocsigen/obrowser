@@ -1100,21 +1100,6 @@ var i_tbl = {
 //     return i_tbl [c.cur_code.get (c.pc++)] (this, c);
 // }
 
-var rinst = [0,0,0,0,0];
-
-function rins (i) {
-    rinst[0] = rinst[1];
-    rinst[1] = rinst[2];
-    rinst[2] = rinst[3];
-    rinst[3] = rinst[4];
-    rinst[4] = i;
-}
-
-function dins() {
-    for (var  i =  0 ;i < 5;i++)
-	console.debug (i + " >> " + instr_name[rinst[i]]);
-}
-
 #define INLINED_STEP_LOOP {						\
     if (vm.ctx == null) break;						\
     var c = vm.ctx;							\
@@ -1133,10 +1118,7 @@ function dins() {
 	    /* SLEEP, WAIT & WAIT_RES */				\
 	    break;							\
     }									\
-					try { \
-					    rins(c.cur_code.get (c.pc)); \
-    if (! i_tbl [c.cur_code.get (c.pc++)] (vm, c)) break;		\
-					} catch(e) { console.debug ("PAF!");console.debug (c); dins(); throw (e);} \
+    if (! i_tbl [c.cur_code.get (c.pc++)] (vm, c)) break;               \
 }
 
 

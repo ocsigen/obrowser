@@ -9,7 +9,7 @@ let h2 = ref 0 and h3 = ref 0 and h4 = ref 0 ;;
 let toc_h2 = ref [] and toc_h3 = ref [] and toc_h4 = ref []
 
 let rec browse node =
-  match Node.get_attribute node "tagName" with
+  match try Node.get_attribute node "tagName" with _ -> "" with
     | "H2" ->
 	incr h2 ; h3 := 0 ; h4 := 0 ;
 	toc_h3 := (Node.get_attribute node "textContent", (!h2, !h3), !toc_h4) :: !toc_h3 ;

@@ -199,7 +199,7 @@ RT.caml_js_http_get_with_status = function (vurl) {
 	vm.thread_wait (xmlhttp, cont);
     } catch (e) {
 	if ((e == MAGIC_CAML_CONT) || (e == MAGIC_CAML_EX)) throw e;
-	throw new Error ("unable to load url " + url + ": " + e.message);
+	this.failwith("unable to load url " + url + ": " + e.message);
     }
 }
 
@@ -243,7 +243,7 @@ RT.caml_js_http_post = function (vurl, type, data) {
 	vm.thread_wait (xmlhttp, cont);
     } catch (e) {
 	if ((e == MAGIC_CAML_CONT) || (e == MAGIC_CAML_EX)) throw e;
-	throw new Error ("unable to load url " + url + ": " + e.message);
+	this.failwith ("unable to load url " + url + ": " + e.message);
     }
 }
 
@@ -262,7 +262,7 @@ RT.caml_js_dom_of_xml = function (str)
       parser = new DOMParser();
       xmlDoc = parser.parseFromString(sstr,"text/xml");
       return xmlDoc;
-    } catch(e) { throw new Error ("unable to parse : " + e.message) }
+    } catch(e) { this.failwith ("unable to parse : " + e.message) }
   }
 }
 
@@ -274,7 +274,7 @@ RT.caml_js_pretty_xml_of_dom = function (o)
     var serializer = new XMLSerializer();
     var prettyString = XML(serializer.serializeToString(o)).toXMLString();
     return (value_from_string (prettyString)) ;
-  } catch(e) { throw new Error ("unable to pretty print : " + e.message) }
+  } catch(e) { this.failwith ("unable to pretty print : " + e.message) }
 }
 
 // Caml name: xml_of_dom
@@ -285,5 +285,5 @@ RT.caml_js_xml_of_dom = function (o)
     var serializer = new XMLSerializer();
     var xml = serializer.serializeToString(o);
     return (value_from_string (xml)) ;
-  } catch (e) { throw new Error ("unable to print : " + e.message) }
+  } catch (e) { this.failwith ("unable to print : " + e.message) }
 }

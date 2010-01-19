@@ -33,7 +33,7 @@ let show_source mdiv name lang =
 ;;
 
 let rec browse node =
-  match Node.get_attribute node "tagName" with
+  match try Node.get_attribute node "tagName" with _ -> "" with
     | "DIV" | "SPAN" ->
 	(match decode_id (Node.get_attribute node "id") with
 	   | id :: "example" :: name :: desc :: args ->
@@ -51,8 +51,8 @@ let rec browse node =
 		    else r) "" (Node.children node)  in
 		 colourise_source lang node code
 	   | _ -> ())
-    | _ ->
-	Node.iter browse node
+      | _ ->
+	  Node.iter browse node
 ;;
 
 browse Node.document ;;

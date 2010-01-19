@@ -42,7 +42,7 @@ module Node = struct
   let set_attribute node name value =
     node >>> call_method "setAttribute" [| string name ; string value |] >>> ignore
   let remove_attribute node name =
-    node >>> set name (inject Nil)
+    try node >>> set name (inject Nil) with _ -> failwith "remove"
   let get_element_by_id root id =
     root >>> call_method "getElementById" [| string id |]
   let register_event node name fn arg =
