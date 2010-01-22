@@ -66,7 +66,7 @@ let display_img idx =
 
 let browse node =
   let rec browse (idx : int) (node : Node.t) =
-    match Node.get_attribute node "tagName" with
+    match try Node.get_attribute node "tagName" with _ -> "" with
       | "A" ->
 	  (match decode_id (Node.get_attribute node "id") with
 	     | _ :: "viewer" :: picture :: [] ->
