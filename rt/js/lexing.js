@@ -94,10 +94,7 @@ RT["caml_lex_engine"] = function(tbl, start_state, lexbuf) {
 	    return (-base-1);
 	}
 	backtrk = R2BLE(tbl.get (LEX_BACKTRK), state);
-	
 	if (backtrk >= 0) {
-	    var pc_off =  R2BLE(tbl.get (LEX_BACKTRK_CODE), state);
-	    run_tag(tbl.get (LEX_CODE).shift (pc_off), lexbuf.get (LEX_MEM));
 	    lexbuf.set (LEX_LAST_POS, lexbuf.get (LEX_CURR_POS));
 	    lexbuf.set (LEX_LAST_ACTION, backtrk);
 	}
