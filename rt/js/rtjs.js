@@ -198,7 +198,7 @@ RT.caml_js_http_get_with_status = function (vurl) {
 	}
 	vm.thread_wait (xmlhttp, cont);
     } catch (e) {
-	if ((e == MAGIC_CAML_CONT) || (e == MAGIC_CAML_EX)) throw e;
+	caml_catch(e);
 	this.failwith("unable to load url " + url + ": " + e.message);
     }
 }

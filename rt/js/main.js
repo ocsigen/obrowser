@@ -30,6 +30,9 @@
 #define MAGIC_CAML_EX   0xEE1664EE
 #define MAGIC_CAML_CONT 0xEE1515EE
 
+#define caml_catch(e) if (((e) == MAGIC_CAML_CONT) || ((e) == MAGIC_CAML_EX)) throw (e)
+
+
 #include <utils.js>
 
 

@@ -1,5 +1,3 @@
-// type obj
-
 // Caml name:  new_obj
 // Caml type:  unit -> obj
 RT["jsoo_new"] = function (o) {
@@ -13,6 +11,7 @@ RT["jsoo_eval"] = function (s) {
 	var code = string_from_value (s) ;
 	return eval (code);
     } catch (e) {
+	caml_catch(e);
 	this.failwith("jsoo_call: " + e.message);
     }
 }
@@ -78,6 +77,7 @@ RT["jsoo_call"] = function (d, args, o) {
     try {
 	return o.apply (d, args.content) ;
     } catch (e) {
+	caml_catch(e);
 	this.failwith("jsoo_call: " + e.message);
     }
 }
