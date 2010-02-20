@@ -24,6 +24,8 @@
 // blocks
 
 #define is_block(b)         (b instanceof Block)
+#define block_tag(b)        (b).tag
+#define block_size(b)       (b).size
 #define mk_block(size, tag) (new Block (size, tag))
 #define field(b,n)          (b).get(n)
 #define store_field(b,n,v)  (b).set(n,v)
