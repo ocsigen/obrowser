@@ -30,16 +30,16 @@ function Block(size, tag) {
     this.offset = 0;
 }
 
-METHODS(Block).get = function (i) {
+Block.prototype.get = function (i) {
     return this.content[this.offset + i];
 }
 
-METHODS(Block).set = function (i, v) {
+Block.prototype.set = function (i, v) {
     this.content[this.offset + i] = v;
 }
 
 /* enables the simulation of C pointer arithmetics */
-METHODS(Block).shift = function (o) {
+Block.prototype.shift = function (o) {
     var nsize = this.size - o >= 0 ? this.size - o : 0;
     var b = new Block (nsize, this.tag);
     b.content = this.content;
@@ -49,6 +49,8 @@ METHODS(Block).shift = function (o) {
 
 #define is_block(b)         (b instanceof Block)
 #define mk_block(size, tag) (new Block (size, tag))
+#define field(b,n)          (b).get(n)
+#define store_field(b,n,v)  (b).set(n,v)
 
 var ATOM = mk_block (0, 0);
 

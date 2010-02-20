@@ -114,6 +114,8 @@ function VM(url, argv) {
     this.ctx.p_ctx = this.ctx ;
 }
 
+#define unbox_code(v) (v.tag == CLOSURE_TAG ? v.get (0):v)
+
 var i_tbl = {
     IACC0: function (vm, c) {
 	c.accu = c.stack[c.sp];
