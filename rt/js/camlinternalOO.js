@@ -33,7 +33,7 @@ function fit_size (n) {
     if (n <= 2) return n; else return (fit_size ((n + 1) / 2) * 2);
 }
 
-RT.oo_new_table = function (pm) {
+oo_new_table = function (pm) {
     oo_table_count++;
     var methods = mk_block (pm.size * 2 + 2, 0);
     methods.set (0, pm.size);
@@ -59,8 +59,8 @@ RT.oo_new_table = function (pm) {
     };
 }
 
-RT.oo_create_table = function (pm) {
-    var table = RT.oo_new_table (pm) ;
+oo_create_table = function (pm) {
+    var table = oo_new_table (pm) ;
     for (var i = 0;i < pm.size;i++) {
 	var lab = i * 2 + 2;
 	table.by_label[lab] = true;
@@ -74,7 +74,7 @@ function oo_resize (table, size) {
 	table.methods.size = size;    
 }
 
-RT.oo_put = function (table, label, element) {
+oo_put = function (table, label, element) {
     oo_resize (table, label + 1);
     table.methods.set (label, element);
     return UNIT;
@@ -83,33 +83,33 @@ RT.oo_put = function (table, label, element) {
 var method_count = 0;
 var inst_var_count = 0;
 
-RT.oo_new_method = function (table) {
+oo_new_method = function (table) {
     var index = table.methods.size;
     oo_resize (table, index + 1);
     return index;
 }
 
-RT.oo_get_method_label = function (table, name) {
+oo_get_method_label = function (table, name) {
     name = jsstr (name);
     var m = table.by_name[name];
     if (m == null) {
-	m = RT.oo_new_method (table);
+	m = oo_new_method (table);
 	table.by_name[name] = m;
 	table.by_label[m] = true;
     }
     return m;
 }
 
-RT.oo_set_method = function (table, label, element) {
+oo_set_method = function (table, label, element) {
     method_count++;
     if (table.by_label[label]) {
-	RT.oo_put (table, label, element);
+	oo_put (table, label, element);
     } else {
 	table.hidden_meths[label] = element;
     }
 }
 
-RT.oo_get_method = function (table, label) {
+oo_get_method = function (table, label) {
     var m = table.hidden_meths[label];
     if (m)
 	return m;
@@ -131,9 +131,9 @@ function dup (b) {
     return bb;
 }
 
-RT.oo_narrow = function (table, vars, virt_meths, concr_meths) {
-    var virt_meths_labs = bmap (virt_meths, function (m) {return RT.oo_get_method_label (table, m)});
-    var concr_meths_labs = bmap (concr_meths, function (m) {return RT.oo_get_method_label (table, m)});
+oo_narrow = function (table, vars, virt_meths, concr_meths) {
+    var virt_meths_labs = bmap (virt_meths, function (m) {return oo_get_method_label (table, m)});
+    var concr_meths_labs = bmap (concr_meths, function (m) {return oo_get_method_label (table, m)});
     table.previous_states = {
 	by_name : dup (table.by_name),
 	by_label : dup (table.by_label),
@@ -178,7 +178,7 @@ RT.oo_narrow = function (table, vars, virt_meths, concr_meths) {
     table.hidden_meths = hidden_meths;
 }
 
-RT.oo_widen = function (table) {
+oo_widen = function (table) {
     var prev = table.previous_states ;
     table.previous_states = prev.next;
     var vars = dup (prev.tvars);
@@ -198,41 +198,41 @@ RT.oo_widen = function (table) {
     }
 }
 
-RT.oo_new_slot = function (table) {
+oo_new_slot = function (table) {
     return table.size++;
 }
 
 
-RT.oo_new_variable = function (table, name) {
+oo_new_variable = function (table, name) {
     name = jsstr (name);
     var v = table.vars[name];
     if (v)
 	return v;
     else {
-	var index = RT.oo_new_slot (table);
+	var index = oo_new_slot (table);
 	if (name.size != "")
 	    table.vars[name] = index;
 	return index;
     }
 }
 
-RT.oo_get_variable = function (table, name) {
+oo_get_variable = function (table, name) {
     return table.vars[jsstr (name)];
 }
 
-RT.oo_initializers = function (table) {
+oo_initializers = function (table) {
     return table.initializers;
 }
 
-RT.oo_methods = function (table) {
+oo_methods = function (table) {
     return table.methods;
 }
 
-RT.oo_size = function (table) {
+oo_size = function (table) {
     return table.size;
 }
 
-RT.oo_init_class_raw = function (table) {
+oo_init_class_raw = function (table) {
     inst_var_count += table.size - 1;
     oo_resize (table, 3 + table.methods.get (1) * 16 / 32);
 }

@@ -157,12 +157,12 @@ function bytes_of_float (x) {
 
 var utf8_enabled = TRUE;
 
-RT.caml_js_enable_utf8 /* : bool -> unit */ = function (v) {
+caml_js_enable_utf8 /* : bool -> unit */ = function (v) {
     utf8_enabled = v;
     return UNIT;
 }
 
-RT.caml_js_utf8_enabled /* : unit -> bool */ = function () {
+caml_js_utf8_enabled /* : unit -> bool */ = function () {
     return utf8_enabled;
 }
 
@@ -178,7 +178,6 @@ function value_from_string (s) {
 	return encode_utf8 (s);
     }
 }
-
 function string_from_value (v) {
     if (utf8_enabled == FALSE) {
 	var s = "";

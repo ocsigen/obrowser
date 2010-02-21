@@ -14,7 +14,7 @@ var link_callbacks = new Array ();
 
 // Caml name: link_to_callback
 // Type:      (unit-> unit) -> string -> unit
-RT["cvmjs_link_to_callback"] = function (clos, txt) {
+function cvmjs_link_to_callback (clos, txt) {
     link_callbacks[link_id] = function () {
 	prg.thread_new (clos);
 	if (prg.status == VM_WAITING)
@@ -30,27 +30,27 @@ RT["cvmjs_link_to_callback"] = function (clos, txt) {
 
 // Caml name: alert
 // Type:      string -> unit
-RT["cvmjs_alert"] = function (s) {
+function cvmjs_alert (s) {
     alert (string_from_value (s));
     return UNIT;
 }
 
 // Caml name: repr
 // Type:      'a -> string
-RT["cvmjs_repr"] = function (v) {
+function cvmjs_repr (v) {
     return value_from_string (repr (v, 100));
 }
 
 // Caml name: repr_exc
 // Type:      exn -> string
-RT["cvmjs_repr_exc"] = function (v) {
+function cvmjs_repr_exc (v) {
     return value_from_string (string_from_value (v.get (0)) +
 			      " " + repr (v.get (1), 100));
 }
 
 // Caml name: clear_console
 // Type:      unit -> unit
-RT["cvmjs_clear_console"] = function () {
+function cvmjs_clear_console () {
     channels[1].con.clear ();
     return UNIT;
 }

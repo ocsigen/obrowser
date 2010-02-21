@@ -1,12 +1,12 @@
 // Caml name:  new_obj
 // Caml type:  unit -> obj
-RT["jsoo_new"] = function (o) {
+function jsoo_new (o) {
     return [];
 }
     
 // Caml name:  eval
 // Caml type:  string -> obj
-RT["jsoo_eval"] = function (s) {
+function jsoo_eval (s) {
     try {
 	var code = string_from_value (s) ;
 	return eval (code);
@@ -18,20 +18,20 @@ RT["jsoo_eval"] = function (s) {
 
 // Caml name:  get
 // Caml type:  string -> obj -> obj
-RT["jsoo_get"] = function (f, o) {
+function jsoo_get (f, o) {
     return o[string_from_value (f)];
 }
 
 // Caml name:  set
 // Caml type:  string -> obj -> obj -> unit
- RT["jsoo_set"] = function (f, v, o) {
+ function jsoo_set (f, v, o) {
      o[string_from_value (f)] = v;
      return UNIT;
 }
 
 // Caml name:  extract
 // Caml type:  obj -> value
-RT["jsoo_extract"] = function (o) {
+function jsoo_extract (o) {
     //   | Obj of obj        0
     //   | Num of float      1
     //   | String of string  2
@@ -61,7 +61,7 @@ RT["jsoo_extract"] = function (o) {
 
 // Caml name:  inject
 // Caml type:  value -> obj
-RT["jsoo_inject"] = function (o) {
+function jsoo_inject (o) {
     if (!is_block(o))
 	return null;
     if (o.tag == 2)
@@ -73,7 +73,7 @@ RT["jsoo_inject"] = function (o) {
 
 // Caml name:  call
 // Caml type:  obj -> obj array -> obj -> obj
-RT["jsoo_call"] = function (d, args, o) {
+function jsoo_call (d, args, o) {
     try {
 	return o.apply (d, args.content) ;
     } catch (e) {
@@ -84,7 +84,7 @@ RT["jsoo_call"] = function (d, args, o) {
 
 // Caml name:  wrap_event
 // Caml type:  (unit -> unit) > obj
-RT["jsoo_wrap_event"] = function (clos, res) {
+function jsoo_wrap_event (clos, res) {
     var vm = this;
     return function (evt) {
 	var pid = vm.thread_new (clos);
@@ -103,6 +103,6 @@ RT["jsoo_wrap_event"] = function (clos, res) {
 
 // Caml name:  get_event_args
 // Caml type:  unit -> obj array
-RT["jsoo_get_event_args"] = function (unit) {
+function jsoo_get_event_args (unit) {
     return this.ctx.event_args;
 }

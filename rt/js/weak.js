@@ -21,7 +21,7 @@ function register_weak (a) {
 
 // Caml name: create
 // Type:      int -> 'a t
-RT["caml_weak_create"] = function (size) {
+function caml_weak_create (size) {
     var a = mk_block (size, ABSTRACT_TAG);
     for (var i = 0;i < size;i++)
 	a.set (i, 0);
@@ -31,25 +31,25 @@ RT["caml_weak_create"] = function (size) {
 
 // Caml name: set
 // Type:      'a t -> int -> 'a option -> unit
-RT["caml_weak_set"] = function (a, i, v) {
+function caml_weak_set (a, i, v) {
     a.set (i, v);
     return UNIT;
 }
 
 // Caml name: get
 // Type:      'a t -> int -> 'a option
-RT["caml_weak_get"] = function (a, i) {
+function caml_weak_get (a, i) {
     return a.get (i);
 }
 
 // Caml name: get_copy
 // Type:      'a t -> int -> 'a option
-RT["caml_weak_get_copy"] = function (a, i) {
+function caml_weak_get_copy (a, i) {
     return a.get (i);
 }
 
 // Caml name: check
 // Type:      'a t -> int -> bool
-RT["caml_weak_check"] = function (a, i) {
+function caml_weak_check (a, i) {
     return mk_bool (is_long (a.get (i)));
 }

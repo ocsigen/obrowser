@@ -9,8 +9,6 @@
 
 var ie = (navigator.appName == "Microsoft Internet Explorer") ;
 
-#define METHODS(c) c.prototype
-
 if (Array.map == null) {
     Array.map = function (a,f) {
 	if (arguments.length == 1) {

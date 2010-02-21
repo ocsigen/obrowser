@@ -20,7 +20,7 @@ i_tbl_cb[IRAISE] = function (vm, c) {
     }
 }
 
-METHODS(VM).callback = function (clos, args) {
+VM.prototype.callback = function (clos, args) {
     var code = mk_block (7, 0);
     var ctx = {
 	cur_code : code,

@@ -52,25 +52,25 @@ function load_program (url) {
 	}
     }
     
-    METHODS(Buffer).seek_start = function (i) {
+    Buffer.prototype.seek_start = function (i) {
 	this.pos = i;
     }
     
-    METHODS(Buffer).seek = function (i) {
+    Buffer.prototype.seek = function (i) {
 	this.pos += i;
     }
     
-    METHODS(Buffer).seek_end = function (i) {
+    Buffer.prototype.seek_end = function (i) {
 	this.pos = this.text.length + i;    
     }
     
-    METHODS(Buffer).read = function (len) {
+    Buffer.prototype.read = function (len) {
 	var r = this.text.slice (this.pos, this.pos + len);
 	this.pos += len;
 	return r;
     }
     
-    METHODS(Buffer).seek_section = function (name) {
+    Buffer.prototype.seek_section = function (name) {
 	var ofs = TRAILER_SIZE + this.nsections * 8;
 	for (var i = this.nsections - 1;i >= 0;i--) {
 	    ofs += this.sections[i].len;
@@ -82,7 +82,7 @@ function load_program (url) {
 	return -1;
     }
     
-    METHODS(Buffer).read_section = function (name) {
+    Buffer.prototype.read_section = function (name) {
 	var len = this.seek_section (name);
 	if (len == -1) {
 	    return null;

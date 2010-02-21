@@ -20,38 +20,38 @@ var SYS_BLOCKED_IO = 9;                  /* "Sys_blocked_io" */
 var ASSERT_FAILURE_EXN = 10;             /* "Assert_failure" */
 var UNDEFINED_RECURSIVE_MODULE_EXN = 11; /* "Undefined_recursive_module" */
 
-METHODS(VM).raise_constant = function(tag) {
+VM.prototype.raise_constant = function(tag) {
     var b = mk_block (1,0);
     b.set(0, this.data.get (tag));
     this.raise (b);
 }
 
-METHODS(VM).raise_with_arg = function (tag,val) {
+VM.prototype.raise_with_arg = function (tag,val) {
     var b = mk_block (2,0);
     b.set(0,this.data.get (tag));
     b.set(1,val);
     this.raise (b);
 }
 
-METHODS(VM).raise_with_string = function (tag, msg) {
+VM.prototype.raise_with_string = function (tag, msg) {
     var b = mk_block (2,0);
     b.set(0,this.data.get (tag));
     b.set(1,value_from_string (msg));
     this.raise (b);
 }
 
-METHODS(VM).invalid_arg = function (msg) {
+VM.prototype.invalid_arg = function (msg) {
     this.raise_with_string (INVALID_EXN, msg);
 }
 
-METHODS(VM).failwith = function (msg) {
+VM.prototype.failwith = function (msg) {
     this.raise_with_string (FAILURE_EXN, msg);
 }
 
-METHODS(VM).array_bound_error = function () {
+VM.prototype.array_bound_error = function () {
     this.invalid_arg ("index out of bounds");
 }
 
-METHODS(VM).raise_end_of_file = function () {
+VM.prototype.raise_end_of_file = function () {
     this.raise_constant (END_OF_FILE_EXN);
 }

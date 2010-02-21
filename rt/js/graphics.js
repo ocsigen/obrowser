@@ -7,18 +7,177 @@
 /*                                                                     */
 /***********************************************************************/
 
-#include <font.js>
+function GraphicsWin (vm, width, height) {
+    this._color = 0;
+    this._w = width;
+    this._h = height;
+    this._line_width = 1;
+    this.vm = vm;
+    this._canvas = document.createElement ("canvas");
+    this._canvas.setAttribute ("width", width);
+    this._canvas.setAttribute ("height", height);
+    this._canvas.setAttribute ("style", "background-color:white; margin:5px; border:1px black solid; margin:2px;");
+    
+    this.st = { button: false, x: 0, y: 0,keypressed: false, key: 0 };
+    var win = this;
+    this._canvas.onmouseover = function (e) { win.grab_input (e) } ;
+    this._canvas.onmouseout = function (e) { win.release_input (e) } ;
+    this._canvas.onmousedown = function (e) { win.h_canvas_mousedown (e) } ;
+    this._canvas.onmousemove = function (e) { win.h_canvas_mousemove (e) } ;
+    this._canvas.onmouseup = function (e) { win.h_canvas_mouseup (e) } ;
+}
+
+#define MASK_BUTTON_DOWN   1
+#define MASK_BUTTON_UP     2
+#define MASK_KEY_PRESSED   4
+#define MASK_MOUSE_MOTION  8
+#define MASK_POLL         16
+
+GraphicsWin.prototype.grab_input = function () {
+    var win = this;
+    this._canvas.style.border = "3px red solid";
+    this._canvas.style.margin = "0px";
+
+    this._canvas.onkeydown = function () { win.h_canvas_keydown () } ;
+    this._canvas.onkeyup = function () { win.h_canvas_keyup () } ;
+}
+
+GraphicsWin.prototype.release_input = function () {
+    var win = this;
+    this._canvas.style.border = "1px black solid";
+    this._canvas.style.margin = "2px";
+
+    this._canvas.onkeydown = null ;
+    this._canvas.onkeyup = null ;
+}
+
+GraphicsWin.prototype.set_mask = function (mask) {
+    this.mask = mask;
+}
+
+GraphicsWin.prototype.h_canvas_mouseup = function (e) {
+    var can = this._canvas;
+    this.st.x =	e.layerX - can.offsetLeft;
+    this.st.y =	this._h - (e.layerY - can.offsetTop);
+    this.st.button = false;
+
+    if (this.mask & MASK_BUTTON_UP) {
+	this.last_answer = {
+	    x : this.st.x,
+	    y : this.st.y,
+	    button : true,
+	    keypressed : this.st.keypressed,
+	    key : this.st.key
+	};
+	this.mask = 0;
+	this.vm.thread_notify_all (this);
+    }
+}
+
+GraphicsWin.prototype.h_canvas_mousedown = function (e) {
+    var can = this._canvas;
+    this.st.x =	e.layerX - can.offsetLeft;
+    this.st.y =	this._h - (e.layerY - can.offsetTop);
+    this.st.button = true;
+
+    if (this.mask & MASK_BUTTON_DOWN) {
+	this.last_answer = {
+	    x : this.st.x,
+	    y : this.st.y,
+	    button : true,
+	    keypressed : this.st.keypressed,
+	    key : this.st.key
+	};
+	this.mask = 0;
+	this.vm.thread_notify_all (this);
+    }
+}
+
+GraphicsWin.prototype.h_canvas_keydown = function (e) {
+    var can = this._canvas;
+    this.st.keypressed = true;
+    this.st.key = char_from_event (e);
+}
+
+GraphicsWin.prototype.h_canvas_keyup = function (e) {
+    var can = this._canvas;
+    this.st.keypressed = false;
+
+    if (this.mask & MASK_KEY_PRESSED) {
+	this.last_answer = {
+	    x : this.st.x,
+	    y : this.st.y,
+	    button : this.st.button,
+	    keypressed : true,
+	    key : this.st.key
+	};
+	this.mask = 0;
+	this.vm.thread_notify_all (this);
+    }
+}
+
+GraphicsWin.prototype.h_canvas_mousemove = function (e) {
+    var can = this._canvas;
+    this.st.x =	e.layerX - can.offsetLeft;
+    this.st.y =	this._h - (e.layerY - can.offsetTop);
+
+    if (this.mask & MASK_MOUSE_MOTION) {
+	this.last_answer = {
+	    x : this.st.x,
+	    y : this.st.y,
+	    button : this.st.button,
+	    keypressed : this.st.keypressed,
+	    key : this.st.key
+	};
+	this.mask = 0;
+	this.vm.thread_notify_all (this);
+    }
+}
+
+GraphicsWin.prototype.resize = function (w, h) {
+    this._w = w;
+    this._h = h;
+    this._canvas.width = w;
+    this._canvas.height = h;
+}
+
+GraphicsWin.prototype.get_context = function () {
+    if (this.ctx == null) {
+	var canvas = this._canvas;
+	var ctx = canvas.getContext ("2d");
+ 	this.font_size = 12;
+ 	this.font = "Sans";
+	ctx.font = this.font_size + "px " + this.font;
+	ctx.strokeStyle = ctx.fillStyle = "rgb(" +
+	    ((this._color >> 16) & 0xFF) + "," +
+	    ((this._color >> 8) & 0xFF) + "," +
+	    (this._color & 0xFF) + ")";
+	ctx.lineWidth = 1;
+	ctx.lineCap = "round";
+	ctx.lineJoin = "round";
+	ctx.save ();
+	ctx.translate (0, this._h);
+	ctx.scale (1, -1);
+	ctx.translate (0.5, 0.5);
+	this.ctx = ctx;
+    }
+    return this.ctx;
+}
+
+GraphicsWin.prototype.get_canvas = function () {
+    return this._canvas;
+}
 
 // Caml name: raw_open_graph
 // Type:      int -> int -> Js.Node.t
-RT.caml_gr_open_graph = function (width, height) {
+function caml_gr_open_graph (width, height) {
     this.graphics_win = new GraphicsWin (this, width, height);
     return this.graphics_win.get_canvas ();
 }
 
 // Caml name: raw_close_graph
 // Type:      unit -> unit
-RT.caml_gr_close_graph = function (unit) {
+function caml_gr_close_graph (unit) {
     if (this.graphics_win)
 	this.graphics_win.close ();
     return UNIT;
@@ -26,7 +185,7 @@ RT.caml_gr_close_graph = function (unit) {
 
 // Caml name: set_window_title
 // Type:      string -> unit
-RT.caml_gr_set_window_title = function (t) {
+function caml_gr_set_window_title (t) {
     if (this.graphics_win)
 	this.graphics_win.set_title (s);
     return UNIT;
@@ -34,7 +193,7 @@ RT.caml_gr_set_window_title = function (t) {
 
 // Caml name: resize_window
 // Type:      int -> int -> unit
-RT.caml_gr_resize_window = function (w, h) {
+function caml_gr_resize_window (w, h) {
     if (this.graphics_win)
 	this.graphics_win.resize (w, h);
     return UNIT;
@@ -42,7 +201,7 @@ RT.caml_gr_resize_window = function (w, h) {
 
 // Caml name: clear_graph
 // Type:      unit -> unit
-RT.caml_gr_clear_graph = function (unit) {
+function caml_gr_clear_graph (unit) {
     if (this.graphics_win) {
 	var ctx = this.graphics_win.get_context ();
 	ctx.fillRect (0, 0, this.graphics_win._w, this.graphics_win._h)
@@ -52,7 +211,7 @@ RT.caml_gr_clear_graph = function (unit) {
 
 // Caml name: size_x
 // Type:      unit -> int
-RT.caml_gr_size_x = function (unit) {
+function caml_gr_size_x (unit) {
     if (this.graphics_win)
 	return this.graphics_win._w;
     else
@@ -61,7 +220,7 @@ RT.caml_gr_size_x = function (unit) {
 
 // Caml name: size_y
 // Type:      unit -> int
-RT.caml_gr_size_y = function (unit) {
+function caml_gr_size_y (unit) {
     if (this.graphics_win)
 	return this.graphics_win._h;
     else
@@ -70,25 +229,25 @@ RT.caml_gr_size_y = function (unit) {
 
 // Caml name: display_mode
 // Type:      bool -> unit
-RT.caml_gr_display_mode = function (bool) {
+function caml_gr_display_mode (bool) {
     return UNIT;
 }
 
 // Caml name: remember_mode
 // Type:      bool -> unit
-RT.caml_gr_remember_mode = function (bool) {
+function caml_gr_remember_mode (bool) {
     return UNIT;
 }
 
 // Caml name: synchronize
 // Type:      unit -> unit
-RT.caml_gr_synchronize = function (unit) {
+function caml_gr_synchronize (unit) {
     return UNIT;
 }
 
 // Caml name: set_color
 // Type:      color -> unit
-RT.caml_gr_set_color = function (color) {
+function caml_gr_set_color (color) {
     if (this.graphics_win) {
 	var ctx = this.graphics_win.get_context ();
 	this.graphics_win._color = color;
@@ -102,7 +261,7 @@ RT.caml_gr_set_color = function (color) {
 
 // Caml name: plot
 // Type:      int -> int -> unit
-RT.caml_gr_plot = function (x, y) {
+function caml_gr_plot (x, y) {
     if (this.graphics_win) {
 	var ctx = this.graphics_win.get_context ();
 	ctx.fillRect (x, y, 1, 1);
@@ -114,7 +273,7 @@ RT.caml_gr_plot = function (x, y) {
 
 // Caml name: point_color
 // Type:      int -> int -> color
-RT.caml_gr_point_color = function (x, y) {
+function caml_gr_point_color (x, y) {
     if (this.graphics_win) {
 	var ctx = this.graphics_win.get_context ();
 	var tmp = ctx.getImageData (x,this.graphics_win._h - y - 1,1,1);
@@ -125,7 +284,7 @@ RT.caml_gr_point_color = function (x, y) {
 
 // Caml name: moveto
 // Type:      int -> int -> unit
-RT.caml_gr_moveto = function (x, y) {
+function caml_gr_moveto (x, y) {
     if (this.graphics_win) {
 	this.graphics_win._x = x;
 	this.graphics_win._y = y;
@@ -135,7 +294,7 @@ RT.caml_gr_moveto = function (x, y) {
 
 // Caml name: current_x
 // Type:      unit -> int
-RT.caml_gr_current_x = function (unit) {
+function caml_gr_current_x (unit) {
     if (this.graphics_win)
 	return this.graphics_win._x;
     else
@@ -144,7 +303,7 @@ RT.caml_gr_current_x = function (unit) {
 
 // Caml name: current_y
 // Type:      unit -> int
-RT.caml_gr_current_y = function (unit) {
+function caml_gr_current_y (unit) {
     if (this.graphics_win)
 	return this.graphics_win._y;
     else
@@ -153,7 +312,7 @@ RT.caml_gr_current_y = function (unit) {
 
 // Caml name: lineto
 // Type:      int -> int -> unit
-RT.caml_gr_lineto = function (x, y) {
+function caml_gr_lineto (x, y) {
     if (this.graphics_win) {
 	var ctx = this.graphics_win.get_context ();
 	ctx.beginPath ();
@@ -168,7 +327,7 @@ RT.caml_gr_lineto = function (x, y) {
 
 // Caml name: raw_draw_rect
 // Type:      int -> int -> int -> int -> unit
-RT.caml_gr_draw_rect = function (x, y, w, h) {
+function caml_gr_draw_rect (x, y, w, h) {
     if (this.graphics_win) {
 	var ctx = this.graphics_win.get_context ();
 	ctx.beginPath ();
@@ -184,10 +343,10 @@ RT.caml_gr_draw_rect = function (x, y, w, h) {
 
 // Caml name: raw_draw_arc
 // Type:      int -> int -> int -> int -> int -> int -> unit
-RT.caml_gr_draw_arc = function (a) {
-    return RT.caml_gr_draw_arc_nat.call (this,a[0],a[1],a[2],a[3],a[4],a[5]);
+function caml_gr_draw_arc (a) {
+    return caml_gr_draw_arc_nat.call (this,a[0],a[1],a[2],a[3],a[4],a[5]);
 }
-RT.caml_gr_draw_arc_nat = function (x,y,rx,ry,a1,a2) {
+function caml_gr_draw_arc_nat (x,y,rx,ry,a1,a2) {
     if (this.graphics_win) {
 	var ctx = this.graphics_win.get_context ();
 	ctx.beginPath ();
@@ -199,7 +358,7 @@ RT.caml_gr_draw_arc_nat = function (x,y,rx,ry,a1,a2) {
 
 // Caml name: raw_set_line_width
 // Type:      int -> unit
-RT.caml_gr_set_line_width = function (lw) {
+function caml_gr_set_line_width (lw) {
     if (this.graphics_win) {
 	var ctx = this.graphics_win.get_context ();
 	this.graphics_win._line_width = lw;
@@ -210,7 +369,7 @@ RT.caml_gr_set_line_width = function (lw) {
 
 // Caml name: raw_fill_rect
 // Type:      int -> int -> int -> int -> unit
-RT.caml_gr_fill_rect = function (x, y, w, h) {
+function caml_gr_fill_rect (x, y, w, h) {
     if (this.graphics_win) {
 	var ctx = this.graphics_win.get_context ();
 	ctx.fillRect (x, y, w, h);
@@ -220,7 +379,7 @@ RT.caml_gr_fill_rect = function (x, y, w, h) {
 
 // Caml name: fill_poly
 // Type:      (int * int) array -> unit
-RT.caml_gr_fill_poly = function (p) {
+function caml_gr_fill_poly (p) {
     if (this.graphics_win) {
 	var ctx = this.graphics_win.get_context ();
 	ctx.beginPath ();
@@ -238,10 +397,10 @@ RT.caml_gr_fill_poly = function (p) {
 
 // Caml name: raw_fill_arc
 // Type:      int -> int -> int -> int -> int -> int -> unit
-RT.caml_gr_fill_arc = function (a) {
-    return RT.caml_gr_fill_arc_nat.call (this,a[0],a[1],a[2],a[3],a[4],a[5]);
+function caml_gr_fill_arc (a) {
+    return caml_gr_fill_arc_nat.call (this,a[0],a[1],a[2],a[3],a[4],a[5]);
 }
-RT.caml_gr_fill_arc_nat = function (x,y,rx,ry,a1,a2) {
+function caml_gr_fill_arc_nat (x,y,rx,ry,a1,a2) {
     if (this.graphics_win) {
 	var ctx = this.graphics_win.get_context ();
 	ctx.beginPath ();
@@ -254,64 +413,81 @@ RT.caml_gr_fill_arc_nat = function (x,y,rx,ry,a1,a2) {
 
 // Caml name: draw_char
 // Type:      char -> unit
-RT.caml_gr_draw_char = function (c) {
+function caml_gr_draw_char (c) {
     if (this.graphics_win) {
 	var ctx = this.graphics_win.get_context ();
-	ctx.drawImage (graphics_font.mapped[c],
-		       this.graphics_win._x,
-		       this.graphics_win._y);
-	this.graphics_win._x += 8;
-	this.graphics_win._y += graphics_font.height;
+	ctx.save ();
+	ctx.scale (1, -1);
+	ctx.translate (0, -this.graphics_win._h);
+	ctx.textBaseline = "bottom";
+	var m = ctx.measureText (c);
+	ctx.fillText (c, this.graphics_win._x, this.graphics_win._y);
+	this.graphics_win._x += Math.round (m.width);
+	this.graphics_win._y += Math.round (this.graphics_win.font_size);
+	ctx.restore ();
     }
     return UNIT;
 }
 
 // Caml name: draw_string
 // Type:      string -> unit
-RT.caml_gr_draw_string = function (s) {
+function caml_gr_draw_string (s) {
+    s = string_from_value (s);
     if (this.graphics_win) {
 	var ctx = this.graphics_win.get_context ();
-	for (var i = 0;i < s.size - 1;i++) {
-	    var img = graphics_font.mapped[s.get (i)];
-	    if (img) {
-		for (var y = 0;y < graphics_font.height;y++)
-		    for (var x = 0;x < 8;x++)
-			if (img[graphics_font.height - 1 - y][x])
-			    ctx.fillRect (this.graphics_win._x + x - .5,
-					  this.graphics_win._y + y - .5,
-					  1, 1);
-		this.graphics_win._x += 8;
-	    }
-	}
-	this.graphics_win._y += graphics_font.height;
+	ctx.save ();
+	ctx.scale (1, -1);
+	ctx.translate (0, -this.graphics_win._h);
+	ctx.textBaseline = "bottom";
+	var m = ctx.measureText (s);
+	ctx.fillText (s, this.graphics_win._x, this.graphics_win._h - this.graphics_win._y);
+	this.graphics_win._x += Math.round (m.width);
+	this.graphics_win._y += Math.round (this.graphics_win.font_size);
+	ctx.restore ();
     }
     return UNIT;
 }
 
 // Caml name: set_font
 // Type:      string -> unit
-RT.caml_gr_set_font = function (s) {
+function caml_gr_set_font (s) {
+    if (this.graphics_win) {
+	this.graphics_win.font = string_from_value (s);
+	var ctx = this.graphics_win.get_context ();
+	ctx.font = this.graphics_win.font_size + "px " + this.graphics_win.font;
+    }
     return UNIT;
 }
 
 // Caml name: set_text_size
 // Type:      int -> unit
-RT.caml_gr_set_text_size = function (sz) {
+function caml_gr_set_text_size (sz) {
+    if (this.graphics_win) {
+ 	this.graphics_win.font_size = sz;
+	var ctx = this.graphics_win.get_context ();
+	ctx.font = this.graphics_win.font_size + "px " + this.graphics_win.font;
+    }
     return UNIT;
 }
 
 // Caml name: text_size
 // Type:      string -> int * int
-RT.caml_gr_text_size = function (s) {
-    var b = mk_block (2, 0);
-    b.set (0, 8 * (s.size - 1));
-    b.set (1, graphics_font.height);
-    return b;
+function caml_gr_text_size (s) {
+    s = string_from_value (s);
+    if (this.graphics_win) {
+	var ctx = this.graphics_win.get_context ();
+	var m = ctx.measureText (s);
+	var b = mk_block (2, 0);
+	b.set (0, Math.round (m.width));
+	b.set (1, Math.round (this.graphics_win.font_size));
+	return b;
+    }
+    this.failwith ("caml_gr_text_size");
 }
 
 // Caml name: make_image
 // Type:      color array array -> image
-RT.caml_gr_make_image = function (caa) {
+function caml_gr_make_image (caa) {
     /* warning: no checks */
     var imgdata = new Object ();
     imgdata.height = caa.size;
@@ -334,7 +510,7 @@ RT.caml_gr_make_image = function (caa) {
 
 // Caml name: dump_image
 // Type:      image -> color array array
-RT.caml_gr_dump_image = function (img) {
+function caml_gr_dump_image (img) {
     var caa = mk_block (img.height, 0);
     for (var y = 0;y < img.height;y++) {
 	caa.set (y, mk_block (img.width, 0));
@@ -350,7 +526,7 @@ RT.caml_gr_dump_image = function (img) {
 
 // Caml name: draw_image
 // Type:      image -> int -> int -> unit
-RT.caml_gr_draw_image = function (bimg, x, y) {
+function caml_gr_draw_image (bimg, x, y) {
     var ctx = this.graphics_win.get_context ();
     var img = bimg.get (0);
     ctx.putImageData (img, x, this.graphics_win._h - y - img.height);
@@ -359,7 +535,7 @@ RT.caml_gr_draw_image = function (bimg, x, y) {
 
 // Caml name: create_image
 // Type:      int -> int -> image
-RT.caml_gr_create_image = function (w, h) {
+function caml_gr_create_image (w, h) {
     var img = new Object ();
     img.width = w;
     img.height = h;
@@ -378,7 +554,7 @@ RT.caml_gr_create_image = function (w, h) {
 
 // Caml name: blit_image
 // Type:      image -> int -> int -> unit
-RT.caml_gr_blit_image = function (bimg, x, y) {
+function caml_gr_blit_image (bimg, x, y) {
     var ctx = this.graphics_win.get_context ();
     var img = bimg.get (0);
     img.data = ctx.getImageData (x, this.graphics_win._h - y - img.height,
@@ -388,7 +564,7 @@ RT.caml_gr_blit_image = function (bimg, x, y) {
 
 // Caml name: wait_next_event
 // Type:      event list -> status
-RT.caml_gr_wait_event = function (evl) {
+function caml_gr_wait_event (evl) {
     var mask = 0;
     while (is_block (evl)) {
 	mask |= 1 << evl.get (0);
@@ -424,6 +600,6 @@ RT.caml_gr_wait_event = function (evl) {
 
 // Caml name: sound
 // Type:      int -> int -> unit
-RT.caml_gr_sound = function (f, d) {
+function caml_gr_sound (f, d) {
     return UNIT;
 }

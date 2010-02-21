@@ -132,7 +132,7 @@ function md5 (message) {
 
 // Caml name: unsafe_string
 // Type:      string -> int -> int -> t
-RT.caml_md5_string = function (v, ofs, len) {
+caml_md5_string = function (v, ofs, len) {
     var s = [];
     for (var i = 0;i < len;i++)
 	s[i] = v.get (ofs + i);
@@ -140,6 +140,6 @@ RT.caml_md5_string = function (v, ofs, len) {
 }
 
 // Caml name: channel
-RT.caml_md5_chan = function (v, ofs, len) {
+caml_md5_chan = function (v, ofs, len) {
     this.failwith ("not implemented in obrowser");
 }

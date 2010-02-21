@@ -7,7 +7,7 @@
 /*                                                                     */
 /***********************************************************************/
 
-#include <ie_js_stdlib_fixes.js>
+#include <compatibility.js>
 
 #define INT32(x) ((x) | 0)
 
@@ -32,12 +32,7 @@
 
 #define caml_catch(e) if (((e) == MAGIC_CAML_CONT) || ((e) == MAGIC_CAML_EX)) throw (e)
 
-
 #include <utils.js>
-
-
-var RT = [];
-
 #include <mlvalues.js>
 #include <custom.js>
 #include <marshall.js>
@@ -66,7 +61,6 @@ function debug_val (msg, val, n) {
 #define debug_val(x,...) 
 #endif //DEBUG
 
-#include <windows.js>
 #include <graphics.js>
 #include <lexing.js>
 
@@ -86,11 +80,18 @@ function VM(url, argv) {
     var program = load_program (url);
     this.syms = program.symbols;
     this.prims = [];
-    for (n in this.syms)
-	this.prims[n] =
-	  (RT[this.syms[n]] == null)
-	? ((function(n){return function () { throw (new Error("undefined primitive " + this.syms[n]))}})(n))
-            : RT[this.syms[n]] ;
+    function undefined_primitive (name){
+	return function () {
+	    throw (new Error("undefined primitive " + name))
+	}
+    }
+    for (n in this.syms) {
+	try {
+	    this.prims[n] = eval (this.syms[n]);
+	} catch (e) {
+	    this.prims[n] = undefined_primitive (this.syms[n]);
+	}
+    }
     this.data = program.data ;
 
     /* init state */
@@ -1076,58 +1077,7 @@ var i_tbl = {
     }
 };
 
-
-// METHODS(VM).step = function () {
-//     if (this.ctx == null) return false;
-//     var c = this.ctx;
-//     if (c.status == GOT_RES) {
-// 	try {
-// 	    if (c.iocontinuation ()) {
-// 		c.status = RUN;
-// 		c.accu = c.ioresult;
-// 		return true;
-// 	    } else {
-// 		c.status = WAIT_RES;
-// 		return false;
-// 	    }
-// 	} catch (e) {
-// 	    if (e != MAGIC_CAML_EX)
-// 		throw e;
-// 	    else
-// 		c.status = c.oldstatus;
-// 	}
-//     } else {
-// 	if (c.status != RUN) {
-// 	    /* SLEEP, WAIT & WAIT_RES */
-// 	    return false;
-// 	}
-//     }
-//     return i_tbl [c.cur_code.get (c.pc++)] (this, c);
-// }
-
-#define INLINED_STEP_LOOP {						\
-    if (vm.ctx == null) break;						\
-    var c = vm.ctx;							\
-    if (c.status == GOT_RES) {						\
-	try {								\
-	    c.accu = c.iocontinuation ();				\
-	    c.status = RUN;						\
-	    continue;							\
-	} catch (e) {							\
-	    if (e == MAGIC_CAML_CONT) break;				\
-	    if (e != MAGIC_CAML_EX) throw e;				\
-	    break;							\
-	}								\
-    } else {								\
-	if (c.status != RUN)						\
-	    /* SLEEP, WAIT & WAIT_RES */				\
-	    break;							\
-    }									\
-    if (! i_tbl [c.cur_code.get (c.pc++)] (vm, c)) break;               \
-}
-
-
-METHODS(VM).raise = function (e) {
+VM.prototype.raise = function (e) {
     with (this.ctx) {
 	accu = e;
 	if (caml_trap_sp == -1) {
@@ -1150,31 +1100,33 @@ METHODS(VM).raise = function (e) {
     }
 }
 
-METHODS(VM).run = function () {
-    if (this.status != VM_RUNNING) {
-	this.status = VM_RUNNING;
-	var vm = this;
-	function sched_run () {
-	    for (var i = 0;i < RESCHED_INTERVAL;i++)
-		INLINED_STEP_LOOP;
-	    if (vm.thread_yield ())
-		window.setTimeout (sched_run, 0);
-	    else
-		vm.status = VM_WAITING;
-	}
-	sched_run ();
-    }
-}
-
-METHODS(VM).run = function () {
+VM.prototype.run = function () {
     if (this.status != VM_RUNNING) {
 	this.status = VM_RUNNING;
 	var vm = this;
 	function sched_run () {
 	    var t1 = (new Date ()).getTime ();
 	    for (var i = 0;i < TIMEOUT_INTERVAL;i++) {
-		for (var j = 0;j < RESCHED_INTERVAL;j++)
-		    INLINED_STEP_LOOP
+		for (var j = 0;j < RESCHED_INTERVAL;j++) {
+		    if (vm.ctx == null) break;						
+		    var c = vm.ctx;							
+		    if (c.status == GOT_RES) {						
+			try {								
+			    c.accu = c.iocontinuation ();				
+			    c.status = RUN;						
+			    continue;							
+			} catch (e) {							
+			    if (e == MAGIC_CAML_CONT) break;				
+			    if (e != MAGIC_CAML_EX) throw e;				
+			    break;							
+			}								
+		    } else {								
+			if (c.status != RUN)						
+			    /* SLEEP, WAIT & WAIT_RES */				
+			    break;							
+		    }									
+		    if (! i_tbl [c.cur_code.get (c.pc++)] (vm, c)) break;               
+		}
 		var t2 = (new Date ()).getTime ();
 		if (!vm.thread_yield ()) {
 		    vm.status = VM_WAITING;
@@ -1192,30 +1144,7 @@ METHODS(VM).run = function () {
     }
 }
 
-/*
-METHODS(VM).resume_after_io = function (resource) {
-    var resumed = false;
-    for (var i = 0;i < this.nthreads;i++)
-	if (this.threads[i].status == WAIT_RES
-	    && this.threads[i].waiting_for == resource) {
-	    this.threads[i].status = GOT_RES;
-	    resumed = true;
-	}
-    if (resumed && this.status == VM_WAITING)
-	this.run ();
-}
-
-METHODS(VM).suspend_before_io = function (resource, cont, args) {
-    with (this.ctx) {
-	oldstatus = status;
-	status = GOT_RES;
-	waiting_for = resource;
-	iocontinuation = function () { return cont (args); };
-    }
-}
-*/
-
-METHODS(VM).thread_notify_all = function (res) {
+VM.prototype.thread_notify_all = function (res) {
     var p = this.ctx;
     do {
 	if (p.status == WAIT_RES && p.waiting_for == res) {
@@ -1228,7 +1157,7 @@ METHODS(VM).thread_notify_all = function (res) {
 	this.run ();
 }
 
-METHODS(VM).thread_notify_one = function (res) {
+VM.prototype.thread_notify_one = function (res) {
     var p = this.ctx;
     do {
 	if (p.status == WAIT_RES && p.waiting_for == res) {
@@ -1241,7 +1170,7 @@ METHODS(VM).thread_notify_one = function (res) {
 	this.run ();
 }
 
-METHODS(VM).thread_wait = function (res, cont) {
+VM.prototype.thread_wait = function (res, cont) {
     this.ctx.waiting_for = res;
     this.ctx.status = WAIT_RES;
     this.ctx.iocontinuation = cont;
@@ -1249,7 +1178,7 @@ METHODS(VM).thread_wait = function (res, cont) {
     throw MAGIC_CAML_CONT;
 }
 
-METHODS(VM).thread_yield = function () {
+VM.prototype.thread_yield = function () {
     if (this.ctx == null)
 	return false;
     var p = this.ctx.n_ctx;
@@ -1263,7 +1192,7 @@ METHODS(VM).thread_yield = function () {
     return false;
 }
 
-METHODS(VM).thread_new = function (clos, arg1) {
+VM.prototype.thread_new = function (clos, arg1) {
     var t = {
 	cur_code : clos.get (0),
 	pc : 0,
@@ -1289,7 +1218,7 @@ METHODS(VM).thread_new = function (clos, arg1) {
     return this.max_pid++;
 }
 
-METHODS(VM).thread_kill = function (pid) {
+VM.prototype.thread_kill = function (pid) {
     var p = this.ctx;
     do {
 	if (p.pid == pid) {
@@ -1308,7 +1237,7 @@ METHODS(VM).thread_kill = function (pid) {
     } while (p != this.ctx);
 }
 
-METHODS(VM).thread_delay = function (millis) {
+VM.prototype.thread_delay = function (millis) {
     function resume (vm, t) {
 	return function () {
 	    t.status = RUN;
@@ -1320,7 +1249,7 @@ METHODS(VM).thread_delay = function (millis) {
     window.setTimeout (resume (this, this.ctx), millis);
 }
 
-METHODS(VM).thread_wakeup = function (pid) {
+VM.prototype.thread_wakeup = function (pid) {
     var p = this.ctx;
     do {
 	if (p.pid == pid) {

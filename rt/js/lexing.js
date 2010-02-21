@@ -78,7 +78,7 @@ function run_tag (pc, mem) {
 
 // Caml name: c_engine
 // Type:      lex_tables -> int -> lexbuf -> int
-RT["caml_lex_engine"] = function(tbl, start_state, lexbuf) {
+function caml_lex_engine(tbl, start_state, lexbuf) {
     var state, base, backtrk, c ;
     state = start_state;
     if (state >= 0) {
@@ -128,7 +128,7 @@ RT["caml_lex_engine"] = function(tbl, start_state, lexbuf) {
 
 // Caml name: c_new_engine
 // Type:      lex_tables -> int -> lexbuf -> int
-RT["caml_new_lex_engine"] = function(tbl, start_state, lexbuf) {
+function caml_new_lex_engine(tbl, start_state, lexbuf) {
     var state, base, backtrk, c, pstate ;
     state = start_state;
     if (state >= 0) {

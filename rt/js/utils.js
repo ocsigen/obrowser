@@ -143,20 +143,6 @@ function get_cookie (name) {
     return null;
 }
 
-// make 'daughter' inherit 'mother' by copying its prototype
-// use this.mother_constructor to acces super constructor
-// use this.base.x to acces mother's x field
-function make_inherit (daughter, mother) {
-    function tmp() {};
-    tmp.prototype = mother.prototype;
-    daughter.prototype = new tmp();
-    daughter.prototype.constructor = daughter;
-    daughter.prototype.mother_constructor = mother;
-    if (mother.base)
-	mother.prototype.base = mother.base;
-    daughter.base = mother.prototype;
-}
-
 // get text file from url as string
 function http_get (url, error) {
     var xmlhttp=false;

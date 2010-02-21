@@ -9,7 +9,7 @@
 
 // Caml name: js_external
 // Type:      string -> int -> ('a -> 'b) option
-RT.caml_js_external = function (vsym, nargs) {
+caml_js_external = function (vsym, nargs) {
     var sym = string_from_value (vsym);
     if (RT[sym] == null)
 	return UNIT;
@@ -61,7 +61,7 @@ RT.caml_js_external = function (vsym, nargs) {
 
 // Caml name: children
 // Type:      t -> t list
-RT.caml_js_node_children = function (n) {
+caml_js_node_children = function (n) {
     var node = n;
     try {
 	var res = nil;
@@ -83,7 +83,7 @@ RT.caml_js_node_children = function (n) {
 }
 // Caml name: n_children
 // Type:      t -> int
-RT.caml_js_node_n_children = function (n) {
+caml_js_node_n_children = function (n) {
     var node = n;
     try {
 	return node.childNodes.length;
@@ -94,7 +94,7 @@ RT.caml_js_node_n_children = function (n) {
 
 // Caml name: child
 // Type:      t -> int -> t
-RT.caml_js_node_child = function (n, i) {
+caml_js_node_child = function (n, i) {
     var node = n;
     try {
 	return node.childNodes[i];
@@ -106,13 +106,13 @@ RT.caml_js_node_child = function (n, i) {
 
 // Caml name: create
 // Type:      unit -> t
-RT.caml_js_fragment_create = function (v) {
+caml_js_fragment_create = function (v) {
     return document.createDocumentFragment ();
 }
 
 // Caml name: append
 // Type:      t -> Node.t -> unit
-RT.caml_js_fragment_append = function (f, n) {
+caml_js_fragment_append = function (f, n) {
     var fragment = f;
     var node = n;
     try {
@@ -125,7 +125,7 @@ RT.caml_js_fragment_append = function (f, n) {
 
 // Caml name: flush
 // Type:      Node.t -> t -> unit
-RT.caml_js_fragment_flush = function (n,f) {
+caml_js_fragment_flush = function (n,f) {
     var fragment = f;
     var node = n;
     try {
@@ -138,20 +138,20 @@ RT.caml_js_fragment_flush = function (n,f) {
 
 // Caml name: alert
 // Type:      string -> unit
-RT.caml_js_alert = function (msg) {
+caml_js_alert = function (msg) {
     window.alert (string_from_value (msg));
     return UNIT;
 }
 
 // Caml name: params
 // Type:      unit -> string array
-RT.caml_js_params = function (v) {
+caml_js_params = function (v) {
     return this.argv;
 }
 
 // Caml name: exec
 // Type:      string -> string array -> unit
-RT.caml_js_exec = function (url, args) {
+caml_js_exec = function (url, args) {
     var argv = [];
     for (var i = 0;i < args.size;i++)
 	argv[i] = string_from_value (args.get(i));
@@ -162,7 +162,7 @@ RT.caml_js_exec = function (url, args) {
 
 // Caml name: http_get_with_status
 // Type:      string -> (int *  string)
-RT.caml_js_http_get_with_status = function (vurl) {
+caml_js_http_get_with_status = function (vurl) {
     var url = string_from_value (vurl);
 
     var xmlhttp = false;
@@ -205,7 +205,7 @@ RT.caml_js_http_get_with_status = function (vurl) {
 
 // Caml name: http_post
 // Type:      string -> string -> string -> (int *  string)
-RT.caml_js_http_post = function (vurl, type, data) {
+caml_js_http_post = function (vurl, type, data) {
     var url = string_from_value (vurl);
 
     var xmlhttp = false;
@@ -249,7 +249,7 @@ RT.caml_js_http_post = function (vurl, type, data) {
 
 // Caml name: dom_of_xml
 // Type:      string -> JSOO.obj
-RT.caml_js_dom_of_xml = function (str) 
+caml_js_dom_of_xml = function (str) 
 {
   var sstr = string_from_value (str);
   try { //IE
@@ -268,7 +268,7 @@ RT.caml_js_dom_of_xml = function (str)
 
 // Caml name: pretty_xml_of_dom
 // Type:      JSOO.obj -> string
-RT.caml_js_pretty_xml_of_dom = function (o)
+caml_js_pretty_xml_of_dom = function (o)
 {
   try {
     var serializer = new XMLSerializer();
@@ -279,7 +279,7 @@ RT.caml_js_pretty_xml_of_dom = function (o)
 
 // Caml name: xml_of_dom
 // Type:      JSOO.obj -> string
-RT.caml_js_xml_of_dom = function (o)
+caml_js_xml_of_dom = function (o)
 {
   try {
     var serializer = new XMLSerializer();

@@ -58,90 +58,90 @@ function open_in (name) {
 /*
 // Caml name: seek_out_blocking
 // Type:      out_channel -> int -> unit
-RT["caml_ml_seek_out"] = function () {
+function caml_ml_seek_out () {
   throw new Error ("caml_ml_seek_out" + " not implemented");
 }
 // Caml name: pos_out
 // Type:      out_channel -> int
-RT["caml_ml_pos_out"] = function () {
+function caml_ml_pos_out () {
   throw new Error ("caml_ml_pos_out" + " not implemented");
 }
 // Caml name: out_channel_length
 // Type:      out_channel -> int
-RT["caml_ml_channel_size"] = function () {
+function caml_ml_channel_size () {
   throw new Error ("caml_ml_channel_size" + " not implemented");
 }
 // Caml name: close_out_channel
 // Type:      out_channel -> unit
-RT["caml_ml_close_channel"] = function () {
+function caml_ml_close_channel () {
   throw new Error ("caml_ml_close_channel" + " not implemented");
 }
 // Caml name: set_binary_mode_out
 // Type:      out_channel -> bool -> unit
-RT["caml_ml_set_binary_mode"] = function () {
+function caml_ml_set_binary_mode () {
   throw new Error ("caml_ml_set_binary_mode" + " not implemented");
 }
 // Caml name: seek_in
 // Type:      in_channel -> int -> unit
-RT["caml_ml_seek_in"] = function () {
+function caml_ml_seek_in () {
   throw new Error ("caml_ml_seek_in" + " not implemented");
 }
 // Caml name: pos_in
 // Type:      in_channel -> int
-RT["caml_ml_pos_in"] = function () {
+function caml_ml_pos_in () {
   throw new Error ("caml_ml_pos_in" + " not implemented");
 }
 // Caml name: in_channel_length
 // Type:      in_channel -> int
-RT["caml_ml_channel_size"] = function () {
+function caml_ml_channel_size () {
   throw new Error ("caml_ml_channel_size" + " not implemented");
 }
 // Caml name: set_binary_mode_in
 // Type:      in_channel -> bool -> unit
-RT["caml_ml_set_binary_mode"] = function () {
+function caml_ml_set_binary_mode () {
   throw new Error ("caml_ml_set_binary_mode" + " not implemented");}
 // Caml name: seek_out
 // Type:      out_channel -> int64 -> unit
-RT["caml_ml_seek_out_64"] = function () {
+function caml_ml_seek_out_64 () {
   throw new Error ("caml_ml_seek_out_64" + " not implemented");
 }
 // Caml name: pos_out
 // Type:      out_channel -> int64
-RT["caml_ml_pos_out_64"] = function () {
+function caml_ml_pos_out_64 () {
   throw new Error ("caml_ml_pos_out_64" + " not implemented");
 }
 // Caml name: out_channel_length
 // Type:      out_channel -> int64
-RT["caml_ml_channel_size_64"] = function () {
+function caml_ml_channel_size_64 () {
   throw new Error ("caml_ml_channel_size_64" + " not implemented");
 }
 // Caml name: seek_in
 // Type:      in_channel -> int64 -> unit
-RT["caml_ml_seek_in_64"] = function () {
+function caml_ml_seek_in_64 () {
   throw new Error ("caml_ml_seek_in_64" + " not implemented");
 }
 // Caml name: pos_in
 // Type:      in_channel -> int64
-RT["caml_ml_pos_in_64"] = function () {
+function caml_ml_pos_in_64 () {
   throw new Error ("caml_ml_pos_in_64" + " not implemented");
 }
 // Caml name: in_channel_length
 // Type:      in_channel -> int64
-RT["caml_ml_channel_size_64"] = function () {
+function caml_ml_channel_size_64 () {
   throw new Error ("caml_ml_channel_size_64" + " not implemented");
 }
 */
 
 // Caml name: close_in
 // Type:      in_channel -> unit
-RT["caml_ml_close_channel"] = function (b) {
+function caml_ml_close_channel (b) {
     b.set (0, null);
     return UNIT;
 }
 
 // Caml name: open_descriptor_out
 // Type:      int -> out_channel
-RT["caml_ml_open_descriptor_out"] = function (fd) {
+function caml_ml_open_descriptor_out (fd) {
     if (channels [fd].mode == CHANNEL_OUT) {
 	var b = mk_block (1, ABSTRACT_TAG);
 	b.set (0, channels [fd])
@@ -153,7 +153,7 @@ RT["caml_ml_open_descriptor_out"] = function (fd) {
 
 // Caml name: open_descriptor_in
 // Type:      int -> in_channel
-RT["caml_ml_open_descriptor_in"] = function (fd) {
+function caml_ml_open_descriptor_in (fd) {
     if (channels [fd].mode == CHANNEL_IN) {
 	var b = mk_block (1, ABSTRACT_TAG);
 	b.set (0, channels [fd])
@@ -165,18 +165,18 @@ RT["caml_ml_open_descriptor_in"] = function (fd) {
 
 // Caml name: descr_inchan
 // Type:      in_channel -> Unix.file_descr
-RT["caml_channel_descriptor"] = function (chan) {
+function caml_channel_descriptor (chan) {
     return chan.get (0).fd;
 }
 // Caml name: descr_outchan
 // Type:      out_channel -> Unix.file_descr
-RT["caml_channel_descriptor"] = function (chan) {
+function caml_channel_descriptor (chan) {
     return chan.get (0).fd;
 }
 
 // Caml name: open_desc
 // Type:      string -> open_flag list -> int -> int
-RT["caml_sys_open"] = function (f, flags, perms) {
+function caml_sys_open (f, flags, perms) {
     var mode = 0;
     var open_flags = new Array (
 	CHANNEL_IN, CHANNEL_OUT, CHANNEL_OUT, 0, 0, 0, 0, 0, 0
@@ -192,7 +192,7 @@ RT["caml_sys_open"] = function (f, flags, perms) {
 
 // Caml name: out_channels_list
 // Type:      unit -> out_channel list
-RT["caml_ml_out_channels_list"] = function (fd) {
+function caml_ml_out_channels_list (fd) {
     var b = 0;
     var r = 0;
     for (var i = 0;i < nchannels;i++) {
@@ -216,14 +216,14 @@ RT["caml_ml_out_channels_list"] = function (fd) {
 
 // Caml name: output_char_blocking
 // Type:      out_channel -> char -> unit
-RT["caml_ml_output_char"] = function (chan, c) {
+function caml_ml_output_char (chan, c) {
     chan.get(0).con.puts (String.fromCharCode (c));
     return UNIT;
 }
 
 // Caml name: unsafe_output_partial
 // Type:      out_channel -> string -> int -> int -> int
-RT["caml_ml_output_partial"] = function (chan, s, st, len) {
+function caml_ml_output_partial (chan, s, st, len) {
     var so = "";
     for (var v = 0;v < len;v++) {
 	so += String.fromCharCode (s.get (st + v))[0];
@@ -234,7 +234,7 @@ RT["caml_ml_output_partial"] = function (chan, s, st, len) {
 
 // Caml name: unsafe_output
 // Type:      out_channel -> string -> int -> int -> unit
-RT["caml_ml_output"] = function (chan, s, st, len) {
+function caml_ml_output (chan, s, st, len) {
     var so = "";
     for (var v = 0;v < len;v++) {
 	so += String.fromCharCode (s.get (st + v))[0];
@@ -245,13 +245,13 @@ RT["caml_ml_output"] = function (chan, s, st, len) {
 
 // Caml name: flush_partial
 // Type:      out_channel -> bool
-RT["caml_ml_flush_partial"] = function (s) {
+function caml_ml_flush_partial (s) {
     return TRUE;
 }
 
 // Caml name: flush
 // Type:      out_channel -> bool
-RT["caml_ml_flush"] = function (s) {
+function caml_ml_flush (s) {
     return UNIT;
 }
 
@@ -282,7 +282,7 @@ function caml_ml_input_scan_line (chan) {
 
 // Caml name: unsafe_output
 // Type:      in_channel -> int
-RT["caml_ml_input_scan_line"] = function (chan) {
+function caml_ml_input_scan_line (chan) {
     vm_suspend_before_io (chan.get (0).fd,caml_ml_input_scan_line,chan.get(0));
 }
 
@@ -312,7 +312,7 @@ function caml_ml_input_char (chan) {
 
 // Caml name: input_char_blocking
 // Type:      in_channel -> char
-RT["caml_ml_input_char"] = function (chan) {
+function caml_ml_input_char (chan) {
     vm_suspend_before_io (chan.get (0).fd, caml_ml_input_char, chan.get (0));
 }
 
@@ -353,7 +353,7 @@ function caml_ml_input (args) {
 
 // Caml name: unsafe_input_blocking
 // Type:      in_channel -> string -> int -> int -> int
-RT["caml_ml_input"] = function (chan, buff, st, len) {
+function caml_ml_input (chan, buff, st, len) {
     var args = [chan.get (0), buff, st, len];
     vm_suspend_before_io (chan.get (0).fd, caml_ml_input, args);
 }
@@ -391,7 +391,7 @@ function caml_input_value (env) {
 
 // Caml name: input_value
 // Type:      in_channel -> 'a
-RT["caml_input_value"] = function (chan) {
+function caml_input_value (chan) {
     vm_suspend_before_io (chan.get (0).fd, caml_input_value,
 			  {chan : chan.get (0), stage : 0} );
 }

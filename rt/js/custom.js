@@ -46,103 +46,103 @@ register_custom (int32_ops);
 
 // Caml name: Int32.neg
 // Caml type: int32 -> int32
-RT.caml_int32_neg = function (a) {
+function caml_int32_neg (a) {
     var a = a.get (1);
     return mk_custom (int32_ops, -a);
 }
 // Caml name: Int32.add
 // Caml type: int32 -> int32 -> int32
-RT.caml_int32_add = function (va,vb) {
+function caml_int32_add (va,vb) {
     var a = va.get (1);
     var b = vb.get (1) ;
     return mk_custom (int32_ops, a + b);
 }
 // Caml name: Int32.sub
 // Caml type: int32 -> int32 -> int32
-RT.caml_int32_sub = function (a,b) {
+function caml_int32_sub (a,b) {
     var a = a.get (1);
     var b = b.get (1) ;
     return mk_custom (int32_ops, a - b);
 }
 // Caml name: Int32.mul
 // Caml type: int32 -> int32 -> int32
-RT.caml_int32_mul = function (a,b) {
+function caml_int32_mul (a,b) {
     var a = a.get (1);
     var b = b.get (1) ;
     return mk_custom (int32_ops, a * b);
 }
 // Caml name: Int32.div
 // Caml type: int32 -> int32 -> int32
-RT.caml_int32_div = function (a,b) {
+function caml_int32_div (a,b) {
     var a = a.get (1);
     var b = b.get (1) ;
     return mk_custom (int32_ops, a / b);
 }
 // Caml name: Int32.rem
 // Caml type: int32 -> int32 -> int32
-RT.caml_int32_mod = function (a,b) {
+function caml_int32_mod (a,b) {
     var a = a.get (1);
     var b = b.get (1) ;
     return mk_custom (int32_ops, a % b);
 }
 // Caml name: Int32.logand
 // Caml type: int32 -> int32 -> int32
-RT.caml_int32_and = function (a,b) {
+function caml_int32_and (a,b) {
     var a = a.get (1);
     var b = b.get (1) ;
     return mk_custom (int32_ops, a & b);
 }
 // Caml name: Int32.logor
 // Caml type: int32 -> int32 -> int32
-RT.caml_int32_or = function (a,b) {
+function caml_int32_or (a,b) {
     var a = a.get (1);
     var b = b.get (1) ;
     return mk_custom (int32_ops, a | b);
 }
 // Caml name: Int32.logxor
 // Caml type: int32 -> int32 -> int32
-RT.caml_int32_xor = function (a,b) {
+function caml_int32_xor (a,b) {
     var a = a.get (1);
     var b = b.get (1) ;
     return mk_custom (int32_ops, a ^ b);
 }
 // Caml name: Int32.shift_left
 // Caml type: int32 -> int -> int32
-RT.caml_int32_lsl = function (a,b) {
+function caml_int32_lsl (a,b) {
     var a = a.get (1);
     return mk_custom (int32_ops, a << b);
 }
 // Caml name: Int32.shift_right
 // Caml type: int32 -> int -> int32
-RT.caml_int32_asr = function (a,b) {
+function caml_int32_asr (a,b) {
     var a = a.get (1);
     return mk_custom (int32_ops, a >> b);
 }
 // Caml name: Int32.shift_right_logical
 // Caml type: int32 -> int -> int32
-RT.caml_int32_lsr = function (a,b) {
+function caml_int32_lsr (a,b) {
     var a = a.get (1);
     return mk_custom (int32_ops, a >>> b);
 }
 // Caml name: Int32.of_int
 // Caml type: int -> int32
-RT.caml_int32_of_int = function (a) {
+function caml_int32_of_int (a) {
     return mk_custom (int32_ops, a);
 }
 // Caml name: Int32.to_int
 // Caml type: int32 -> int
-RT.caml_int32_to_int = function (a) {
+function caml_int32_to_int (a) {
     return a.get (1);
 }
 // Caml name: Int32.format
 // Caml type: string -> int32 -> string
-RT.caml_int32_format = function (f, v) {
-    return RT.caml_format_int.call (this, f, v.get (1));
+function caml_int32_format (f, v) {
+    return caml_format_int.call (this, f, v.get (1));
 }
 // Caml name: Int32.of_string
 // Caml type: string -> int32
-RT.caml_int32_of_string = function (s) {
-    return mk_custom (int32_ops, RT.caml_int_of_string.call (this, s));
+function caml_int32_of_string (s) {
+    return mk_custom (int32_ops, caml_int_of_string.call (this, s));
 }
 
 
@@ -170,11 +170,11 @@ nativeint_ops = {
 
 register_custom (nativeint_ops);
 
-RT.caml_nativeint_shift_left = function (x, s) {
+function caml_nativeint_shift_left (x, s) {
     return (x << s);
 }
 
-RT.caml_nativeint_sub = function (a,b) {
+function caml_nativeint_sub (a,b) {
     return (a - b);
 }
 
@@ -182,7 +182,7 @@ RT.caml_nativeint_sub = function (a,b) {
 
 function Int64 () {}
 
-int64_compare = function (a, b) {
+function int64_compare (a, b) {
     var t = int64_sub (a, b).get (1).t;
     var is_zero = true;
     for (var i = 0;i < 8;i++)
@@ -191,7 +191,7 @@ int64_compare = function (a, b) {
 	return 0;
     return (((t[0] >> 7) == 1) ? -1 : 1);
 }
-int64_add = function (a, b) {
+function int64_add (a, b) {
     a = a.get (1);
     b = b.get (1);
     var r = new Int64 ();
@@ -204,7 +204,7 @@ int64_add = function (a, b) {
     }
     return mk_custom (int64_ops, r);
 }
-int64_neg = function (a) {
+function int64_neg (a) {
     a = a.get (1);
     var r = new Int64 ();
     r.t = [];
@@ -218,10 +218,10 @@ int64_neg = function (a) {
     }
     return mk_custom (int64_ops, r);
 }
-int64_sub = function (a, b) {
+function int64_sub (a, b) {
     return int64_add (a, int64_neg (b));
 }
-int64_of_int = function (x) {
+function int64_of_int (x) {
     /* assumes exists n, INTEGER_SIZE = (2 ** n)%N */
     var r = new Int64 ();
     r.t = [];
@@ -232,21 +232,21 @@ int64_of_int = function (x) {
 	    r.t[7 - i] = 0xFF;
     return mk_custom (int64_ops, r);
 }
-int64_of_bytes = function (bytes) {
+function int64_of_bytes (bytes) {
     var r = new Int64 ();
     r.t = [];
     for (var i = 0;i < 8;i++)
 	r.t[i] = bytes[i];
     return mk_custom (int64_ops, r);
 }
-int64_of_bytes_le = function (bytes) {
+function int64_of_bytes_le (bytes) {
     var r = new Int64 ();
     r.t = [];
     for (var i = 0;i < 8;i++)
 	r.t[i] = bytes[7 - i];
     return mk_custom (int64_ops, r);
 }
-int64_to_bytes = function (a) {
+function int64_to_bytes (a) {
     return a.get (1).t;
 }
 

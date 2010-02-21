@@ -33,22 +33,22 @@ function Reader (chunk) {
     this.chunk_idx = 0;
 }
 
-METHODS(Reader).read8u = function () {
+Reader.prototype.read8u = function () {
     return this.chunk[this.chunk_idx++];
 }
-METHODS(Reader).read8s = function () {
+Reader.prototype.read8s = function () {
     var r = this.chunk[this.chunk_idx++];
     if (r & 0x80)
 	return r - 256;
     else
 	return r;
 }
-METHODS(Reader).read16u = function () {
+Reader.prototype.read16u = function () {
     var r = this.chunk[this.chunk_idx++];
     r = (r << 8) | this.chunk[this.chunk_idx++];
     return r;
 }
-METHODS(Reader).read16s = function () {
+Reader.prototype.read16s = function () {
     var r = this.chunk[this.chunk_idx++];
     r = (r << 8) | this.chunk[this.chunk_idx++];
     if (r & 0x8000)
@@ -57,14 +57,14 @@ METHODS(Reader).read16s = function () {
 	return r;
 }
 /* don't know if works... */
-METHODS(Reader).read32u = function () {
+Reader.prototype.read32u = function () {
     var r = this.chunk[this.chunk_idx++];
     r = (r << 8) | this.chunk[this.chunk_idx++];
     r = (r << 8) | this.chunk[this.chunk_idx++];
     r = (r << 8) | this.chunk[this.chunk_idx++];
     return r;
 }
-METHODS(Reader).read32s = function () {
+Reader.prototype.read32s = function () {
     var r = this.chunk[this.chunk_idx++];
     r = (r << 8) | this.chunk[this.chunk_idx++];
     r = (r << 8) | this.chunk[this.chunk_idx++];
@@ -277,13 +277,13 @@ function input_val (chunk, error) {
 
 // Caml name: unmarshal
 // Type:      string -> int -> 'a
-RT.caml_input_value_from_string = function (s, ofs) {
+caml_input_value_from_string = function (s, ofs) {
     return input_val (s.content.slice (s.offset + ofs, s.size),caml_failwith);
 }
 
 // Caml name: marshal_data_size
 // Type:      string -> int -> int
-RT.caml_marshal_data_size = function (s, ofs) {
+caml_marshal_data_size = function (s, ofs) {
     return input_size (s.content.slice (s.offset + ofs, s.size),caml_failwith);
 }
 
@@ -296,18 +296,18 @@ function Writer () {
     this.size_64 = 0;
 }
 
-METHODS(Writer).write = function (size, value) {
+Writer.prototype.write = function (size, value) {
     for (var i = size - 8;i >= 0;i -= 8)
 	this.chunk[this.chunk_idx++] = (value >> i) & 0xFF;
 }
 
-METHODS(Writer).write_code = function (size, code, value) {
+Writer.prototype.write_code = function (size, code, value) {
     this.chunk[this.chunk_idx++] = code;
     for (var i = size - 8;i >= 0;i -= 8)
 	this.chunk[this.chunk_idx++] = (value >> i) & 0xFF;
 }
 
-METHODS(Writer).finalize = function () {
+Writer.prototype.finalize = function () {
     this.block_len = this.chunk_idx - 20;
     this.chunk_idx = 0;
     this.write (32, 0x8495A6BE);
@@ -460,7 +460,7 @@ function output_val (v, error) {
 
 // Caml name: to_string
 // Type:      'a -> extern_flags list -> string
-RT.caml_output_value_to_string = function (v, fl) {
+function caml_output_value_to_string (v, fl) {
     /* ignores flags... */
     var t = output_val (v, caml_failwith);
     return mk_array_from_js (t);
@@ -468,7 +468,7 @@ RT.caml_output_value_to_string = function (v, fl) {
 
 // Caml name: to_channel
 // Type:      out_channel -> 'a -> extern_flags list -> unit
-RT.caml_output_value = function (chan, v, fl) {
+function caml_output_value (chan, v, fl) {
     /* ignores flags... */
     var t = output_val (v, caml_failwith);
     for (var i = 0;i < t.length;i++)
@@ -479,7 +479,7 @@ RT.caml_output_value = function (chan, v, fl) {
 /*
 // Caml name: to_buffer_unsafe
 // Type:      string -> int -> int -> 'a -> extern_flags list -> int
-RT["caml_output_value_to_buffer"] = function (s, ofs, len, v, fl) {
+function caml_output_value_to_buffer (s, ofs, len, v, fl) {
     var t = output_val (v, caml_failwith);
     return mk_array_from_js (t);
 }

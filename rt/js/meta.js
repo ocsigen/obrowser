@@ -9,49 +9,49 @@
 
 // Caml name: global_data
 // Type:      unit -> Obj.t array
-RT["caml_get_global_data"] = function (unit) {
+function caml_get_global_data (unit) {
     return prg.data;
 }
 /*
 // Caml name: realloc_global_data
 // Type:      int -> unit
-RT["caml_realloc_global"] = function () {
+function caml_realloc_global () {
   throw new Error ("caml_realloc_global" + " not implemented");
 }
 // Caml name: static_alloc
 // Type:      int -> string
-RT["caml_static_alloc"] = function () {
+function caml_static_alloc () {
   throw new Error ("caml_static_alloc" + " not implemented");
 }
 // Caml name: static_free
 // Type:      string -> unit
-RT["caml_static_free"] = function () {
+function caml_static_free () {
   throw new Error ("caml_static_free" + " not implemented");
 }
 // Caml name: static_resize
 // Type:      string -> int -> string
-RT["caml_static_resize"] = function () {
+function caml_static_resize () {
   throw new Error ("caml_static_resize" + " not implemented");
 }
 // Caml name: static_release_bytecode
 // Type:      string -> int -> unit
-RT["caml_static_release_bytecode"] = function () {
+function caml_static_release_bytecode () {
   throw new Error ("caml_static_release_bytecode" + " not implemented");
 }
 // Caml name: reify_bytecode
 // Type:      string -> int -> closure
-RT["caml_reify_bytecode"] = function () {
+function caml_reify_bytecode () {
   throw new Error ("caml_reify_bytecode" + " not implemented");
 }
 // Caml name: invoke_traced_function
 // Type:      Obj.t -> Obj.t -> Obj.t -> Obj.t
-RT["caml_invoke_traced_function"] = function () {
+function caml_invoke_traced_function () {
   throw new Error ("caml_invoke_traced_function" + " not implemented");
 }
 */
 // Caml name: get_section_table
 // Type:      unit -> (string * Obj.t) list
-RT["caml_get_section_table"] = function () {
+function caml_get_section_table () {
     var res = 0;
     for (var i = 0;i < prg.nsections;i++) {
 	var name = value_from_string (prg.sections[i].name);

@@ -9,7 +9,7 @@
 
 // Caml name: make
 // Type:      string -> string -> t
-RT.caml_regexp_make = function (vs, vf) {
+function caml_regexp_make (vs, vf) {
     var s = string_from_value (vs);
     var f = string_from_value (vf);
     try { 
@@ -21,14 +21,14 @@ RT.caml_regexp_make = function (vs, vf) {
 
 // Caml name: last_index
 // Type:      t -> int
-RT.caml_regexp_last_index = function (vr) { 
+function caml_regexp_last_index (vr) { 
     var r = unbox_abstract (vr) ;
     return r.lastIndex;
 }
 
 // Caml name: test
 // Type:      t -> string -> bool
-RT.caml_regexp_test = function (vr, vs) {
+function caml_regexp_test (vr, vs) {
     var r = unbox_abstract (vr) ;
     var s = string_from_value (vs) ;
     return mk_bool (r.test (s));
@@ -36,7 +36,7 @@ RT.caml_regexp_test = function (vr, vs) {
 
 // Caml name: exec
 // Type:      t -> string -> string array
-RT.caml_regexp_exec = function (vr, vs) {
+function caml_regexp_exec (vr, vs) {
     var r = unbox_abstract (vr) ;
     var s = string_from_value (vs) ;
     var res = r.exec (s);
@@ -53,7 +53,7 @@ RT.caml_regexp_exec = function (vr, vs) {
 
 // Caml name: index
 // Type:      t -> string -> int
-RT.caml_regexp_index = function (vr, vs) {
+function caml_regexp_index (vr, vs) {
     var r = unbox_abstract (vr) ;
     var s = string_from_value (vs) ;
     var i = s.search (r);
@@ -66,7 +66,7 @@ RT.caml_regexp_index = function (vr, vs) {
 
 // Caml name: replace
 // Type:      t -> string -> string -> string
-RT.caml_regexp_replace = function (vr, vsub, vs) {
+function caml_regexp_replace (vr, vsub, vs) {
     var r = unbox_abstract (vr) ;
     var s = string_from_value (vs) ;
     var sub = string_from_value (vsub) ;
@@ -75,7 +75,7 @@ RT.caml_regexp_replace = function (vr, vsub, vs) {
 
 // Caml name: replace_fun
 // Type:      t -> (int -> string array -> string) -> string -> string
-RT.caml_regexp_replace_fun = function (vr, vf, vs) {
+function caml_regexp_replace_fun (vr, vf, vs) {
     var r = unbox_abstract (vr) ;
     var s = string_from_value (vs) ;
     var vm = this;
@@ -91,7 +91,7 @@ RT.caml_regexp_replace_fun = function (vr, vf, vs) {
 
 // Caml name: split
 // Type:      t -> string -> string array
-RT.caml_regexp_split = function (vr, vs) {
+function caml_regexp_split (vr, vs) {
     var r = unbox_abstract (vr) ;
     var s = string_from_value (vs) ;
     var res = s.split (r);
