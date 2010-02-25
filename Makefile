@@ -68,7 +68,7 @@ dist: clean
 	 echo "[DIST] dist/$$B.$$D.tbz2"
 
 install:
-	$(OCAMLFIND) install obrowser META vm.js rt/caml/stdlib.cma rt/caml/*.cmi rt/caml/std_exit.cmo axo/AXO.cma axo/AXO*.cmi
+	$(OCAMLFIND) install obrowser META vm.js rt/js/ffi.js rt/caml/stdlib.cma rt/caml/*.cmi rt/caml/std_exit.cmo axo/AXO.cma axo/AXO*.cmi
 	install -m 644 rt/caml/dllstdlib.so `$(OCAMLFIND) -query obrowser`
 
 uninstall:
