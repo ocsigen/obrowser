@@ -16,9 +16,9 @@
 EXAMPLES = $(patsubst examples/%,%, $(wildcard examples/*))
 EXAMPLES_TARGETS = $(patsubst examples/%,%.example, $(wildcard examples/*))
 OCAMLFIND = ocamlfind
-.PHONY: tuto dist plugin
+.PHONY: tuto dist plugin lwt
 
-all: rt/caml/stdlib.cma vm.js tuto $(EXAMPLES_TARGETS) examples.html AXO
+all: rt/caml/stdlib.cma vm.js tuto $(EXAMPLES_TARGETS) examples.html AXO lwt
 
 %.example: 
 	@echo "[EXAMPLE] $*"
@@ -27,6 +27,10 @@ all: rt/caml/stdlib.cma vm.js tuto $(EXAMPLES_TARGETS) examples.html AXO
 AXO:
 	@echo "[AXO]"
 	@cd axo/ && $(MAKE) --no-print-directory
+
+lwt:
+	@echo "[LWT]"
+	@cd lwt/ && $(MAKE) --no-print-directory
 
 tuto:
 	@echo "[TUTORIAL]"
@@ -68,7 +72,7 @@ dist: clean
 	 echo "[DIST] dist/$$B.$$D.tbz2"
 
 install:
-	$(OCAMLFIND) install obrowser META vm.js rt/js/ffi.js rt/caml/stdlib.cma rt/caml/*.cmi rt/caml/std_exit.cmo axo/AXO.cma axo/AXO*.cmi
+	$(OCAMLFIND) install obrowser META vm.js rt/js/ffi.js rt/caml/stdlib.cma rt/caml/*.cmi rt/caml/std_exit.cmo axo/AXO.cma axo/AXO*.cmi lwt/lwt_obrowser.cma lwt/lwt_*.cmi
 	install -m 644 rt/caml/dllstdlib.so `$(OCAMLFIND) -query obrowser`
 
 uninstall:

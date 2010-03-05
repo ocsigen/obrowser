@@ -13,6 +13,9 @@ Mandatory to build the core
  - perl (this will be removed)
  - OCaml 3.11.0 and an associated C compiler
 
+For lwt_obrowser
+ - lwt
+
 Not mandatory (optional examples)
  - Ocsigen to build and run the ocsigen-related examples
  - Menhir (and ocamllex)
