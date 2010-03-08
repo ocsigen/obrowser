@@ -11,9 +11,11 @@
 // Type:      string -> int -> ('a -> 'b) option
 caml_js_external = function (vsym, nargs) {
     var sym = string_from_value (vsym);
-    if (RT[sym] == null)
-	return UNIT;
-    this.prims[sym] = RT[sym];
+    try {
+	this.prims[sym] = eval (sym);
+    } catch (e) {
+	return 0 /* None */;
+    }
     var cl;
     switch (nargs) {
     case 1:
