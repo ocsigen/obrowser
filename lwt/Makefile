@@ -28,9 +28,9 @@ lwt_obrowser.cma: ../rt/caml/stdlib.cma $(CMOS)
 
 clean:
 	@echo "[CLEAN]"
-	@rm -f *.cm* *~ *.exe *.uue vm.js
+	@rm -f *.cm* *~ *.exe *.uue vm.js .depend
 
-depend:
+.depend:
 	@CAMLLIB=../rt/caml ocamldep $(SOURCES)> .depend
 
 
