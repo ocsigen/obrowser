@@ -280,7 +280,7 @@ function hash_aux(obj){
     
     if (is_long(obj)) {
 	hash_univ_count--;
-	COMBINE(Long_val(obj));
+	COMBINE(obj);
 	return;
     }
     
@@ -662,7 +662,8 @@ function caml_frexp_float (v) {
     return pair (box_float (x * Math.pow (2, -e)), e);
 }
 
-function caml_alloc_dummy (size) {
+caml_alloc_dummy =
+caml_alloc_dummy_float = function (size) {
     return mk_block (size, 0);
 }
 
