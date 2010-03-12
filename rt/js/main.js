@@ -1065,11 +1065,12 @@ VM.prototype.raise = function (e) {
     with (this.ctx) {
 	accu = e;
 	if (caml_trap_sp == -1) {
-	    throw new Error ("Fatal error: " +
+	    basic_io_write ("Fatal error: " +
 			     string_from_value (accu.get(0).get(0))
 			     + (accu.size == 2
 				?(" " + repr (accu.get (1), 1000))
 				:""));
+	    throw new Error ("Fatal");
 	    this.thread_kill (pid);
 	} else {
 	    sp = caml_trap_sp;

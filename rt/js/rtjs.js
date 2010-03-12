@@ -244,7 +244,7 @@ function caml_js_http_post (vurl, type, data) {
 	}
 	vm.thread_wait (xmlhttp, cont);
     } catch (e) {
-	if ((e == MAGIC_CAML_CONT) || (e == MAGIC_CAML_EX)) throw e;
+	caml_catch (e);
 	this.failwith ("unable to load url " + url + ": " + e.message);
     }
 }
@@ -253,19 +253,19 @@ function caml_js_http_post (vurl, type, data) {
 // Type:      string -> JSOO.obj
 function caml_js_dom_of_xml (str) 
 {
-  var sstr = string_from_value (str);
-  try { //IE
-    xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
-    xmlDoc.async = "false";
-    xmlDoc.loadXML(sstr);
-    return xmlDoc; 
-  } catch(e) {
+    var sstr = string_from_value (str);
     try {
-      parser = new DOMParser();
-      xmlDoc = parser.parseFromString(sstr,"text/xml");
-      return xmlDoc;
+	try { //IE
+	    xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+	    xmlDoc.async = "false";
+	    xmlDoc.loadXML(sstr);
+	    return xmlDoc; 
+	} catch(e) {
+	    parser = new DOMParser();
+	    xmlDoc = parser.parseFromString(sstr,"text/xml");
+	    return xmlDoc;
+	}
     } catch(e) { this.failwith ("unable to parse : " + e.message) }
-  }
 }
 
 // Caml name: pretty_xml_of_dom
