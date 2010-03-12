@@ -19,7 +19,6 @@ type t = { mutable waiting: Thread.t list }
 let create () = { waiting = [] }
 
 let wait cond mut =
-  Thread.critical_section := true;
   Mutex.unlock mut;
   cond.waiting <- Thread.self() :: cond.waiting;
   Thread.sleep();

@@ -14,7 +14,8 @@ CMOS= \
   sys.cmo thread.cmo \
   camlinternalLazy.cmo camlinternalOO.cmo oo.cmo camlinternalMod.cmo \
   jSOO.cmo \
-  mutex.cmo complex.cmo parsing.cmo lexing.cmo stream.cmo genlex.cmo \
+  mutex.cmo condition.cmo \
+  complex.cmo parsing.cmo lexing.cmo stream.cmo genlex.cmo \
   js.cmo graphics.cmo regexp.cmo
 
 .PHONY=clean depend exec_compflags

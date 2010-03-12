@@ -31,7 +31,13 @@ val sleep : float -> unit Lwt.t
 
 val yield : unit -> unit Lwt.t
   (** [yield ()] is a threads which suspends itself and then resumes
-      as soon as possible and terminates. *)
+      as soon as possible and terminates.
+      Unlike [Lwt_preemtive.yield],
+      that version will also let the browser work if it has something to
+      do (for example redraw the page).
+  *)
+
+val run : 'a Lwt.t -> 'a
 
 (*
 exception Timeout
@@ -48,10 +54,17 @@ val with_timeout : float -> (unit -> 'a Lwt.t) -> 'a Lwt.t
         Lwt.select [Lwt_unix.timeout d; f ()]
       ]}
   *)
+*)
+
+(** [http_get url args] sends an HTTP GET request to the server with GET
+  * arguments [args] nicely encoded and return
+  * [(code, message)] where [code] is the HTTP code and [message] the content of
+  * the answer. *)
+val http_get : string -> (string * string) list -> (int * string) Lwt.t
 
 (** [http_post url args] sends an HTTP POST request to the server with POST
   * arguments [args] nicely encoded and return
-  * [(code,message)] where [code] is the HTTP code and [message] the content of
+  * [(code, message)] where [code] is the HTTP code and [message] the content of
   * the answer. *)
 val http_post : string -> (string * string) list -> (int * string) Lwt.t
 
@@ -63,5 +76,3 @@ val http_get_post :
   (string * string) list -> 
   (string * string) list -> 
   (int * string) Lwt.t
-
-*)

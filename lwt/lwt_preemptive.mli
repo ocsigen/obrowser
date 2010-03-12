@@ -23,3 +23,14 @@
 
 val detach : ('a -> 'b) -> 'a -> 'b Lwt.t
 
+val yield : unit -> unit Lwt.t
+  (** [yield ()] is a threads which suspends itself and then resumes
+      as soon as possible and terminates.
+      It will let the other Lwt threads work,
+      but not always the browser. 
+      So if you want for example to update the page,
+      use [Lwt_obrowser.yield] instead (which is slower, however).
+  *)
+
+
+val run : 'a Lwt.t -> 'a

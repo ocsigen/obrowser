@@ -21,17 +21,54 @@
  * 02111-1307, USA.
  *)
 
+let (>>>) x f = f x
 
 let sleep s = Lwt_preemptive.detach Thread.delay s
 
 let yield () = sleep 0.0
 
-(*
-let http_post url args = Lwt_preemptive.detach (AXOCom.http_post url) args
+let run = Lwt_preemptive.run
+
+(*****************************************************************************)
+(* some functions taken from AXO: (what is the best place for them?) *)
+let window = JSOO.eval "window"
+
+(* internal only : encode a string according to percent-encoding system *)
+let urlencode_string str =
+  window >>> JSOO.call_method "escape" [| JSOO.string str |]
+         >>> JSOO.as_string
+
+(* decode a string according to percent encoding system *)
+let urldecode_string str =
+  window >>> JSOO.call_method "unescape" [| JSOO.string str |]
+         >>> JSOO.as_string
+
+(* internal only : takes a list of (name,value) and makes it url-friendly *)
+let urlencode args =
+ String.concat "&"
+   (List.map
+      (fun (n,v) -> (urlencode_string n) ^ "=" ^ (urlencode_string v))
+      args
+   )
+
+let http_get url args =
+  let url = if args = [] then url else url^(urlencode args) in
+  Lwt_preemptive.detach Js.http_get_with_status url
+
+let http_post url args =
+  Js.http_post url "application/x-www-form-urlencoded" (urlencode args)
 
 let http_get_post url get_args post_args =
-  Lwt_preemptive.detach (AXOCom.http_get_post url get_args) post_args
-*)
+  Js.http_post
+    (url ^ "?" ^ (urlencode get_args))
+    "application/x-www-form-urlencode"
+    (urlencode post_args)
+
+let http_post url args = Lwt_preemptive.detach (http_post url) args
+
+let http_get_post url get_args post_args =
+  Lwt_preemptive.detach (http_get_post url get_args) post_args
+
 
   
 

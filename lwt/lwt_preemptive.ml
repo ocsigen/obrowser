@@ -23,43 +23,16 @@
 
 let (>>=) = Lwt.bind
 
-(* only one preemptive thread is running lwt at a time 
-   (but not always the same) *)
-let doing_lwt = Mutex.create ()
-
 (* queue of ready to run lwt threads (to be awoken) *)
-let queue_mutex = Mutex.create ()
 let (queue_add, queue_take) =
  let lwt_queue = Queue.create () in
- ((fun v ->
-     Mutex.lock queue_mutex;
-     Queue.add v lwt_queue;
-     Mutex.unlock queue_mutex),
-  (fun () ->
-     Mutex.lock queue_mutex;
-     let v = Queue.take lwt_queue in
-     Mutex.unlock queue_mutex;
-     v
-     (* in case of exception Empty, I do not unlock the mutex *)
-  ))
+ ((fun v -> Queue.add v lwt_queue),
+  (fun () -> Queue.take lwt_queue))
 
-let do_lwt_queue () =
-  let rec aux () = 
-    let w = queue_take () in
-    Lwt.wakeup w ();
-    aux ()
-  in
-  try aux ()
-  with
-    | Queue.Empty -> 
-        Mutex.unlock doing_lwt;
-        Mutex.unlock queue_mutex (* unlocked after doing_lwt *)
-(* gargh. I really hate programming with preemptive threads!!!!
-   Vive Lwt ! -- Vincent *)
-    | Invalid_argument _ -> Mutex.unlock doing_lwt
-        (* should never occur if I'm right.
-           But if it does, a lwt thread may be delayed
-           until someone call do_lwt_queue again. *)
+(* only one preemptive thread is running lwt at a time 
+   (but not always the same) *)
+let queue_mutex = Mutex.create ()
+let queue_not_empty = Condition.create ()
 
 let detach f x =
   let res = ref None in
@@ -75,10 +48,9 @@ let detach f x =
        (* I add the result in the queue of ready lwt promises *)
        queue_add w;
 
-       (* if nobody is doing the lwt queue, I will do it *)
-       if Mutex.try_lock doing_lwt
-       then do_lwt_queue ()
-
+       Mutex.lock queue_mutex;
+       Condition.signal queue_not_empty;
+       Mutex.unlock queue_mutex
     ) x 
   in
   t
@@ -91,3 +63,19 @@ let yield () =
 
   t
 
+let rec run t =
+  let rec aux () = 
+    match Lwt.poll t with
+      | Some x ->
+          Mutex.unlock queue_mutex; x
+      | None ->
+          let w = queue_take () in
+          Lwt.wakeup w ();
+          aux ()
+  in
+  Mutex.lock queue_mutex;
+  try aux () with
+    | Queue.Empty -> 
+        Condition.wait queue_not_empty queue_mutex;
+        Mutex.unlock queue_mutex;
+        run t
