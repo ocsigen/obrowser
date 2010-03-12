@@ -266,3 +266,18 @@ let decode_id s  =
   in List.map (List.fold_left (fun r s -> s ^ r) "") (split 0 0 [])
 ;;
 
+let redirect_post url params =
+  let f = Html.create "form" ~attrs:[("action", url); ("method", "post")] () 
+  in
+  List.iter
+    (fun (n, v) -> 
+       Node.append f (Html.create "input"
+                        ~attrs:[("type", "text"); 
+                                ("name", n); 
+                                ("value", v)] ()))
+    params ;
+  ignore (JSOO.call_method "submit" [||] f)
+
+let window = JSOO.eval "window"
+
+let redirect_get url = JSOO.set "location" (JSOO.string url) window

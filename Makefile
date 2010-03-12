@@ -60,6 +60,7 @@ clean:
 	@cd rt/caml && $(MAKE) clean
 	@rm -f examples.html
 	@cd tutorial && $(MAKE) clean
+	@cd lwt && $(MAKE) clean
 	@$(RM) -f *.exe *.cm* *.so *.a *.dylib *.o *~ *.uue \
                     vm.js server
 	@$(RM) -f examples/*/*.exe examples/*/*.cm* examples/*/*.exe.uue
