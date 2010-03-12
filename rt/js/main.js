@@ -45,22 +45,6 @@
 #include <jsoo.js>
 #include <regexp.js>
 #include <camlinternalOO.js>
-
-#ifdef DEBUG
-function debug (msg) {
-    console.debug ("VM says \"" + msg + "\"");
-}
-
-function debug_val (msg, val, n) {
-    if (n == null) n = 4;
-    console.debug ("VM says \"" + msg + "\"" + repr (val, n));
-}
-
-#else //DEBUG
-#define debug(x) 
-#define debug_val(x,...) 
-#endif //DEBUG
-
 #include <graphics.js>
 #include <lexing.js>
 
@@ -705,7 +689,7 @@ var i_tbl = {
     },
     IRAISE: function (vm, c) {
 	if (c.caml_trap_sp == -1) {
-	    debug ('Fatal error: ' +
+	    basic_io_write ('Fatal error: ' +
 		      string_from_value (c.accu.get (0).get (0))
 		      + (c.accu.size == 2
 			 ?(' ' + repr (c.accu.get (1), 1000))

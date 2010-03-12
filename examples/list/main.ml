@@ -9,3 +9,5 @@ let container = get_element_by_id "basket" in
 	  (fun n -> Html.li [Html.string n])
 	  (List.filter ((<>) "") items)))
 ;;
+
+failwith "here is how exceptions are shown"

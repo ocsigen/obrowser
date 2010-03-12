@@ -289,3 +289,28 @@ caml_js_xml_of_dom = function (o)
     return (value_from_string (xml)) ;
   } catch (e) { this.failwith ("unable to print : " + e.message) }
 }
+
+function basic_io_write (s) {
+    var div = document.getElementById ("caml_io_console");
+    if (div == null) {
+	div = document.createElement ("DIV");
+	div.style.position = "absolute";
+	div.style.left = "5px";
+	div.style.bottom = "5px";
+	div.style.padding = "5px";
+	div.style.backgroundColor = "lightgrey";
+	div.style.color = "black";
+	div.style.whiteSpace = "pre";
+	div.id = "caml_io_console";
+	document.body.appendChild (div);
+    }
+    div.innerHTML += s;
+    return UNIT;
+}
+
+// Caml name: basic_io_write
+// Type:      string -> unit
+function caml_basic_io_write (s) {
+    basic_io_write (string_val (s));
+    return UNIT;
+}

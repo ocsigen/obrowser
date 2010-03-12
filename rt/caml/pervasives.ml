@@ -270,20 +270,22 @@ let set_binary_mode_in _ _ = failwith "not implemented in obrowser"
 
 (* Output functions on standard output *)
 
-let print_char c = JSOO_basic_io.write (let s = string_create 1 in s.[0] <- c ; s)
-let print_string s = JSOO_basic_io.write s
-let print_int i = JSOO_basic_io.write (string_of_int i)
-let print_float f = JSOO_basic_io.write (string_of_float f)
+external basic_io_write : string -> unit = "caml_basic_io_write"
+
+let print_char c = basic_io_write (let s = string_create 1 in s.[0] <- c ; s)
+let print_string s = basic_io_write s
+let print_int i = basic_io_write (string_of_int i)
+let print_float f = basic_io_write (string_of_float f)
 let print_endline s =
   print_string s; print_char '\n'
 let print_newline () = print_char '\n'
 
 (* Output functions on standard error *)
 
-let prerr_char c = JSOO_basic_io.write (let s = string_create 1 in s.[0] <- c ; s)
-let prerr_string s = JSOO_basic_io.write s
-let prerr_int i = JSOO_basic_io.write (string_of_int i)
-let prerr_float f = JSOO_basic_io.write (string_of_float f)
+let prerr_char c = basic_io_write (let s = string_create 1 in s.[0] <- c ; s)
+let prerr_string s = basic_io_write s
+let prerr_int i = basic_io_write (string_of_int i)
+let prerr_float f = basic_io_write (string_of_float f)
 let prerr_endline s =
   prerr_string s; prerr_char '\n'
 let prerr_newline () = prerr_char '\n'

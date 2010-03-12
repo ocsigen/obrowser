@@ -1,7 +1,7 @@
 ML=$(wildcard *.ml)
 #CMO=$(patsubst %.ml,%.cmo, $(ML))
 CMOS= \
-  jSOO_basic_io.cmo pervasives.cmo sys.cmo \
+  pervasives.cmo sys.cmo \
   marshal.cmo obj.cmo lazy.cmo \
   array.cmo list.cmo hashtbl.cmo \
   char.cmo string.cmo \

@@ -85,7 +85,7 @@ function thread_delay (s) {
 // Caml name: thread_uncaught_exception
 // Type:      exn -> unit
 function thread_uncaught_exception (e) {
-    debug ("Fatal error: " +
+    basic_io_write ("Fatal error: " +
 	   string_from_value (e.get(0).get(0))
 	   + (this.ctx.accu.size == 2
 	      ?(" " + repr (e.get (1), 1000))
