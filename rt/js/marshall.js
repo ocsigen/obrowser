@@ -468,19 +468,16 @@ function caml_output_value_to_string (v, fl) {
 
 // Caml name: to_channel
 // Type:      out_channel -> 'a -> extern_flags list -> unit
-function caml_output_value (chan, v, fl) {
-    /* ignores flags... */
-    var t = output_val (v, caml_failwith);
-    for (var i = 0;i < t.length;i++)
-	chan.get (0).putc (t[i]);
-    return mk_array_from_js (t);
-}
+//function caml_output_value (chan, v, fl) {
+//}
 
-/*
 // Caml name: to_buffer_unsafe
 // Type:      string -> int -> int -> 'a -> extern_flags list -> int
 function caml_output_value_to_buffer (s, ofs, len, v, fl) {
     var t = output_val (v, caml_failwith);
-    return mk_array_from_js (t);
+    for (var i = 0;i < t.length;i++) {
+	s.set (ofs + i, t[i]);
+    }
+    return t.length;
 }
-*/
+
