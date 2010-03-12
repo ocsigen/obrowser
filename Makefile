@@ -52,6 +52,7 @@ rt/caml/stdlib.cma: $(wildcard rt/caml/*.ml) $(wildcard rt/caml/*.mli)
 vm.js: 	$(wildcard rt/js/*.js)	
 	@echo "[CPP] $@"
 	@cpp -DDEBUG -P -Irt/js rt/js/main.js vm.js
+	@cat rt/js/ffi.js >> vm.js
 
 clean:
 	@echo "[CLEAN]"
