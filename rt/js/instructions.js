@@ -181,7 +181,3 @@ var instr_name = new Array (
     "BNEQ", "BLTINT", "BLEINT", "BGTINT", "BGEINT", "ULTINT", "UGEINT",
     "BULTINT", "BUGEINT", "GETPUBMET", "GETDYNMET", "STOP", "EVENT", "BREAK"
 );
-
-function print_instr (code, ofs) {
-    console.debug (instr_name[code.get (ofs)]);
-}
