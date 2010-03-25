@@ -3,7 +3,6 @@
 (*                           Objective Caml                            *)
 (*                                                                     *)
 (*  David Nowak and Xavier Leroy, projet Cristal, INRIA Rocquencourt   *)
-(*            Modified version for O'Browser by Benjamin Canou         *)
 (*                                                                     *)
 (*  Copyright 1996 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
@@ -12,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* $Id: event.ml,v 1.14 2001/12/07 13:40:21 xleroy Exp $ *)
+(* $Id: event.ml 4144 2001-12-07 13:41:02Z xleroy $ *)
 
 (* Events *)
 type 'a basic_event =

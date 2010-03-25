@@ -3,7 +3,6 @@
 (*                           Objective Caml                            *)
 (*                                                                     *)
 (*  David Nowak and Xavier Leroy, projet Cristal, INRIA Rocquencourt   *)
-(*            Modified version for O'Browser by Benjamin Canou         *)
 (*                                                                     *)
 (*  Copyright 1996 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
@@ -12,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* $Id: event.mli,v 1.15 2006/01/12 03:24:56 garrigue Exp $ *)
+(* $Id: event.mli 7322 2006-01-12 03:24:56Z garrigue $ *)
 
 (** First-class synchronous communication.
 

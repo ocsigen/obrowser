@@ -11,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* $Id: format.ml,v 1.74 2008/09/08 12:30:19 weis Exp $ *)
+(* $Id: format.ml 9244 2009-04-29 18:33:31Z weis $ *)
 
 (* A pretty-printing facility and definition of formatters for ``parallel''
    (i.e. unrelated or independent) pretty-printing on multiple out channels. *)
@@ -1040,9 +1040,9 @@ let get_buffer_out b =
   s
 ;;
 
-(* [ppf] is supposed to be a pretty-printer that outputs in buffer [b]:
-   to extract contents of [ppf] as a string we flush [ppf] and get the string
-   out of [b]. *)
+(* [ppf] is supposed to be a pretty-printer that outputs to buffer [b]:
+   to extract the contents of [ppf] as a string we flush [ppf] and get the
+   string out of [b]. *)
 let string_out b ppf =
   pp_flush_queue ppf false;
   get_buffer_out b
@@ -1311,7 +1311,10 @@ let kbprintf k b =
   mkprintf false (fun _ -> formatter_of_buffer b) k
 ;;
 
-let bprintf b = kbprintf ignore b;;
+let bprintf b =
+  let k ppf = pp_flush_queue ppf false in
+  kbprintf k b
+;;
 
 let ksprintf k =
   let b = Buffer.create 512 in

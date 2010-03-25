@@ -11,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* $Id: sys.mlp,v 1.2 2007/02/26 14:21:57 xleroy Exp $ *)
+(* $Id: sys.mlp 7927 2007-02-26 14:21:57Z xleroy $ *)
 
 (* WARNING: sys.ml is generated from sys.mlp.  DO NOT EDIT sys.ml or
    your changes will be lost.
@@ -37,7 +37,6 @@ external time: unit -> float = "caml_sys_time"
 external chdir: string -> unit = "caml_sys_chdir"
 external getcwd: unit -> string = "caml_sys_getcwd"
 external readdir : string -> string array = "caml_sys_read_directory"
-
 
 let interactive = ref false
 
@@ -77,4 +76,4 @@ exception Break
 
 let catch_break _ = failwith "not implemented in obrowser"
 
-let ocaml_version = "3.11.0/obrowser";;
+let ocaml_version = "3.11.2/obrowser";;

@@ -1,10 +1,8 @@
-
 (***********************************************************************)
 (*                                                                     *)
 (*                           Objective Caml                            *)
 (*                                                                     *)
 (*            Xavier Leroy, projet Cristal, INRIA Rocquencourt         *)
-(*            Modified version for O'Browser by Benjamin Canou         *)
 (*                                                                     *)
 (*  Copyright 1996 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
@@ -13,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* $Id: map.mli,v 1.33 2005/10/25 18:34:07 doligez Exp $ *)
+(* $Id: map.mli 9190 2009-03-21 16:35:48Z xleroy $ *)
 
 (** Association tables over ordered types.
 
@@ -75,9 +73,7 @@ module type S =
     (** [iter f m] applies [f] to all bindings in map [m].
        [f] receives the key as first argument, and the associated value
        as second argument.  The bindings are passed to [f] in increasing
-       order with respect to the ordering over the type of the keys.
-       Only current bindings are presented to [f]:
-       bindings hidden by more recent bindings are not passed to [f]. *)
+       order with respect to the ordering over the type of the keys. *)
 
     val map: ('a -> 'b) -> 'a t -> 'b t
     (** [map f m] returns a map with same domain as [m], where the

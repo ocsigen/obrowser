@@ -1,10 +1,8 @@
-
 (***********************************************************************)
 (*                                                                     *)
 (*                           Objective Caml                            *)
 (*                                                                     *)
 (*              Damien Doligez, projet Para, INRIA Rocquencourt        *)
-(*            Modified version for O'Browser by Benjamin Canou         *)
 (*                                                                     *)
 (*  Copyright 1996 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
@@ -13,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* $Id: random.ml,v 1.22 2003/12/16 18:09:43 doligez Exp $ *)
+(* $Id: random.ml 6023 2003-12-16 18:09:44Z doligez $ *)
 
 (* "Linear feedback shift register" pseudo-random number generator. *)
 (* References: Robert Sedgewick, "Algorithms", Addison-Wesley *)

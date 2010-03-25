@@ -3,7 +3,6 @@
 (*                           Objective Caml                            *)
 (*                                                                     *)
 (*         Xavier Leroy and Damien Doligez, INRIA Rocquencourt         *)
-(*            Modified version for O'Browser by Benjamin Canou         *)
 (*                                                                     *)
 (*  Copyright 1996 Institut National de Recherche en Informatique et   *)
 (*  en Automatique.  All rights reserved.  This file is distributed    *)
@@ -12,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* $Id: condition.mli,v 1.13 2001/12/07 13:40:21 xleroy Exp $ *)
+(* $Id: condition.mli 4144 2001-12-07 13:41:02Z xleroy $ *)
 
 (** Condition variables to synchronize between threads.
 

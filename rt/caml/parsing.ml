@@ -11,7 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* $Id: parsing.ml,v 1.19 2008/08/06 09:38:21 xleroy Exp $ *)
+(* $Id: parsing.ml 9163 2009-01-13 15:17:51Z doligez $ *)
 
 (* The parsing engine *)
 
@@ -180,9 +180,15 @@ let peek_val env n =
   Obj.magic env.v_stack.(env.asp - n)
 
 let symbol_start_pos () =
-  if env.rule_len > 0
-  then env.symb_start_stack.(env.asp - env.rule_len + 1)
-  else env.symb_end_stack.(env.asp)
+  let rec loop i =
+    if i <= 0 then env.symb_end_stack.(env.asp)
+    else begin
+      let st = env.symb_start_stack.(env.asp - i + 1) in
+      let en = env.symb_end_stack.(env.asp - i + 1) in
+      if st <> en then st else loop (i - 1)
+    end
+  in
+  loop env.rule_len
 ;;
 let symbol_end_pos () = env.symb_end_stack.(env.asp);;
 let rhs_start_pos n = env.symb_start_stack.(env.asp - (env.rule_len - n));;

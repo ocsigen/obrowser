@@ -13,9 +13,11 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* $Id: printexc.ml,v 1.18 2004/01/16 15:24:02 doligez Exp $ *)
+(* $Id: printexc.ml 9335 2009-09-16 13:34:57Z xclerc $ *)
 
 open Printf;;
+
+let printers = ref []
 
 let locfmt = format_of_string "File \"%s\", line %d, characters %d-%d: %s";;
 
@@ -50,7 +52,17 @@ let to_string = function
   | Assert_failure(file, line, char) ->
       sprintf locfmt file line char (char+6) "Assertion failed"
   | x ->
-      let x = Obj.repr x in
-      let constructor = (Obj.magic(Obj.field (Obj.field x 0) 0) : string) in
-      constructor ^ (fields x)
+      let rec conv = function
+        | hd :: tl ->
+            (match try hd x with _ -> None with
+            | Some s -> s
+            | None -> conv tl)
+        | [] ->
+            let x = Obj.repr x in
+            let constructor = (Obj.magic(Obj.field (Obj.field x 0) 0) : string) in
+            constructor ^ (fields x) in
+      conv !printers
 ;;
+
+let register_printer fn =
+  printers := fn :: !printers
