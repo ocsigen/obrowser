@@ -9,9 +9,7 @@ function jsstr(s) {
     }
 }
 
-function plabel (s) {
-    s = jsstr (s); 
-
+function plabel_jsstr (s) {
     if (label_cache[s] != null)
 	return label_cache[s] ;
     var accu = 0;
@@ -25,6 +23,11 @@ function plabel (s) {
 
     label_cache[s] = accu ;
     return accu ;
+}
+
+function plabel (s) {
+    s = jsstr (s); 
+    return plabel_jsstr (s);
 }
 
 var oo_table_count = 0;

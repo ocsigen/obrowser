@@ -1,3 +1,4 @@
+var MAGIC_CAML_CALLBACK = 987654321
 #define MAGIC_CAML_CALLBACK 987654321
 
 var i_tbl_cb = []
@@ -73,4 +74,29 @@ VM.prototype.callback = function (clos, args) {
     var r = ctx.accu;
     this.ctx = octx;
     return r;
+}
+
+
+
+
+VM.prototype.callback_method = function (obj, name, oargs) {
+    var lab = plabel_jsstr (name);
+    /* resolve method */
+    var meths = obj.get (0);
+    var li = 3;
+    var hi = meths.get (0) * 2 + 1;
+    while (li < hi) {
+	var mi = ((li + hi) >> 1) | 1;
+	if (lab < meths.get (mi))
+	    hi = mi - 2;
+	else
+	li = mi;
+    } 
+    var clos = meths.get (li - 1);
+    /* add obj to args */
+    var args = [obj];
+    for (i = 0;i < oargs.length;i++) {
+	args[i + 1] = oargs[i];
+    }
+    return this.callback(clos, args);
 }

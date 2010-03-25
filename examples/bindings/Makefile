@@ -1,6 +1,6 @@
 .PHONY: clean
 
-all: main.exe.uue vm.js
+all: main.exe.uue obj.exe.uue vm.js
 
 main.exe: corner_click.cma main.ml ../../rt/caml/stdlib.cma
 	@echo "[OCAMLC] $@"
@@ -9,6 +9,14 @@ main.exe: corner_click.cma main.ml ../../rt/caml/stdlib.cma
 corner_click.cma: corner_click_stubs.o corner_click.cmo ../../rt/caml/stdlib.cma
 	@echo "[OCAMLMKLIB] $@"
 	@CAMLLIB=../../rt/caml ocamlmklib corner_click_stubs.o corner_click.cmo -o corner_click
+
+obj.exe: object_bindings.cma object_main.ml ../../rt/caml/stdlib.cma
+	@echo "[OCAMLC] $@"
+	@CAMLLIB=../../rt/caml ocamlc object_bindings.cma object_main.ml -o $@
+
+object_bindings.cma: object_bindings_stubs.o object_bindings.cmo ../../rt/caml/stdlib.cma
+	@echo "[OCAMLMKLIB] $@"
+	@CAMLLIB=../../rt/caml ocamlmklib object_bindings_stubs.o object_bindings.cmo -o object_bindings
 
 %.o: %.c
 	@echo "[CC] $@"
