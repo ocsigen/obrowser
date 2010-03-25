@@ -1,7 +1,7 @@
 .PHONY=all clean
 
 all: vm.js
-	@OCAMLLIB=`pwd`/../../rt/caml ocamlbuild main.byte
+	@ocamlbuild -ocamlc 'OCAMLLIB=$(PWD)/../../rt/caml ocamlc' main.byte
 	@uuencode main.byte stdout > main.uue
 
 vm.js: ../../vm.js
