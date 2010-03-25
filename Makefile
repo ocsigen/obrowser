@@ -75,7 +75,7 @@ dist: clean
 
 install:
 	$(OCAMLFIND) install obrowser META vm.js rt/js/ffi.js rt/caml/stdlib.cma rt/caml/*.cmi rt/caml/std_exit.cmo axo/AXO.cma axo/AXO*.cmi lwt/lwt_obrowser.cma lwt/lwt_*.cmi
-	install -m 644 rt/caml/dllstdlib.so `$(OCAMLFIND) -query obrowser`
+	install -m 644 rt/caml/dllstdlib.so `$(OCAMLFIND) -printconf destdir`/obrowser
 
 uninstall:
 	$(OCAMLFIND) remove obrowser
