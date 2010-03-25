@@ -1,0 +1,8 @@
+===== 1.1+dev =====
+
+  * Port to OCaml 3.11.2
+  * Add module {{{Lwt_obrowser}}}
+
+===== 1.1 (2010-01-22) =====
+
+  * First public release
