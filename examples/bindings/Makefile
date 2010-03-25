@@ -1,6 +1,6 @@
 .PHONY: clean
 
-all: main.exe.uue obj.exe.uue vm.js
+all: main.exe.uue obj_gen.exe.uue vm.js
 
 main.exe: corner_click.cma main.ml ../../rt/caml/stdlib.cma
 	@echo "[OCAMLC] $@"
@@ -10,13 +10,16 @@ corner_click.cma: corner_click_stubs.o corner_click.cmo ../../rt/caml/stdlib.cma
 	@echo "[OCAMLMKLIB] $@"
 	@CAMLLIB=../../rt/caml ocamlmklib corner_click_stubs.o corner_click.cmo -o corner_click
 
-obj.exe: object_bindings.cma object_main.ml ../../rt/caml/stdlib.cma
+obj_gen.exe: object_bindings_gen.ml ../../rt/caml/stdlib.cma
 	@echo "[OCAMLC] $@"
-	@CAMLLIB=../../rt/caml ocamlc object_bindings.cma object_main.ml -o $@
+	@CAMLLIB=../../rt/caml ocamlc object_bindings_gen.ml -o $@
 
-object_bindings.cma: object_bindings_stubs.o object_bindings.cmo ../../rt/caml/stdlib.cma
-	@echo "[OCAMLMKLIB] $@"
-	@CAMLLIB=../../rt/caml ocamlmklib object_bindings_stubs.o object_bindings.cmo -o object_bindings
+pa_object_bindings.cmo: pa_object_bindings.ml
+	ocamlc -c -I +camlp4 -I +camlp4/Camlp4Printers -I +camlp4/Camlp4Parsers -pp camlp4of $<
+
+object_bindings_gen.js: object_bindings_gen.ml
+object_bindings_gen.ml: object_bindings.ml pa_object_bindings.cmo
+	camlp4of pa_object_bindings.cmo -js object_bindings_gen.js -impl $< -o $@
 
 %.o: %.c
 	@echo "[CC] $@"
@@ -42,4 +45,4 @@ vm.js: ../../vm.js
 
 clean:
 	@echo "[CLEAN]"
-	@rm -f *.cm* *~ *.cma *.o *.exe *.uue vm.js *.so *.dylib *.dll *.a
+	@rm -f *.cm* *~ *.cma *.o *.exe *.uue vm.js *.so *.dylib *.dll *.a object_bindings_gen.js object_bindings_gen.ml

@@ -38,6 +38,8 @@ var TRUE = 1
 function mk_bool (v) { return (v?TRUE:FALSE); }
 function mk_int (v) { return v; }
 function is_long (b) { return (!(b instanceof Block)); }
+function val_int (i) { return i; }
+function int_val (v) { return v; }
 
 // floats
 

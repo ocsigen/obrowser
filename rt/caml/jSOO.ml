@@ -103,3 +103,8 @@ let wrap_event f =
 	 Thread.thread_uncaught_exception e;
 	 Thread.exit ())
 ;;
+
+
+(* meta *)
+
+external current_vm : unit -> obj = "current_vm"

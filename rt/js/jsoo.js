@@ -106,3 +106,8 @@ function jsoo_wrap_event (clos, res) {
 function jsoo_get_event_args (unit) {
     return this.ctx.event_args;
 }
+
+// Type: unit -> obj
+function current_vm () {
+    return this;
+}
