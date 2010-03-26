@@ -1,5 +1,5 @@
-function number () {
-    this.v = 0;
+function number (init) {
+    this.v = init;
 }
 
 number.prototype.get = function () {

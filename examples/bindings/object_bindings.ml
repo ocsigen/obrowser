@@ -1,14 +1,10 @@
-class external number = object
-  method get : int
-  method incr : int -> unit
-  method to_string : string
-  method print : unit -> unit
-end
+class external number : int -> < get : int ; incr : int -> unit ; to_string : string ; print : unit -> unit >
 
-class number' = object (self)
-	inherit number as mom
-	method incr n = mom # incr (n * 2)
-	method to_string = string_of_int (self # get) ^ " !"
+class number' =
+object (self)
+  inherit number 13 as mom
+  method incr n = mom # incr (n * 2)
+  method to_string = string_of_int (self # get) ^ " !"
 end
 
 let _ =
