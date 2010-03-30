@@ -21,28 +21,49 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
     | <:ctyp< int >> -> <:expr< JSOO.int >>
     | <:ctyp< string >> -> <:expr< JSOO.string >>
     | <:ctyp< unit >> -> <:expr< Obj.magic >>
-    | _ -> failwith "unhandled type"
+    | _ -> <:expr<
+	(fun o ->
+	   let o = Obj.magic o in
+	     try
+	       JSOO.get "__jso" o
+	     with Failure _ ->
+	       failwith "unhandled type conversion")
+	>>
 
   (* extract a value from JS to ML in ML *)
   let  extractor _loc = function
     | <:ctyp< string >> -> <:expr< JSOO.as_string >>
     | <:ctyp< int >> -> <:expr< JSOO.as_int >>
     | <:ctyp< unit >> -> <:expr< ignore >>
-    | _ -> failwith "unhandled type"
+    | _ -> <:expr<
+	(fun o ->
+	   let o = Obj.magic o in
+	     try
+	       match JSOO.extract (JSOO.get "__caml" o) with
+		 | JSOO.Nil ->
+		     let wrapper : 'a__ -> 'b__ = Obj.magic (JSOO.get "__caml_wrapper" o) in
+		     let wrapped = wrapper o in
+		       JSOO.set "__caml" (Obj.magic wrapped) o ;
+		       wrapped
+		 | JSOO.Obj o -> Obj.magic o
+		 | _ -> failwith "typeconv"
+	     with Failure _ ->
+	       failwith "unhandled type conversion")
+	>>
 
   (* inject a value from JS to ML in JS *)
   let js_injector _loc = function
     | <:ctyp< int >> -> "val_int"
     | <:ctyp< string >> -> "val_string"
     | <:ctyp< unit >> -> "(function(){return UNIT;})"
-    | _ -> failwith "unhandled type"
+    | _ -> "(function (o) { if (!o.__caml) { o.__caml = o.vm.callback_method(o.mlo, \"__caml_wrapper\", [o]); } ; return o.__caml; })"
 
   (* extract a value from ML to JS in JS *)
   let  js_extractor _loc = function
     | <:ctyp< string >> -> "string_val"
     | <:ctyp< int >> -> "int_val"
     | <:ctyp< unit >> -> "(function(){return UNIT;})"
-    | _ -> failwith "unhandled type"
+    | _ -> "(function (o) { return o.__jso; })"
 
 
 
@@ -78,6 +99,7 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
       <:class_str_item< method $lid:n$ : $t$ = $e$ >>
 	
     let make_methods _loc i mi ci m =
+      print_js ("for (p in " ^ i ^ ".prototype) { " ^ ci ^ ".prototype[p] = " ^ i ^ ".prototype[p] ; }");
       let rec make = function
 	| (n, t, _loc) :: l ->
 	    print_js (ci ^ ".prototype." ^ n ^ "_ = " ^ i ^ ".prototype." ^ n);
@@ -161,16 +183,27 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
 	    in tt 0 l
 	  in
 	  let m = make_methods _loc i mi ci m in
-	      <:str_item< 
+	  let ti = "__" ^ i ^ "_builder" in
+	    <:str_item< 
 	      let $lid:mi$ o = $fargs <:expr<JSOO.call_function  $targs 0 (<:expr<Obj.magic o>> :: <:expr<JSOO.current_vm ()>> :: transt p)$ (JSOO.eval $str:mi$)>> 0 p$
 	  ;;
-	  class $lid:i$ = $pargs <:class_expr< object (self)
-	    val mutable __jso = JSOO.inject JSOO.Nil
+	  class $lid:ti$ o = object (self)
+	    val mutable __jso = o
 	      $cst:m$
 	    initializer
-	      __jso <- $eargs <:expr<$lid:mi$ (Obj.repr self)>> 0 (List.rev p)$
-	  end>> 0 p$
-	    >>
+	      JSOO.set "__jso" __jso (Obj.magic self)
+	  end ;;
+	  class $lid:i$ = $pargs <:class_expr<
+	  let nil = JSOO.inject JSOO.Nil in  object (self)
+	    inherit $lid:ti$ nil
+	    initializer 
+	      __jso <- $eargs <:expr<$lid:mi$ (Obj.repr self)>> 0 (List.rev p)$ ;
+	      JSOO.set "__jso" __jso (Obj.magic self)
+	  end >> 0 p$  ;;
+	  let _ =
+	      JSOO.set "__caml_wrapper" (Obj.magic (fun o -> new $lid:ti$ o)) (JSOO.get "prototype" (JSOO.eval $str:i$)) ;
+	      JSOO.set "__caml_wrapper" (Obj.magic (fun o -> new $lid:ti$ o)) (JSOO.get "prototype" (JSOO.eval $str:ci$))
+	  ;; >>
 	]
       ];
   END
