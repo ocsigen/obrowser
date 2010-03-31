@@ -16,7 +16,7 @@ CMOS= \
   jSOO.cmo \
   mutex.cmo condition.cmo \
   complex.cmo parsing.cmo lexing.cmo stream.cmo genlex.cmo \
-  js.cmo graphics.cmo regexp.cmo
+  js.cmo graphics.cmo regexp.cmo weak.cmo
 
 .PHONY=clean depend exec_compflags
 
