@@ -1,3 +1,10 @@
 description = "OCaml virtual machine in Javascript"
 version = "0.1"
 archive(byte) = "stdlib.cma"
+
+package "lwt_obrowser" (
+    requires = "lwt"
+    version = "[distributed with OBrowser]"
+    description = "Using Lwt in OBrowser"
+    archive(byte) = "lwt_obrowser.cma"
+  )
