@@ -6,6 +6,10 @@ number.prototype.get = function () {
     return this.v;
 }
 
+number.prototype.dup = function () {
+    return new number (this.v);
+}
+
 number.prototype.incr = function (n) {
     this.v = this.v + n;
 }

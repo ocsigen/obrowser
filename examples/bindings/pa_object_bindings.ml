@@ -192,8 +192,7 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
 	      $cst:m$
 	    initializer
 	      JSOO.set "__jso" __jso (Obj.magic self)
-	  end ;;
-	  class $lid:i$ = $pargs <:class_expr<
+	  end and $lid:i$ = $pargs <:class_expr<
 	  let nil = JSOO.inject JSOO.Nil in  object (self)
 	    inherit $lid:ti$ nil
 	    initializer 

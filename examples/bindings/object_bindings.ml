@@ -1,5 +1,6 @@
 class external number : int ->
   < get : int ; 
+    dup : number ;
     incr : int -> unit ;
     to_string : string ;
     print : unit -> unit >
