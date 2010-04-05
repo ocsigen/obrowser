@@ -59,6 +59,14 @@ function jsoo_extract (o) {
     return b;
 }
 
+// Caml name:  extract_bool
+// Caml type:  obj -> bool
+function jsoo_extract_bool (o) {
+    if (o)
+	return 1;
+    return 0;
+}
+
 // Caml name:  inject
 // Caml type:  value -> obj
 function jsoo_inject (o) {

@@ -40,6 +40,10 @@ let string s = inject (String s) ;;
 let float f = inject (Num f) ;;
 (** Obtain a JS number from an int value *)
 let int i = inject (Num (float_of_int i)) ;;
+(** Obtain a JS bool from a bool *)
+let js_false = eval "false"
+and js_true = eval "true"
+let bool = function true -> js_true | false -> js_false ;;
 
 (* object extractors *)
 
@@ -49,7 +53,7 @@ let as_string x = match extract x with String s -> s | _ -> failwith "as_string"
 (** extracts an object from a JS object, raises (Failure "as_obj") in
     case of error *)
 let as_obj x = match extract x with Obj o -> o | _ -> failwith "as_obj" ;;
-(** extracts a, int from a JS object, raises (Failure "as_int") in
+(** extracts a int from a JS object, raises (Failure "as_int") in
     case of error *)
 let as_int x = match extract x with Num f -> int_of_float f | _ -> failwith "as_int" ;;
 (** extracts a floatfrom a JS object, raises (Failure "as_float") in
@@ -58,6 +62,9 @@ let as_float x = match extract x with Num f -> f | _ -> failwith "as_float" ;;
 (** extracts a block from a JS object, raises (Failure "as_block") in
     case of error *)
 let as_block x = match extract x with Block b -> b | _ -> failwith "as_block" ;;
+(** Extracts a bool from a JS object *)
+external as_bool : obj -> bool = "jsoo_extract_bool" ;;
+
 
 (* field accessors *)
 
