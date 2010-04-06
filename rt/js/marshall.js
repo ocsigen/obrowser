@@ -62,14 +62,14 @@ Reader.prototype.read32u = function () {
     r = (r << 8) | this.chunk[this.chunk_idx++];
     r = (r << 8) | this.chunk[this.chunk_idx++];
     r = (r << 8) | this.chunk[this.chunk_idx++];
-    return r;
+    return INT32(r);
 }
 Reader.prototype.read32s = function () {
     var r = this.chunk[this.chunk_idx++];
     r = (r << 8) | this.chunk[this.chunk_idx++];
     r = (r << 8) | this.chunk[this.chunk_idx++];
     r = (r << 8) | this.chunk[this.chunk_idx++];
-    return r;
+    return INT32(r);
 }
 
 function input_size (chunk, error) {
@@ -278,12 +278,16 @@ function input_val (chunk, error) {
 // Caml name: unmarshal
 // Type:      string -> int -> 'a
 caml_input_value_from_string = function (s, ofs) {
+    var vm = this;
+    function caml_failwith (s) {vm.failwith (s);};
     return input_val (s.content.slice (s.offset + ofs, s.size),caml_failwith);
 }
 
 // Caml name: marshal_data_size
 // Type:      string -> int -> int
 caml_marshal_data_size = function (s, ofs) {
+    var vm = this;
+    function caml_failwith (s) {vm.failwith (s);};
     return input_size (s.content.slice (s.offset + ofs, s.size),caml_failwith);
 }
 

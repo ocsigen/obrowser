@@ -9,7 +9,7 @@
 
 #include <compatibility.js>
 
-#define INT32(x) ((x) | 0)
+#define INT32(x) ((x) & (-1))
 
 #include <instructions.js>
 
@@ -823,7 +823,8 @@ var i_tbl = {
 	return true;
     },
     ICONSTINT: function (vm, c) {
-	c.accu = c.cur_code.get (c.pc); c.pc++;
+	c.accu = c.cur_code.get (c.pc);
+	c.pc++;
 	return true;
     },
     IPUSHCONST0: function (vm, c) {
@@ -848,11 +849,12 @@ var i_tbl = {
     },
     IPUSHCONSTINT: function (vm, c) {
 	c.stack[--c.sp] = c.accu;
-	c.accu = c.cur_code.get (c.pc); c.pc++;
+	c.accu = c.cur_code.get (c.pc);
+        c.pc++;
 	return true;
     },
     INEGINT: function (vm, c) {
-	c.accu = -c.accu;
+	c.accu = INT32(-c.accu);
 	return true;
     },
     IADDINT: function (vm, c) {
@@ -924,12 +926,12 @@ var i_tbl = {
 	return true;
     },
     IOFFSETINT: function (vm, c) {
-	c.accu += c.cur_code.get (c.pc);
+	c.accu = INT32(c.accu + c.cur_code.get (c.pc));
 	c.pc++;
 	return true;
     },
     IOFFSETREF: function (vm, c) {
-	c.accu.set (0, c.accu.get (0) + c.cur_code.get (c.pc));
+	c.accu.set (0, INT32(c.accu.get (0) + c.cur_code.get (c.pc)));
 	c.accu = UNIT;
 	c.pc++;
 	return true;

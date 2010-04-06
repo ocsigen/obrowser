@@ -23,6 +23,9 @@ end
 let _ =
   let v = new number' in
   let c = new calculator v in
-    c # add (new number 3) ;
+    c # add (new number 0) ;
     c # print () ;
+    print_int min_int ;
+    print_newline () ;
+    print_int max_int ;
 ;;
