@@ -10,6 +10,7 @@ class external calculator : number ->
   < add : number -> unit ;
     result : number ;
     print : unit -> unit >
+  = "Calculator"
 ;;
 
 class number' =

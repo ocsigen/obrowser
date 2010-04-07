@@ -98,12 +98,12 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
     let e = mk_args t in
       <:class_str_item< method $lid:n$ : $t$ = $e$ >>
 	
-    let make_methods _loc i mi ci m =
-      print_js ("for (p in " ^ i ^ ".prototype) { " ^ ci ^ ".prototype[p] = " ^ i ^ ".prototype[p] ; }");
+    let make_methods _loc jsi jsmli m =
+      print_js ("for (p in " ^ jsi ^ ".prototype) { " ^ jsmli ^ ".prototype[p] = " ^ jsi ^ ".prototype[p] ; }");
       let rec make = function
 	| (n, t, _loc) :: l ->
-	    print_js (ci ^ ".prototype." ^ n ^ "_ = " ^ i ^ ".prototype." ^ n);
-	    print_js (ci ^ ".prototype." ^ n ^ " = function () {");
+	    print_js (jsmli ^ ".prototype." ^ n ^ "_ = " ^ jsi ^ ".prototype." ^ n);
+	    print_js (jsmli ^ ".prototype." ^ n ^ " = function () {");
 	    print_js ("  var a = [];");
 	    let m = make_method n t _loc in
 	      print_js ("}");
@@ -113,97 +113,106 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
 	    <:class_str_item< >>
       in make m
 
-  EXTEND Gram
-	GLOBAL: str_item;
-      str_item: [
-	[ "class" ; "external" ; i = a_LIDENT ; ":" ; pm = ctyp ->
-	    let mi = "__caml_make_" ^ i in
-	    let ci = "__caml_" ^ i in
-	      print_js ("function " ^ ci ^ "(mlo, vm, args) {");
-	      print_js ("  this.mlo = mlo;");
-	      print_js ("  this.vm = vm;");
-	      print_js ("  " ^ i ^ ".apply (this, args);") ;
-	      print_js ("}") ;
-	      print_js ("function " ^ mi ^ "(mlo, vm) {");
-	      print_js ("var args = []; for (var i = 2;i < arguments.length;i++) args[i - 2] = arguments[i];");
-              print_js ("  return new " ^ ci ^ " (mlo, vm, args);");
-              print_js ("}") ;
-	  let rec params = function
-		<:ctyp< $t1$ -> $t2$ >> -> (t1, _loc) :: params t2
-	      | _ -> []
-	  in
-	  let rec methods = function
-		<:ctyp< $t1$ -> $t2$ >> -> methods t2
-	      | <:ctyp< < $ms$ > >> ->
-		(let rec aux = function
-		   | <:ctyp< $lid:i$ : $t$ ; $e$ >> -> (i, t, _loc) :: aux e
-		   | <:ctyp< $lid:i$ : $t$ >> -> [(i, t, _loc)]
-		   | <:ctyp< >> -> []
-		   | _ -> failwith "bad class type"
-		 in aux ms)
-	      | _ -> failwith "not a class type"
-	  in
-	  let p = params pm in
-	  let m = methods pm in
-	  let rec eargs ee n = function
-	      _ :: l ->
-		let nn = Printf.sprintf "a%d" n in
-		let e = eargs ee (n + 1) l in
-		  <:expr< $e$ $lid:nn$ >>
-	    | [] -> <:expr< $ee$ >>
-	  in
-	  let targs n p =
-	    let rec targs n = function
-		v :: l ->
-		  let e = targs (n + 1) l in
-		    Ast.ExSem (_loc, <:expr< $v$ >>, e)
-	      | [] -> <:expr< >>
-	    in let ta = targs n p in <:expr< [| $ta$ |] >>
-	  in
-	  let rec fargs ee n = function
-	      _ :: l ->
-		let nn = Printf.sprintf "a%d" n in
-		let e = fargs ee (n + 1) l in
-		  <:expr< fun $lid:nn$ -> $e$ >>
-	    | [] -> <:expr< $ee$ >>
-	  in
-	  let rec pargs ee n = function
-	      _ :: l ->
-		let nn = Printf.sprintf "a%d" n in
-		let e = pargs ee (n + 1) l in
-		  <:class_expr< fun $lid:nn$ -> $e$ >>
-	    | [] -> <:class_expr< $ee$ >>
-	  in
-	  let transt l =
-	    let rec tt n = function
-	      | [] -> []
-	      | (e, _loc) :: l -> 
-		  let nn = Printf.sprintf "a%d" n in
-		    <:expr< $injector _loc e$ $lid:nn$ >> :: tt (n + 1) l
-	    in tt 0 l
-	  in
-	  let m = make_methods _loc i mi ci m in
-	  let ti = "__" ^ i ^ "_builder" in
-	    <:str_item< 
-	      let $lid:mi$ o = $fargs <:expr<JSOO.call_function  $targs 0 (<:expr<Obj.magic o>> :: <:expr<JSOO.current_vm ()>> :: transt p)$ (JSOO.eval $str:mi$)>> 0 p$
-	  ;;
-	  class $lid:ti$ o = object (self)
+  let class_decl mli jsi pm _loc =
+    let jsmlif = "__caml_make_" ^ mli in
+    let jsmli = "__caml_" ^ mli in
+    let tmli = "__" ^ mli in
+    let mlif = "__" ^ mli ^ "_builder" in
+      print_js ("function " ^ jsmli ^ "(mlo, vm, args) {");
+      print_js ("  this.mlo = mlo;");
+      print_js ("  this.vm = vm;");
+      print_js ("  " ^ jsi ^ ".apply (this, args);") ;
+      print_js ("}") ;
+      print_js ("function " ^ jsmlif ^ "(mlo, vm) {");
+      print_js ("var args = []; for (var i = 2;i < arguments.length;i++) args[i - 2] = arguments[i];");
+      print_js ("  return new " ^ jsmli ^ " (mlo, vm, args);");
+      print_js ("}") ;
+      let rec params = function
+	  <:ctyp< $t1$ -> $t2$ >> -> (t1, _loc) :: params t2
+	| _ -> []
+      in
+      let rec methods = function
+	  <:ctyp< $t1$ -> $t2$ >> -> methods t2
+	| <:ctyp< < $ms$ > >> ->
+	  (let rec aux = function
+	     | <:ctyp< $lid:i$ : $t$ ; $e$ >> -> (i, t, _loc) :: aux e
+	     | <:ctyp< $lid:i$ : $t$ >> -> [(i, t, _loc)]
+	     | <:ctyp< >> -> []
+	     | _ -> failwith "bad class type"
+	   in aux ms)
+	| _ -> failwith "not a class type"
+      in
+      let p = params pm in
+      let m = methods pm in
+      let rec eargs ee n = function
+	  _ :: l ->
+	    let nn = Printf.sprintf "a%d" n in
+	    let e = eargs ee (n + 1) l in
+	      <:expr< $e$ $lid:nn$ >>
+	| [] -> <:expr< $ee$ >>
+      in
+      let targs n p =
+	let rec targs n = function
+	    v :: l ->
+	      let e = targs (n + 1) l in
+		Ast.ExSem (_loc, <:expr< $v$ >>, e)
+	  | [] -> <:expr< >>
+	in let ta = targs n p in <:expr< [| $ta$ |] >>
+      in
+      let rec fargs ee n = function
+	  _ :: l ->
+	    let nn = Printf.sprintf "a%d" n in
+	    let e = fargs ee (n + 1) l in
+	      <:expr< fun $lid:nn$ -> $e$ >>
+	      | [] -> <:expr< $ee$ >>
+      in
+      let rec pargs ee n = function
+	  _ :: l ->
+	    let nn = Printf.sprintf "a%d" n in
+	    let e = pargs ee (n + 1) l in
+	      <:class_expr< fun $lid:nn$ -> $e$ >>
+	      | [] -> <:class_expr< $ee$ >>
+      in
+      let transt l =
+	let rec tt n = function
+	  | [] -> []
+	  | (e, _loc) :: l -> 
+	      let nn = Printf.sprintf "a%d" n in
+		<:expr< $injector _loc e$ $lid:nn$ >> :: tt (n + 1) l
+	in tt 0 l
+      in
+      let m = make_methods _loc jsi jsmli m in
+	<:str_item< 
+	  let $lid:mlif$ o = $fargs <:expr<JSOO.call_function  $targs 0 (<:expr<Obj.magic o>> :: <:expr<JSOO.current_vm ()>> :: transt p)$ (JSOO.eval $str:jsmlif$)>> 0 p$
+  ;;
+  class $lid:tmli$ o = object (self)
 	    val mutable __jso = o
 	      $cst:m$
 	    initializer
 	      JSOO.set "__jso" __jso (Obj.magic self)
-	  end and $lid:i$ = $pargs <:class_expr<
+	  end and $lid:mli$ = $pargs <:class_expr<
 	  let nil = JSOO.inject JSOO.Nil in  object (self)
-	    inherit $lid:ti$ nil
+	    inherit $lid:tmli$ nil
 	    initializer 
-	      __jso <- $eargs <:expr<$lid:mi$ (Obj.repr self)>> 0 (List.rev p)$ ;
+	      __jso <- $eargs <:expr<$lid:mlif$ (Obj.repr self)>> 0 (List.rev p)$ ;
 	      JSOO.set "__jso" __jso (Obj.magic self)
 	  end >> 0 p$  ;;
 	  let _ =
-	      JSOO.set "__caml_wrapper" (Obj.magic (fun o -> new $lid:ti$ o)) (JSOO.get "prototype" (JSOO.eval $str:i$)) ;
-	      JSOO.set "__caml_wrapper" (Obj.magic (fun o -> new $lid:ti$ o)) (JSOO.get "prototype" (JSOO.eval $str:ci$))
+	      JSOO.set "__caml_wrapper" (Obj.magic (fun o -> new $lid:tmli$ o)) (JSOO.get "prototype" (JSOO.eval $str:jsi$)) ;
+	      JSOO.set "__caml_wrapper" (Obj.magic (fun o -> new $lid:tmli$ o)) (JSOO.get "prototype" (JSOO.eval $str:jsmli$))
 	  ;; >>
+
+
+  EXTEND Gram
+	GLOBAL: str_item;
+      str_item: [
+	[ "class" ; "external" ; mli = a_LIDENT ; ":" ; pm = ctyp ; jsi = jsi_opt ->
+	  class_decl mli (match jsi with None -> mli | Some jsi -> jsi) pm _loc
 	]
+      ];
+      jsi_opt: [
+	[ "=" ; jsi = a_STRING -> Some jsi ]
+      | [ [] -> None ]
       ];
   END
     
