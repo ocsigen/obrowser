@@ -213,7 +213,7 @@ oo_new_variable = function (table, name) {
 	return v;
     else {
 	var index = oo_new_slot (table);
-	if (name.size != "")
+	if (name.length != 0)
 	    table.vars[name] = index;
 	return index;
     }
