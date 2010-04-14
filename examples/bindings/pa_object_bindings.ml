@@ -8,6 +8,7 @@ end
 module Make (Syntax : Sig.Camlp4Syntax) = struct
   open Sig
   include Syntax
+  let uid = let v = ref 0 in fun () -> incr v ; Printf.sprintf "u%x" !v
 
   let js_file = ref None
   let print_js s =
@@ -41,7 +42,7 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
 	     try
 	       match JSOO.extract (JSOO.get "__caml" o) with
 		 | JSOO.Nil ->
-		     let wrapper : 'a__ -> 'b__ = Obj.magic (JSOO.get "__caml_wrapper" o) in
+		     let wrapper : '$lid:uid()$ -> '$lid:uid()$ = Obj.magic (JSOO.get "__caml_wrapper" o) in
 		     let wrapped = wrapper o in
 		       JSOO.set "__caml" (Obj.magic wrapped) o ;
 		       wrapped
@@ -99,7 +100,6 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
       <:class_str_item< method $lid:n$ : $t$ = $e$ >>
 	
     let make_methods _loc jsi jsmli m =
-      print_js ("for (p in " ^ jsi ^ ".prototype) { " ^ jsmli ^ ".prototype[p] = " ^ jsi ^ ".prototype[p] ; }");
       let rec make = function
 	| (n, t, _loc) :: l ->
 	    print_js (jsmli ^ ".prototype." ^ n ^ "_ = " ^ jsi ^ ".prototype." ^ n);
@@ -113,7 +113,7 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
 	    <:class_str_item< >>
       in make m
 
-  let class_decl mli jsi pm _loc =
+  let class_decl mli jsi pm inh _loc =
     let jsmlif = "__caml_make_" ^ mli in
     let jsmli = "__caml_" ^ mli in
     let tmli = "__" ^ mli in
@@ -127,6 +127,13 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
       print_js ("var args = []; for (var i = 2;i < arguments.length;i++) args[i - 2] = arguments[i];");
       print_js ("  return new " ^ jsmli ^ " (mlo, vm, args);");
       print_js ("}") ;
+      print_js ("if (window.__caml_reg == undefined) __caml_reg = [];");
+      print_js ("__caml_reg[\"" ^ mli ^ "\"] = " ^ jsmli ^ ";");
+      print_js ("for (p in " ^ jsi ^ ".prototype) { " ^ jsmli ^ ".prototype[p] = " ^ jsi ^ ".prototype[p] ; }");
+      (match inh with
+	 | Some c ->
+	     print_js ("for (p in __caml_reg[\"" ^ c ^ "\"].prototype) { " ^ jsmli ^ ".prototype[p] = __caml_reg[\"" ^ c ^ "\"].prototype[p] ; }");
+	 | None -> ());
       let rec params = function
 	  <:ctyp< $t1$ -> $t2$ >> -> (t1, _loc) :: params t2
 	| _ -> []
@@ -143,12 +150,11 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
 	| _ -> failwith "not a class type"
       in
       let p = params pm in
-      let m = methods pm in
+      let m = List.rev (methods pm) in
       let rec eargs ee n = function
 	  _ :: l ->
 	    let nn = Printf.sprintf "a%d" n in
-	    let e = eargs ee (n + 1) l in
-	      <:expr< $e$ $lid:nn$ >>
+	      eargs <:expr< $ee$ $lid:nn$ >> (n + 1) l
 	| [] -> <:expr< $ee$ >>
       in
       let targs n p =
@@ -182,19 +188,29 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
 	in tt 0 l
       in
       let m = make_methods _loc jsi jsmli m in
+      let stub =
+	match inh with
+	  | None ->
+	      <:class_expr< object (self)
+		val mutable __jso = o
+		  $cst:m$
+		initializer
+		  JSOO.set "__jso" __jso (Obj.magic self)
+	      end >>
+	  | Some c ->
+	      <:class_expr< object (self)
+		inherit $lid:"__" ^ c$ o
+		  $cst:m$
+	      end >>
+      in
 	<:str_item< 
-	  let $lid:mlif$ o = $fargs <:expr<JSOO.call_function  $targs 0 (<:expr<Obj.magic o>> :: <:expr<JSOO.current_vm ()>> :: transt p)$ (JSOO.eval $str:jsmlif$)>> 0 p$
+	  let $lid:mlif$ o = $fargs <:expr<JSOO.call_function  $targs 0 (<:expr<Obj.magic o>> :: <:expr<JSOO.current_vm ()>> :: transt p)$ (JSOO.eval $str:jsmlif$)>> 0 (List.rev p)$
   ;;
-  class $lid:tmli$ o = object (self)
-	    val mutable __jso = o
-	      $cst:m$
-	    initializer
-	      JSOO.set "__jso" __jso (Obj.magic self)
-	  end and $lid:mli$ = $pargs <:class_expr<
+  class $lid:tmli$ o = $stub$ and $lid:mli$ = $pargs <:class_expr<
 	  let nil = JSOO.inject JSOO.Nil in  object (self)
 	    inherit $lid:tmli$ nil
 	    initializer 
-	      __jso <- $eargs <:expr<$lid:mlif$ (Obj.repr self)>> 0 (List.rev p)$ ;
+	      __jso <- $eargs <:expr<$lid:mlif$ (Obj.repr self)>> 0 p$ ;
 	      JSOO.set "__jso" __jso (Obj.magic self)
 	  end >> 0 p$  ;;
 	  let _ =
@@ -206,12 +222,16 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
   EXTEND Gram
 	GLOBAL: str_item;
       str_item: [
-	[ "class" ; "external" ; mli = a_LIDENT ; ":" ; pm = ctyp ; jsi = jsi_opt ->
-	  class_decl mli (match jsi with None -> mli | Some jsi -> jsi) pm _loc
+	[ "class" ; "external" ; mli = a_LIDENT ; inh = inherit_opt ; ":" ; pm = ctyp ; jsi = jsi_opt ->
+	  class_decl mli (match jsi with None -> mli | Some jsi -> jsi) pm inh _loc
 	]
       ];
       jsi_opt: [
 	[ "=" ; jsi = a_STRING -> Some jsi ]
+      | [ [] -> None ]
+      ];
+      inherit_opt: [
+	[ "inherit" ; i = a_LIDENT -> Some i ]
       | [ [] -> None ]
       ];
   END

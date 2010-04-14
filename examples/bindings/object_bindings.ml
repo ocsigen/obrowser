@@ -1,4 +1,4 @@
-class external number : int ->
+class external number : int -> string ->
   < get : int ; 
     dup : number ;
     incr : int -> unit ;
@@ -13,9 +13,14 @@ class external calculator : number ->
   = "Calculator"
 ;;
 
+class external super_calculator inherit calculator : string ->
+  < alert : unit >
+  = "SuperCalculator"
+;;
+
 class number' =
 object (self)
-  inherit number 13 as mom
+  inherit number 10 "bob" as mom
   method incr n = mom # incr (n * 2)
   method print () = print_endline (self # to_string)
 end
@@ -24,9 +29,9 @@ end
 let _ =
   let v = new number' in
   let c = new calculator v in
-    c # add (new number 0) ;
+  let c' = new super_calculator "haha" in
+    c # add (new number 7 "marc") ;
     c # print () ;
-    print_int min_int ;
-    print_newline () ;
-    print_int max_int ;
+    c' # add (c # result) ;
+    c' # alert
 ;;
