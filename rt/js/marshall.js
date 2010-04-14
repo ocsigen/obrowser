@@ -316,7 +316,7 @@ Writer.prototype.finalize = function () {
     this.chunk_idx = 0;
     this.write (32, 0x8495A6BE);
     this.write (32, this.block_len);
-    this.write (32, this.num_objects);
+    this.write (32, this.obj_counter);
     this.write (32, this.size_32);
     this.write (32, this.size_64);
     return this.chunk;
@@ -373,12 +373,12 @@ function output_val (v, error) {
 		} else {
 		    writer.write_code (32, CODE_STRING32, len);
 		}
-		for (var i = 0;i < le;i++)
+		for (var i = 0;i < len;i++)
 		    writer.write (8, v.get (i));
 		writer.size_32 += 1 + (len + 4) / 4;
 		writer.size_64 += 1 + (len + 8) / 8;
 		v.dejavu = true;
-		v.dejavu_location = writer.num_objects++;
+		v.dejavu_location = writer.obj_counter++;
 		break;
 	    }
 	    case DOUBLE_TAG: {
@@ -389,7 +389,7 @@ function output_val (v, error) {
 		writer.size_32 += 1 + 2;
 		writer.size_64 += 1 + 1;
 		v.dejavu = true;
-		v.dejavu_location = writer.num_objects++;
+		v.dejavu_location = writer.obj_counter++;
 		break;
 	    }
 	    case DOUBLE_ARRAY_TAG: {
@@ -405,7 +405,7 @@ function output_val (v, error) {
 		writer.size_32 += 1 + nfloats * 2;
 		writer.size_64 += 1 + nfloats;
 		v.dejavu = true;
-		v.dejavu_location = writer.num_objects++;
+		v.dejavu_location = writer.obj_counter++;
 		break;
 	    }
 	    case ABSTRACT_TAG:
@@ -427,20 +427,22 @@ function output_val (v, error) {
 		
 		v.get (0).serialize(v, writer);
 		v.dejavu = true;
-		v.dejavu_location = writer.num_objects++;
+		v.dejavu_location = writer.obj_counter++;
 		break;
 	    }
 	    default: {
-		if (v.tag < 16 && v.size < 8 / 4)
+		if (v.tag < 16 && v.size < 8) {
 		    writer.write (8, PREFIX_SMALL_BLOCK + v.tag + (v.size<<4));
-		else
+		} else {
 		    writer.write_code(32, CODE_BLOCK32, HD(v));
-		writer.size_32 += 1 + v.size * 4;
-		writer.size_64 += 1 + v.size * 4;
+		}
+		writer.size_32 += 1 + v.size ;
+		writer.size_64 += 1 + v.size ;
 		v.dejavu = true;
-		v.dejavu_location = writer.num_objects++;
-		for (i = 1; i < v.size; i++)
+		v.dejavu_location = writer.obj_counter++;
+		for (i = 0; i < v.size; i++) {
 		    extern_rec (v.get (i));
+		}
 	    }
 	    }
 	}
@@ -457,6 +459,7 @@ function output_val (v, error) {
     extern_invalid_argument("output_value: abstract value (outside heap)");
   }
 */
+    extern_rec (v);
     writer.finalize ();
     return writer.chunk;
 }
@@ -466,8 +469,15 @@ function output_val (v, error) {
 // Type:      'a -> extern_flags list -> string
 function caml_output_value_to_string (v, fl) {
     /* ignores flags... */
+    var vm = this;
+    function caml_failwith (s) {vm.failwith (s);};
     var t = output_val (v, caml_failwith);
-    return mk_array_from_js (t);
+    var b = mk_block (t.length + 1, STRING_TAG);
+    for (var i = 0;i < t.length;i++) {
+	store_field (b, i, t[i]);
+    }
+    store_field (b, t.length, 0);
+    return b;
 }
 
 // Caml name: to_channel
@@ -478,6 +488,8 @@ function caml_output_value_to_string (v, fl) {
 // Caml name: to_buffer_unsafe
 // Type:      string -> int -> int -> 'a -> extern_flags list -> int
 function caml_output_value_to_buffer (s, ofs, len, v, fl) {
+    var vm = this;
+    function caml_failwith (s) {vm.failwith (s);};
     var t = output_val (v, caml_failwith);
     for (var i = 0;i < t.length;i++) {
 	s.set (ofs + i, t[i]);
