@@ -51,18 +51,39 @@ let urlencode args =
       args
    )
 
+(* the following encode the whole string, even regular chars.
+   Otherwise it does not work with Ocaml's Marshalled data *)
+let urlencode_string_ s =
+  let hex c =
+    Char.chr ((if c < 10 then Char.code '0' else Char.code 'A' - 10) + c)
+  in
+  let s' = String.make (String.length s * 3) ' ' in
+  for i = 0 to String.length s - 1 do
+    s'.[i * 3] <- '%' ;
+    s'.[i * 3 + 1] <- hex ((Char.code s.[i]) lsr 4) ;
+    s'.[i * 3 + 2] <- hex ((Char.code s.[i]) land 0xF)
+  done ;
+  s'
+
+let urlencode_ args =
+ String.concat "&"
+   (List.map
+      (fun (n,v) -> (urlencode_string_ n) ^ "=" ^ (urlencode_string_ v))
+      args
+   )
+
 let http_get url args =
   let url = if args = [] then url else url^(urlencode args) in
   Lwt_preemptive.detach Js.http_get_with_status url
 
 let http_post url args =
-  Js.http_post url "application/x-www-form-urlencoded" (urlencode args)
+  Js.http_post url "application/x-www-form-urlencoded" (urlencode_ args)
 
 let http_get_post url get_args post_args =
   Js.http_post
     (url ^ "?" ^ (urlencode get_args))
     "application/x-www-form-urlencode"
-    (urlencode post_args)
+    (urlencode_ post_args)
 
 let http_post url args = Lwt_preemptive.detach (http_post url) args
 
