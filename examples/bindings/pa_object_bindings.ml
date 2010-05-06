@@ -25,11 +25,14 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
     | _ -> <:expr<
 	(fun o ->
 	   let o = Obj.magic o in
-	     try
-	       JSOO.get "__jso" o
-	     with Failure _ ->
-	       failwith "unhandled type conversion")
-	>>
+	     if o == JSOO.null then
+	       o
+	     else
+	       let jso = JSOO.get "__jso" o in
+		 if jso == JSOO.undefined  then
+		   o
+		 else
+		   jso) >>
 
   (* extract a value from JS to ML in ML *)
   let  extractor _loc = function
@@ -39,17 +42,19 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
     | _ -> <:expr<
 	(fun o ->
 	   let o = Obj.magic o in
-	     try
+	     if o == JSOO.undefined then o else
 	       match JSOO.extract (JSOO.get "__caml" o) with
 		 | JSOO.Nil ->
-		     let wrapper : '$lid:uid()$ -> '$lid:uid()$ = Obj.magic (JSOO.get "__caml_wrapper" o) in
-		     let wrapped = wrapper o in
-		       JSOO.set "__caml" (Obj.magic wrapped) o ;
-		       wrapped
+		     let wrapper = JSOO.get "__caml_wrapper" o in
+		       if wrapper == JSOO.undefined then
+			 Obj.magic o
+		       else
+			 let wrapper : '$lid:uid()$ -> '$lid:uid()$ = Obj.magic wrapper in
+			 let wrapped = wrapper o in
+			   JSOO.set "__caml" (Obj.magic wrapped) o ;
+			   wrapped
 		 | JSOO.Obj o -> Obj.magic o
-		 | _ -> failwith "typeconv"
-	     with Failure _ ->
-	       failwith "unhandled type conversion")
+		 | _ -> failwith "typeconv")
 	>>
 
   (* inject a value from JS to ML in JS *)
@@ -57,14 +62,14 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
     | <:ctyp< int >> -> "val_int"
     | <:ctyp< string >> -> "val_string"
     | <:ctyp< unit >> -> "(function(){return UNIT;})"
-    | _ -> "(function (o) { if (!o.__caml) { o.__caml = o.vm.callback_method(o.mlo, \"__caml_wrapper\", [o]); } ; return o.__caml; })"
+    | _ -> "(function (o) { if ((!o) || (!o.__caml_wrapper)) {return o; } ; if (!o.__caml) { o.__caml = running_vm.callback(o.__caml_wrapper, [o]); } ; return o.__caml; })"
 
   (* extract a value from ML to JS in JS *)
   let  js_extractor _loc = function
     | <:ctyp< string >> -> "string_val"
     | <:ctyp< int >> -> "int_val"
     | <:ctyp< unit >> -> "(function(){return UNIT;})"
-    | _ -> "(function (o) { return o.__jso; })"
+    | _ -> "(function (o) { if (o && o.__jso) return o.__jso; return o; })"
 
 
 

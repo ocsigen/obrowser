@@ -44,6 +44,9 @@ let int i = inject (Num (float_of_int i)) ;;
 let js_false = eval "false"
 and js_true = eval "true"
 let bool = function true -> js_true | false -> js_false ;;
+(** special values *)
+let undefined = eval "undefined"
+let null = eval "null"
 
 (* object extractors *)
 

@@ -1,3 +1,19 @@
+type id
+
+class external store : <
+  add : string -> id ;
+  get : id -> string
+> ;;
+
+let _ =
+  print_endline "oh 1 !" ;
+  let s = new store in
+  print_endline "oh 2 !" ;
+  let bob = s # add "bob" in
+    print_endline "oh 3 !" ;
+    print_endline (">> " ^ (s # get bob))
+;;
+
 class external number : int -> string ->
   < get : int ; 
     dup : number ;

@@ -1088,6 +1088,7 @@ VM.prototype.raise = function (e) {
 }
 
 VM.prototype.run = function () {
+    running_vm = this;
     if (this.status != VM_RUNNING) {
 	this.status = VM_RUNNING;
 	var vm = this;
@@ -1129,6 +1130,7 @@ VM.prototype.run = function () {
 	}
 	sched_run ();
     }
+    running_vm = null;
 }
 
 VM.prototype.thread_notify_all = function (res) {

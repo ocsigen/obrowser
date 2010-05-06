@@ -1,3 +1,7 @@
+function store () { this.cur = 0; }
+store.prototype.add = function (v) { this[++this.cur] = v; return this.cur; }
+store.prototype.get = function (id) { return this[id]; }
+
 function number (init, name) { this.v = init; this.name = name; }
 number.prototype.get = function () { return this.v; }
 number.prototype.dup = function () { return new number (this.v); }

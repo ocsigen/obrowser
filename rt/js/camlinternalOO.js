@@ -47,6 +47,8 @@ oo_new_table = function (pm) {
     for (var i = 0;i < pm.size;i++) {
 	var plab = plabel (pm.get(i));
 	methods.set (i * 2 + 3, plab);
+	methods["M" + jsstr (pm.get(i))] = i * 2 + 2;
+	methods["L" + plab] = i * 2 + 2;
     }
     var refnil = mk_block (1, 0);
     refnil.set (0, 0);
@@ -99,6 +101,8 @@ oo_get_method_label = function (table, name) {
 	m = oo_new_method (table);
 	table.by_name[name] = m;
 	table.by_label[m] = true;
+	table.methods["M" + name] = m;
+	table.methods["L" + plabel_jsstr(name)] = m;
     }
     return m;
 }

@@ -55,6 +55,7 @@ VM.prototype.callback = function (clos, args) {
     code.set (5, 1);
     code.set (6, ISTOP);
 
+    running_vm = this;
     try {
 	while (ctx.cur_code.get (ctx.pc) != ISTOP) {
 	    if (! i_tbl_cb [ctx.cur_code.get (ctx.pc++)] (this, ctx)) {
@@ -70,7 +71,7 @@ VM.prototype.callback = function (clos, args) {
 	    throw e;
 	}
     }
-    
+    running_vm = null;
     var r = ctx.accu;
     this.ctx = octx;
     return r;
