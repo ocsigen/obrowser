@@ -125,6 +125,7 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
     let mlif = "__" ^ mli ^ "_builder" in
       print_js ("function " ^ jsmli ^ "(mlo, vm, args) {");
       print_js ("  this.mlo = mlo;");
+      print_js ("  mlo.__jso = this;");
       print_js ("  this.vm = vm;");
       print_js ("  " ^ jsi ^ ".apply (this, args);") ;
       print_js ("}") ;
@@ -215,8 +216,7 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
 	  let nil = JSOO.inject JSOO.Nil in  object (self)
 	    inherit $lid:tmli$ nil
 	    initializer 
-	      __jso <- $eargs <:expr<$lid:mlif$ (Obj.repr self)>> 0 p$ ;
-	      JSOO.set "__jso" __jso (Obj.magic self)
+	      __jso <- $eargs <:expr<$lid:mlif$ (Obj.repr self)>> 0 p$
 	  end >> 0 p$  ;;
 	  let _ =
 	      JSOO.set "__caml_wrapper" (Obj.magic (fun o -> new $lid:tmli$ o)) (JSOO.get "prototype" (JSOO.eval $str:jsi$)) ;
