@@ -293,7 +293,7 @@ function hash_aux(obj){
     }
     case DOUBLE_TAG: {
 	hash_univ_count--;
-	var bytes = bytes_of_float (unbox_float (obj));
+	var bytes = bytes_of_float (obj);
 	for (var p = 7; p >= 0; p--)
             COMBINE_SMALL(bytes[p]);
 	break;
