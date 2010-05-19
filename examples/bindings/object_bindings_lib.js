@@ -18,3 +18,9 @@ function SuperCalculator (message) { this.message = message ; Calculator.call (t
 /* inheritance : */
 for (i in Calculator.prototype) SuperCalculator.prototype[i] = Calculator.prototype[i];
 SuperCalculator.prototype.alert = function () { window.alert (this.message + " " + this.value.to_string ()); }
+
+function Stack () { this.items = new Array (); }
+Stack.prototype.push = function (s) { this.items.push (s); }
+Stack.prototype.get_all = function () { return this.items; }
+Stack.prototype.reinit = function (v) { this.items = v; }
+Stack.prototype.disp = function () { console.debug ("--- disp ---"); return UNIT; }
