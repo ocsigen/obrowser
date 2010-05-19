@@ -1257,7 +1257,7 @@ function exec_caml (url) {
     var argv = [];
     for (var i = 0;i < arguments.length - 1;i++)
 	argv[i] = arguments[i+1].toString();
-    var vm = new VM(url, argv) ;
-    vm.run ();
-    return vm ;
+    last_vm = new VM(url, argv) ;
+    last_vm.run ();
+    return last_vm ;
 }

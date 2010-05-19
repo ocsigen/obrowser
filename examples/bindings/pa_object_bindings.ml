@@ -31,6 +31,8 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
     | <:ctyp< string >> -> "string_val"
     | <:ctyp< int >> -> "int_val"
     | <:ctyp< unit >> -> "(function(){return UNIT;})"
+    | <:ctyp< $a$ -> unit >> ->
+      "(function(cl){return function (a){ last_vm.callback (cl, [" ^ js_injector _loc a ^ " (a)]);} })"
     | <:ctyp< $t$ array >> ->
       "(function(b){var o = new Array();for(var i=0;i<b.size;i++)o[i]=" ^ js_extractor _loc t ^ "(b.get(i)); return o;})"
     | _ -> "(function (o) { if (o && o.__jso) return o.__jso; return o; })"
@@ -38,6 +40,7 @@ module Make (Syntax : Sig.Camlp4Syntax) = struct
   (* inject a value from ML to JS in ML *)
   let injector _loc = function
     | <:ctyp< $_$ array >> as t -> <:expr< fun (o : $t$) -> JSOO.call_function [| Obj.magic o |] (JSOO.eval ($str:js_extractor _loc t$)) >>
+    | <:ctyp< $_$ -> unit >> as t -> <:expr< fun (o : $t$) -> JSOO.call_function [| Obj.magic o |] (JSOO.eval ($str:js_extractor _loc t$)) >>
     | <:ctyp< int >> -> <:expr< JSOO.int >>
     | <:ctyp< string >> -> <:expr< JSOO.string >>
     | <:ctyp< unit >> -> <:expr< Obj.magic >>

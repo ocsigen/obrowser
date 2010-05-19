@@ -42,16 +42,18 @@ object (self)
 end
 ;;
 
-class external stack :
+class external stack : (string -> unit) ->
   < get_all : string array ;
     reinit : string array -> unit ;
     push : string -> unit >
   = "Stack"
 ;;
 
+let pr = (fun s -> print_endline (" --- PUSHED " ^ s ^ " ---")) ;;
+
 class stack_anoviste =
 object (self)
-  inherit stack
+  inherit stack pr
   method disp () =
     print_endline "<<" ;
     Array.iter (fun o -> print_endline (Printf.sprintf " - \"%s\"" o)) (self # get_all) ;
@@ -62,7 +64,6 @@ open JSOO ;;
 
 let _ =
   let s = new stack_anoviste in
-    eval "console" >>> call_method "debug" [| Obj.magic s |] >>> ignore ;
     s # push "test un" ;
     s # push "test deux" ;
     s # disp () ;
