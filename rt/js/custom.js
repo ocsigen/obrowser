@@ -180,10 +180,10 @@ function caml_nativeint_sub (a,b) {
 
 /* int64 */
 
-function Int64 () {}
+function mk_int64 (t) { return mk_custom (int64_ops, t); }
 
 function int64_compare (a, b) {
-    var t = int64_sub (a, b).get (1).t;
+    var t = int64_sub (a, b).get (1);
     var is_zero = true;
     for (var i = 0;i < 8;i++)
 	if (t[i] != 0) is_zero = false;
@@ -194,60 +194,45 @@ function int64_compare (a, b) {
 function int64_add (a, b) {
     a = a.get (1);
     b = b.get (1);
-    var r = new Int64 ();
-    r.t = [];
+    r = [];
     var carry = 0;
     for (var i = 0;i < 8;i++) {
-	r.t[i] = a.t[i] + b.t[i] + carry;
-	carry = r.t[i] >> 8;
-	r.t[i] &= 0xFF;
+	r[i] = a[i] + b[i] + carry;
+	carry = r[i] >> 8;
+	r[i] &= 0xFF;
     }
-    return mk_custom (int64_ops, r);
+    return mk_int64 (r);
 }
 function int64_neg (a) {
     a = a.get (1);
     var r = new Int64 ();
-    r.t = [];
+    r = [];
     for (var i = 0;i < 8;i++)
-	r.t[i] = a.t[i] ^ 0xFF;
+	r[i] = a[i] ^ 0xFF;
     var carry = 1;
     for (var i = 0;i < 8;i++) {
-	r.t[i] = a.t[i] +carry;
-	carry = r.t[i] >> 8;
-	r.t[i] &= 0xFF;
+	r[i] = a[i] +carry;
+	carry = r[i] >> 8;
+	r[i] &= 0xFF;
     }
     return mk_custom (int64_ops, r);
 }
 function int64_sub (a, b) {
     return int64_add (a, int64_neg (b));
 }
-function int64_of_int (x) {
-    /* assumes exists n, INTEGER_SIZE = (2 ** n)%N */
-    var r = new Int64 ();
-    r.t = [];
-    for (var i = 0;i < INTEGER_SIZE / 8;i++)
-	r.t[7 - i] = (x >> (i * 8)) & 0xFF;
-    if (x >> (INTEGER_SIZE - 1) == 1)
-	for (var i = INTEGER_SIZE / 8 - 1;i < 8;i++)
-	    r.t[7 - i] = 0xFF;
-    return mk_custom (int64_ops, r);
+caml_int64_of_int = int64_of_int = function (x) {
+    var t = [];
+    for (var i = 0;i < 4;i++)
+	t[3 - i] = (x < 0) ? 0xFF : 0x00;
+    for (var i = 0;i < 4;i++)
+	t[7 - i] = (x >> (i * 8)) & 0xFF;
+    return mk_int64 (t);
 }
 function int64_of_bytes (bytes) {
-    var r = new Int64 ();
-    r.t = [];
-    for (var i = 0;i < 8;i++)
-	r.t[i] = bytes[i];
-    return mk_custom (int64_ops, r);
+    return mk_int64 (r);
 }
-function int64_of_bytes_le (bytes) {
-    var r = new Int64 ();
-    r.t = [];
-    for (var i = 0;i < 8;i++)
-	r.t[i] = bytes[7 - i];
-    return mk_custom (int64_ops, r);
-}
-function int64_to_bytes (a) {
-    return a.get (1).t;
+function int64_to_bytes (v) {
+    return v.get (1);
 }
 
 int64_ops = {
@@ -259,7 +244,7 @@ int64_ops = {
 	return 0;
     },
     serialize : function (v, writer) {
-	var t = int64_to_bytes (v.get (1));
+	var t = int64_to_bytes (v);
 	for (var j = 0;j < 8;j++)
 	    writer.write (8, t[j]);
 	writer.size_32 += 2 + ((8 + 3) >> 2);
@@ -269,7 +254,7 @@ int64_ops = {
 	var t = [];
 	for (var j = 0;j < 8;j++)
 	    t[j] = reader.read8u();
-	return int64_of_bytes (t);
+	return mk_int64 (t);
     }
 };
 
