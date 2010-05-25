@@ -23,6 +23,12 @@
 
 val detach : ('a -> 'b) -> 'a -> 'b Lwt.t
 
+val undetach : ('a -> 'b Lwt.t) -> 'a -> unit
+  (** When called by a preemptive thread, [undetach f a]
+      will ask the main Lwt thread to execute [f a].
+      Exceptions are ignored.
+  *)
+
 val yield : unit -> unit Lwt.t
   (** [yield ()] is a threads which suspends itself and then resumes
       as soon as possible and terminates.

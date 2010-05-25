@@ -91,6 +91,10 @@ let http_get_post url get_args post_args =
   Lwt_preemptive.detach (http_get_post url get_args) post_args
 
 
+
+let register_event node name (f : 'a -> unit Lwt.t) =
+  Js.Node.register_event node name
+    (fun a -> Lwt_preemptive.undetach f a)
   
 
 (* old implementation was:

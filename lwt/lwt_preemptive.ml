@@ -45,15 +45,24 @@ let detach f x =
   let _ = Thread.create 
     (fun x -> 
        res := Some (f x);
+       Mutex.lock queue_mutex;
        (* I add the result in the queue of ready lwt promises *)
        queue_add w;
 
-       Mutex.lock queue_mutex;
        Condition.signal queue_not_empty;
        Mutex.unlock queue_mutex
     ) x 
   in
   t
+
+let undetach f x =
+  let t, w = Lwt.wait () in
+(*VVV What if exception? *)
+  ignore (t >>= fun () -> f x);
+  Mutex.lock queue_mutex;
+  queue_add w;
+  Condition.signal queue_not_empty;
+  Mutex.unlock queue_mutex
 
 let yield () =
   let t, w = Lwt.wait () in
