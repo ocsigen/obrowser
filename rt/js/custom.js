@@ -241,7 +241,8 @@ int64_ops = {
 	int64_compare (a, b);
     },
     hash : function (a) {
-	return 0;
+	var t = a.get (1);
+	return t[7] | (t[6] << 8) | (t[5] << 16) | (t[4] << 24);
     },
     serialize : function (v, writer) {
 	var t = int64_to_bytes (v);

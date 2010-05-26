@@ -113,7 +113,7 @@ function box_float (x) {
 
 function float_of_bytes (bytes) {
     /* sign & exponent */
-    var sign = ((bytes[0] >> 7) == 1);
+    var sign = ((bytes[0] >>> 7) == 1);
     var exponent = (((bytes[0] & 0x7F) << 4) | (bytes[1] >> 4 )) - 1023;
     /* mantissa in a bool array */
     var ba = [];
@@ -134,7 +134,7 @@ function bytes_of_float (x) {
     var m = Math.abs (x * Math.pow (2, -e)) * 2 - 1;
     e += 1022;
     var bits = [];
-    bits[0] = (x > 0);
+    bits[0] = (x < 0);
     for (var i = 0;i <= 52 ; i++) {
 	bits [11 + i] = (m >= 1);
 	m = (m - Math.floor (m)) * 2;
