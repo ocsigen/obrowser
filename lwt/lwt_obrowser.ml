@@ -95,7 +95,11 @@ let http_get_post url get_args post_args =
 let register_event node name (f : 'a -> unit Lwt.t) =
   Js.Node.register_event node name
     (fun a -> Lwt_preemptive.undetach f a)
-  
+
+(* with given content type (TODO : refactor ! optionnal arg ?) *)
+let http_post_with_content_type url contenttype args =
+  Lwt_preemptive.detach (Js.http_post url contenttype) (urlencode_ args)
+
 
 (* old implementation was:
 

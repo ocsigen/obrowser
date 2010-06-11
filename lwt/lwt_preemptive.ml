@@ -69,6 +69,10 @@ let yield () =
 
   (* I add the result in the queue of ready lwt promises *)
   queue_add w;
+  (* There is no lock because `yield' is called inside aux (in run) (called
+   * inside run => already lock) *)
+  (* Ther is no signal for the same reason (called inside run => no thread
+   * wait-ing on the condition) *)
 
   t
 

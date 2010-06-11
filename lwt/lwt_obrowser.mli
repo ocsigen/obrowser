@@ -77,5 +77,13 @@ val http_get_post :
   (string * string) list -> 
   (int * string) Lwt.t
 
+(** [http_post_with_content_type url ct args] sends an HTTP POST request to the
+  * server with POST arguments [args] nicely encoded, with Content-Type set to
+  * [ct]. The returned value is [(code, message)] where [code] is the HTTP code
+  * and [message] the content of the answer. *)
+val http_post_with_content_type : string -> string -> (string * string) list
+  -> (int * string) Lwt.t
+
+
 (** Register a Lwt thread on a DOM event. *)
 val register_event : JSOO.obj -> string -> ('a -> unit Lwt.t) -> 'a -> unit
