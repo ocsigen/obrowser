@@ -180,59 +180,106 @@ function caml_nativeint_sub (a,b) {
 
 /* int64 */
 
-function mk_int64 (t) { return mk_custom (int64_ops, t); }
+#include "Int64.js"
 
-function int64_compare (a, b) {
-    var t = int64_sub (a, b).get (1);
-    var is_zero = true;
-    for (var i = 0;i < 8;i++)
-	if (t[i] != 0) is_zero = false;
-    if (is_zero)
-	return 0;
-    return (((t[0] >> 7) == 1) ? -1 : 1);
+function val_int64 (t) { return mk_custom (int64_ops, t); }
+
+caml_int64_compare = int64_compare = function (a, b) {
+    return a.get (1).compareTo (b.get (1));
 }
-function int64_add (a, b) {
-    a = a.get (1);
-    b = b.get (1);
-    r = [];
-    var carry = 0;
-    for (var i = 0;i < 8;i++) {
-	r[i] = a[i] + b[i] + carry;
-	carry = r[i] >> 8;
-	r[i] &= 0xFF;
-    }
-    return mk_int64 (r);
+caml_int64_add = int64_add = function (a, b) {
+    return val_int64 (a.get (1).add (b.get (1)));
 }
-function int64_neg (a) {
-    a = a.get (1);
-    var r = new Int64 ();
-    r = [];
-    for (var i = 0;i < 8;i++)
-	r[i] = a[i] ^ 0xFF;
-    var carry = 1;
-    for (var i = 0;i < 8;i++) {
-	r[i] = a[i] +carry;
-	carry = r[i] >> 8;
-	r[i] &= 0xFF;
-    }
-    return mk_custom (int64_ops, r);
+caml_int64_neg = int64_neg = function (a) {
+    return val_int64 (a.get (1).neg ());
 }
-function int64_sub (a, b) {
-    return int64_add (a, int64_neg (b));
+caml_int64_sub = int64_sub = function (a, b) {
+    return val_int64 (a.get (1).sub (b.get (1)));
+}
+caml_int64_mul = int64_mul = function (a, b) {
+    return val_int64 (a.get (1).mul (b.get (1)));
+}
+caml_int64_div = int64_div = function (a, b) {
+    return val_int64 (a.get (1).div (b.get (1)));
+}
+caml_int64_mod = int64_mod = function (a, b) {
+    return val_int64 (a.get (1).mod (b.get (1)));
+}
+caml_int64_and = int64_and = function (a, b) {
+    return val_int64 (a.get (1).and (b.get (1)));
+}
+caml_int64_or = int64_or = function (a, b) {
+    return val_int64 (a.get (1).or (b.get (1)));
+}
+caml_int64_xor = int64_xor = function (a, b) {
+    return val_int64 (a.get (1).xor (b.get (1)));
+}
+caml_int64_lsl = int64_lsl = function (a, b) {
+    return val_int64 (a.get (1).lsl (b.get (1)));
+}
+caml_int64_lsr = int64_lsr = function (a, b) {
+    return val_int64 (a.get (1).lsr (b.get (1)));
+}
+caml_int64_asr = int64_asr = function (a, b) {
+    return val_int64 (a.get (1).asr (b.get (1)));
+}
+caml_int64_of_int32 = int64_of_int32 = function (x) {
+    return val_int64 (new Int64 (x.get (1)));
+}
+caml_int64_to_int32 = int64_to_int32 = function (x) {
+    return val_custom (int32_ops, x.get (1).lo);
 }
 caml_int64_of_int = int64_of_int = function (x) {
-    var t = [];
-    for (var i = 0;i < 4;i++)
-	t[3 - i] = (x < 0) ? 0xFF : 0x00;
-    for (var i = 0;i < 4;i++)
-	t[7 - i] = (x >> (i * 8)) & 0xFF;
-    return mk_int64 (t);
+    return val_int64 (new Int64 (x));
 }
+caml_int64_to_int = int64_to_int = function (x) {
+    return x.get (1).lo;
+}
+caml_int64_of_float = int64_of_float = function (x) {
+    return val_int64 (new Int64 (Math.floor (x)));
+}
+caml_int64_to_float = int64_to_float = function (x) {
+    return val_float (x.get (1).lo + x.get (1).hi * (1 << 30) * 4);
+}
+function caml_int64_format (fmt, x) {
+    var fmt = string_from_value (fmt);
+    var t = fmt[fmt.length - 1];
+    var n = int64_val (x).toString (t == 'd' ? 10 : (t == 'o' ? 8 : (t == 'x' ? 16 : 10 /* err */)));
+    var l = 0, c = '0';
+    if (fmt.length == 3) {
+	l = fmt.charCodeAt (1) - "0".charCodeAt (0);
+    } else {
+	if (fmt.length >= 4) {
+	    c = fmt.charAt(1);
+	    for (var i = 2;i <= fmt.length - 2;i++)
+		l = l * 10 + (fmt.charCodeAt (i) - "0".charCodeAt (0));
+	}
+    }
+    var rem = l - n.length;
+    for (var i = 0;i < rem;i++)
+	n = c + n;
+    return value_from_string (n);
+}
+function caml_int64_of_string (s) {
+    return val_int64 (parseInt64 (s));
+}
+
 function int64_of_bytes (bytes) {
-    return mk_int64 (r);
+    var lo = bytes[7] | (bytes[6] << 8) | (bytes[5] << 16) | (bytes[4] << 16);
+    var hi = bytes[3] | (bytes[2] << 8) | (bytes[1] << 16) | (bytes[0] << 16);
+    return val_int64 (new Int64 (lo, hi));
 }
 function int64_to_bytes (v) {
-    return v.get (1);
+    return [
+	(v.get (1).hi >> 24) & 0xFF,
+	(v.get (1).hi >> 16) & 0xFF,
+	(v.get (1).hi >> 8) & 0xFF,
+	(v.get (1).hi >> 0) & 0xFF,
+	(v.get (1).lo >> 24) & 0xFF,
+	(v.get (1).lo >> 16) & 0xFF,
+	(v.get (1).lo >> 8) & 0xFF,
+	(v.get (1).lo >> 0) & 0xFF
+    ];
 }
 
 int64_ops = {
@@ -255,7 +302,7 @@ int64_ops = {
 	var t = [];
 	for (var j = 0;j < 8;j++)
 	    t[j] = reader.read8u();
-	return mk_int64 (t);
+	return int64_of_bytes (t);
     }
 };
 
