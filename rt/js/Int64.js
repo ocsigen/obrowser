@@ -1,10 +1,10 @@
 /***********************************************************************/
-/*                                                                     */
 /*  Int64 implementation in JavaScript                                 */
+/*  Some tricks inspired from OCaml's Int64 emulation.                 */
 /*                                                                     */
 /*  Copyright 2010 Benjamin Canou.                                     */
 /*  This file is distributed under the terms of the GNU Library        */
-/*  General Public License, version 2 or newer                         */
+/*  General Public License, version 2 or newer.                        */
 /***********************************************************************/
 
 /*** construction from 0, 1 or 2 integers ***/
@@ -33,16 +33,20 @@ function Int64 (lo, hi) {
 
 /*** reading and printing ***/
 Int64.prototype.toString = function (base, upper) {
+  if (base == undefined) base = 10;
   if (base <= 1 || base >= 26)
     throw new Error ("Int64.toString: unbound base");
   var v = this;
-  var b = new Int64 (base == undefined ? 10 : base);
+  if (this.isZero ()) return "0";
+  var b = new Int64 (base);
+  var sign = (v.hi < 0);
   var r = "";
   while (!v.isZero ()) {
-    var mod = v.mod (b);
+    var mod = v.mod (b).lo;
     v = v.div (b);
-    r = digitString (mod.lo, upper) + r;
+    r = digitString (sign ? -mod : mod, upper) + r;
   }
+  if (sign) r = "-" + r;
   return r;
 }
 function parseInt64 (s) {
@@ -66,27 +70,32 @@ Int64.prototype.isZero = function () {
 /* comparison to another value : Int64 -> bool */
 Int64.prototype.compareTo = function (i) {
   if (this.hi == i.hi)
-    return ((this.lo - i.lo) & -1);
-  return ((this.hi - i.hi) & -1);
+    return (this.lo == i.lo ? 0 : (ult (this.lo, i.lo) ? -1 : 1))
+  return ((this.hi < i.hi) ? -1 : 1);
+}
+Int64.prototype.compareToUnsigned = function (i) {
+  if (this.hi == i.hi)
+    return (this.lo == i.lo ? 0 : (ult (this.lo, i.lo) ? -1 : 1))
+  return (ult (this.hi, i.hi) ? -1 : 1);
 }
 
 /*** logical operations ***/
 /* bitwise exclusive and : Int64 -> Int64 */
-Int64.prototype.and = function () {
+Int64.prototype.and = function (i) {
   var r = new Int64 ();
   r.lo = this.lo & i.lo;
   r.hi = this.hi & i.hi;
   return r;
 }
 /* bitwise or : Int64 -> Int64 */
-Int64.prototype.or = function () {
+Int64.prototype.or = function (i) {
   var r = new Int64 ();
   r.lo = this.lo | i.lo;
   r.hi = this.hi | i.hi;
   return r;
 }
 /* bitwise exclusive or : Int64 -> Int64 */
-Int64.prototype.xor = function () {
+Int64.prototype.xor = function (i) {
   var r = new Int64 ();
   r.lo = this.lo ^ i.lo;
   r.hi = this.hi ^ i.hi;
@@ -148,7 +157,7 @@ Int64.prototype.asr = function (s) {
 /* unary arithmetic negation : Int64 */
 Int64.prototype.neg = function () {
   var r = new Int64 ();
-  r.lo = -this.lo;
+  r.lo = (-this.lo) & -1;
   r.hi = ~this.hi;
   if (r.lo == 0) r.hi = ((r.hi + 1) & -1);
   return r;
@@ -158,7 +167,7 @@ Int64.prototype.add = function (i) {
   var r = new Int64 ();
   r.lo = (this.lo + i.lo) & -1;
   r.hi = (this.hi + i.hi) & -1;
-  if (r.lo < this.lo) r.hi = ((r.hi + 1) & -1);
+  if (ult (r.lo, this.lo)) r.hi = ((r.hi + 1) & -1);
   return r;
 }
 /* substraction : Int64 -> Int64 */
@@ -166,7 +175,7 @@ Int64.prototype.sub = function (i) {
   var r = new Int64 ();
   r.lo = (this.lo - i.lo) & -1;
   r.hi = (this.hi - i.hi) & -1;
-  if (this.lo < i.lo) r.hi = ((r.hi - 1) & -1);
+  if (ult (this.lo, i.lo)) r.hi = ((r.hi - 1) & -1);
   return r;
 }
 /* multiplication : Int64 -> Int64 */
@@ -202,54 +211,68 @@ Int64.prototype.mul = function (i) {
 
   r.lo = C;
   var tlo = r.lo + (B1 << 16) & -1;
-  if (tlo < r.lo) r.hi = (r.hi + 1) & -1;
+  if (ult (tlo, r.lo)) r.hi = (r.hi + 1) & -1;
   r.lo = tlo;
   tlo = r.lo + (B2 << 16) & -1;
-  if (tlo < r.lo) r.hi = (r.hi + 1) & -1;
+  if (ult (tlo, r.lo)) r.hi = (r.hi + 1) & -1;
   r.lo = tlo;
   
   return r;
 }
 /* division : Int64 -> Int64 */
 Int64.prototype.div = function (i) {
+  var sign = (this.hi < 0) ^ (i.hi < 0);
+  var rest = this;
+  if (rest.hi < 0) rest = rest.neg ();
+  if (i.hi < 0) i = i.neg ();
+  if (i.isZero ()) throw new Error ("Int64.div: division by zero");
+
   /* find N such as i * 2 ** N > this */
   var n = 0;
-  while (i.lsl (n).compareTo (this) <= 0) n++;
+  while (i.lsl (n).compareToUnsigned (rest) <= 0) n++;
   
   /* reduce multiples of i and 2 ** n, forall 0 <= n < N */
-  var rest = this;
   var quo = new Int64(0);
   while (n >= 0) {
-    if (rest.compareTo (i.lsl (n)) >= 0) {
-      rest = rest.sub (i.lsl (n));
-      quo = quo.add ((new Int64 (1)).lsl (n));
+    var shf = i.lsl (n);
+    if (rest.compareToUnsigned (shf) >= 0) {
+      rest = rest.sub (shf);
+      quo = quo.or ((new Int64 (1)).lsl (n));
     }
     n--;
   }
-  return quo;
+  return sign ? quo.neg () : quo;
 }
 /* modulo : Int64 -> Int64 */
 Int64.prototype.mod = function (i) {
+  var sign = (this.hi < 0);
+  var rest = this;
+  if (rest.hi < 0) rest = rest.neg ();
+  if (i.hi < 0) i = i.neg ();
+  if (i.isZero ()) throw new Error ("Int64.mod: division by zero");
+
   /* find N such as i * 2 ** N > this */
   var n = 0;
-  while (i.lsl (n).compareTo (this) <= 0) n++;
+  while (i.lsl (n).compareToUnsigned (rest) <= 0) n++;
   
   /* reduce multiples of i and 2 ** n, forall 0 <= n < N */
-  var rest = this;
   var quo = new Int64(0);
   while (n >= 0) {
-    if (rest.compareTo (i.lsl (n)) >= 0) {
-      rest = rest.sub (i.lsl (n));
-      quo = quo.add ((new Int64 (1)).lsl (n));
+    var shf = i.lsl (n);
+    if (rest.compareToUnsigned (shf) >= 0) {
+      rest = rest.sub (shf);
     }
     n--;
   }
-  return rest;
+  return sign ? rest.neg () : rest;
 }
 
 /*** utilities ***/
 function isInt(v) {
   return (typeof (v) == 'number' && (!isNaN (v)) && ((v & -1) === v))
+}
+function ult (a,b) {
+    return ((a >= 0) ? ((b < 0) || (a < b)) : ((b < 0) && (a < b)));
 }
 var _lowerCaseDigits = [
   '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','g','h','i',
@@ -263,13 +286,13 @@ for (i in _upperCaseDigits) _digitsReversed[_upperCaseDigits[i]] = i;
 function digitString (v, u) {
   var s = u ? _lowerCaseDigits[v] : _upperCaseDigits[v];
   if (s == undefined)
-    throw new Error ("digitString: unbound number");
+    throw new Error ("digitString: unbound number " + v);
   return s;
 }
 function stringDigit (v) {
   var s = _digitsReversed[v];
   if (s == undefined)
-      throw new Error ("stringDigit: unbound digit");
+      throw new Error ("stringDigit: unbound digit " + v);
   return s;
 }
 

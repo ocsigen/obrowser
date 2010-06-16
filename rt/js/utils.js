@@ -202,7 +202,7 @@ function uudecode (s) {
 
 // unsigned operator <
 function ult (a,b) {
-    return ((a >= 0) ? ((b < 0) || (a < b)) : ((b < 0) && (a > b)));
+    return ((a >= 0) ? ((b < 0) || (a < b)) : ((b < 0) && (a < b)));
 }
 
 #endif /*__UTILS_H*/
