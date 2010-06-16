@@ -32,7 +32,7 @@ function int32_val (v) { return v.get (1); }
 int32_ops = {
     id : "_i",
     compare :  function (a,b) {
-	return (a - b);
+	return (a.get (1) - b.get (1));
     },
     hash : function (a) {
 	return a;
@@ -172,7 +172,7 @@ function nativeint_val (v) { return v.get (1); }
 nativeint_ops = {
     id : "_n",
     compare : function (a,b) {
-	return (a - b);
+	return (a.get (1) - b.get (1));
     },
     hash : function (a) {
 	return a;
@@ -328,7 +328,7 @@ function int64_val (v) { return v.get (1); }
 int64_ops = {
     id : "_j",
     compare : function (a,b) {
-	int64_compare (a, b);
+	return int64_compare (a, b);
     },
     hash : function (a) {
 	return a.get (1).lo;
