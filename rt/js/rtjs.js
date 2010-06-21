@@ -300,6 +300,7 @@ function basic_io_write (s) {
 	div.style.padding = "5px";
 	div.style.backgroundColor = "lightgrey";
 	div.style.color = "black";
+	div.style.fontSize = "10px";
 	div.style.whiteSpace = "pre";
 	div.id = "caml_io_console";
 	document.body.appendChild (div);

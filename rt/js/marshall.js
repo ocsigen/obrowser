@@ -202,6 +202,7 @@ function input_val (chunk, error) {
 		case CODE_DOUBLE_ARRAY8_LITTLE: {
 		    var len = reader.read8u();
 		    var v = mk_block (len, DOUBLE_ARRAY_TAG);
+		    intern_obj_table[obj_counter++] = v;
 		    for (var i = 0;i < len;i++) {
 			var t = [];
 			for (var j = 0;j < 8;j++)
@@ -213,6 +214,7 @@ function input_val (chunk, error) {
 		case CODE_DOUBLE_ARRAY8_BIG: {
 		    var len = reader.read8u();
 		    var v = mk_block (len, DOUBLE_ARRAY_TAG);
+		    intern_obj_table[obj_counter++] = v;
 		    for (var i = 0;i < len;i++) {
 			var t = [];
 			for (var j = 0;j < 8;j++)
@@ -224,6 +226,7 @@ function input_val (chunk, error) {
 		case CODE_DOUBLE_ARRAY32_LITTLE: {
 		    var len = reader.read32u();
 		    var v = mk_block (len, DOUBLE_ARRAY_TAG);
+		    intern_obj_table[obj_counter++] = v;
 		    for (var i = 0;i < len;i++) {
 			var t = [];
 			for (var j = 0;j < 8;j++)
@@ -235,6 +238,7 @@ function input_val (chunk, error) {
 		case CODE_DOUBLE_ARRAY32_BIG: {
 		    var len = reader.read32u();
 		    var v = mk_block (len, DOUBLE_ARRAY_TAG);
+		    intern_obj_table[obj_counter++] = v;
 		    for (var i = 0;i < len;i++) {
 			var t = [];
 			for (var j = 0;j < 8;j++)
@@ -260,10 +264,13 @@ function input_val (chunk, error) {
 			si = reader.read8u ();
 		    }
 		    var c = find_custom (s);
-		    if (!c)
+		    if (!c) {
 			error ("unknown custom identifier " + s);
-		    else
-			return c.deserialize (reader);
+		    } else {
+			var v = c.deserialize (reader);
+			intern_obj_table[obj_counter++] = v;
+			return v;
+		    }
 		}
 		default:
 		    error ("ill-formed message (" + code + ")");
@@ -325,6 +332,7 @@ Writer.prototype.finalize = function () {
 #define HD(v) (((v).size << 10) | (v).tag)
 
 function output_val (v, error) {
+    var dejavus = [];
     var writer = new Writer ()
     function extern_rec (v) {
 	if (is_long (v)) {
@@ -378,6 +386,7 @@ function output_val (v, error) {
 		writer.size_32 += 1 + (len + 4) / 4;
 		writer.size_64 += 1 + (len + 8) / 8;
 		v.dejavu = true;
+                dejavus.push (v) ;
 		v.dejavu_location = writer.obj_counter++;
 		break;
 	    }
@@ -389,6 +398,7 @@ function output_val (v, error) {
 		writer.size_32 += 1 + 2;
 		writer.size_64 += 1 + 1;
 		v.dejavu = true;
+                dejavus.push (v) ;
 		v.dejavu_location = writer.obj_counter++;
 		break;
 	    }
@@ -405,6 +415,7 @@ function output_val (v, error) {
 		writer.size_32 += 1 + nfloats * 2;
 		writer.size_64 += 1 + nfloats;
 		v.dejavu = true;
+                dejavus.push (v) ;
 		v.dejavu_location = writer.obj_counter++;
 		break;
 	    }
@@ -412,7 +423,8 @@ function output_val (v, error) {
 		caml_invalid_arg("output_value: abstract value (Abstract)");
 		break;
 	    case INFIX_TAG:
-		//	caml_invalid_arg("output_value: on verra plus tard");
+	    case CLOSURE_TAG:
+		caml_invalid_arg("output_value: closure");
 		writer.write_code (32, CODE_INFIXPOINTER, v.offset);
 		extern_rec(v.shift (- v.offset));
 		break;
@@ -427,6 +439,7 @@ function output_val (v, error) {
 		
 		v.get (0).serialize(v, writer);
 		v.dejavu = true;
+                dejavus.push (v) ;
 		v.dejavu_location = writer.obj_counter++;
 		break;
 	    }
@@ -439,6 +452,7 @@ function output_val (v, error) {
 		writer.size_32 += 1 + v.size ;
 		writer.size_64 += 1 + v.size ;
 		v.dejavu = true;
+                dejavus.push (v) ;
 		v.dejavu_location = writer.obj_counter++;
 		for (i = 0; i < v.size; i++) {
 		    extern_rec (v.get (i));
@@ -448,19 +462,13 @@ function output_val (v, error) {
 	}
 	
     }
-    /* BOUZIN :
-  else if ((char *) v >= caml_code_area_start &&
-           (char *) v < caml_code_area_end) {
-    if (!extern_closures)
-      extern_invalid_argument("output_value: functional value");
-    writecode32(CODE_CODEPOINTER, (char *) v - caml_code_area_start);
-    writeblock((char *) caml_code_checksum(), 16);
-  } else {
-    extern_invalid_argument("output_value: abstract value (outside heap)");
-  }
-*/
+    /* todo : handle closures */
     extern_rec (v);
     writer.finalize ();
+    for (i in dejavus) {
+	dejavus[i].dejavu = undefined ;
+	dejavus[i].dejavu_location = undefined ;
+    }
     return writer.chunk;
 }
 
