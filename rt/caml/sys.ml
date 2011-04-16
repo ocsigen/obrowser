@@ -76,4 +76,4 @@ exception Break
 
 let catch_break _ = failwith "not implemented in obrowser"
 
-let ocaml_version = "3.11.2/obrowser";;
+let ocaml_version = "3.12.0/obrowser";;

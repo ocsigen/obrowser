@@ -11,7 +11,7 @@ Mandatory to build the core
  - a bourne-like shell (like bash)
  - the GNU version of make
  - perl (this will be removed)
- - OCaml 3.11.0 and an associated C compiler
+ - OCaml 3.12.0 and an associated C compiler
 
 For lwt_obrowser
  - lwt
