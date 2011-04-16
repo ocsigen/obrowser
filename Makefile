@@ -18,7 +18,14 @@ EXAMPLES_TARGETS = $(patsubst examples/%,%.example, $(wildcard examples/*))
 OCAMLFIND = ocamlfind
 .PHONY: tuto dist plugin lwt
 
-all: rt/caml/stdlib.cma vm.js tuto $(EXAMPLES_TARGETS) examples.html AXO lwt
+all: .check_version rt/caml/stdlib.cma vm.js tuto $(EXAMPLES_TARGETS) examples.html AXO lwt
+
+.check_version:
+	@[ "$(shell ocamlc -vnum)" = "3.12.0" ] || \
+	  [ "$(shell ocamlc -vnum)" = "3.12.1" ] || \
+	  ( echo "You need ocaml version 3.12.0 or 3.12.1"; \
+            exit 1 )
+	touch $@
 
 %.example: 
 	@echo "[EXAMPLE] $*"
