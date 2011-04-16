@@ -2,12 +2,12 @@ ML=$(wildcard *.ml)
 #CMO=$(patsubst %.ml,%.cmo, $(ML))
 CMOS= \
   pervasives.cmo sys.cmo \
-  marshal.cmo obj.cmo lazy.cmo \
+  int32.cmo int64.cmo nativeint.cmo \
   array.cmo list.cmo hashtbl.cmo \
+  marshal.cmo obj.cmo lazy.cmo \
   char.cmo string.cmo \
   stdLabels.cmo arrayLabels.cmo listLabels.cmo stringLabels.cmo \
   set.cmo map.cmo stack.cmo queue.cmo buffer.cmo sort.cmo \
-  int32.cmo int64.cmo nativeint.cmo \
   printf.cmo format.cmo scanf.cmo \
   arg.cmo  printexc.cmo \
   digest.cmo random.cmo callback.cmo \
@@ -62,7 +62,7 @@ stubs.c: $(ML)
 
 depend:
 	@echo "[CAMLDEP]"
-	@CAMLLIB=. ocamldep -I . *.ml > .depend
+	@CAMLLIB=. ocamldep -I . *.ml *.mli > .depend
 
 include .depend
 

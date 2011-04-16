@@ -101,7 +101,7 @@ let __ocaml_lex_tables = {
 }
 
 let rec line lexbuf =
-    __ocaml_lex_line_rec lexbuf 0
+  __ocaml_lex_line_rec lexbuf 0
 and __ocaml_lex_line_rec lexbuf __ocaml_lex_state =
   match Lexing.engine __ocaml_lex_tables __ocaml_lex_state lexbuf with
       | 0 ->
@@ -122,7 +122,7 @@ let
   | __ocaml_lex_state -> lexbuf.Lexing.refill_buff lexbuf; __ocaml_lex_line_rec lexbuf __ocaml_lex_state
 
 and token lexbuf =
-    __ocaml_lex_token_rec lexbuf 3
+  __ocaml_lex_token_rec lexbuf 3
 and __ocaml_lex_token_rec lexbuf __ocaml_lex_state =
   match Lexing.engine __ocaml_lex_tables __ocaml_lex_state lexbuf with
       | 0 ->
