@@ -74,14 +74,14 @@ clean:
 	@for ex in $(EXAMPLES) ; do cd examples/$$ex && $(MAKE) clean && cd ../.. ; done
 	@cd axo && $(MAKE) clean
 
+
+VERSION := $(shell head -n 1 VERSION)
+
 dist: clean
-	@if ! [ -d dist ] ; then mkdir dist ; fi
-	@B=$$(basename $$(pwd)) ; D=$$(date "+%y%m%d.%H%M") ; \
-	 cd .. ; tar cjf $$B.$$D.tbz2 --exclude="*.svn*" --exclude="$$B/dist*" $$B ; mv $$B.$$D.tbz2 $$B/dist ; \
-	 echo "[DIST] dist/$$B.$$D.tbz2"
+	darcs dist -d obrowser-$(VERSION)
 
 install:
-	$(OCAMLFIND) install obrowser META vm.js rt/js/ffi.js rt/caml/stdlib.cma rt/caml/*.cmi rt/caml/std_exit.cmo axo/AXO.cma axo/AXO*.cmi lwt/lwt_obrowser.cma lwt/lwt_*.cmi
+	$(OCAMLFIND) install -patch-version ${VERSION} obrowser META vm.js rt/js/ffi.js rt/caml/stdlib.cma rt/caml/*.cmi rt/caml/std_exit.cmo axo/AXO.cma axo/AXO*.cmi lwt/lwt_obrowser.cma lwt/lwt_*.cmi
 	install -m 644 rt/caml/dllstdlib.so `$(OCAMLFIND) -printconf destdir`/obrowser
 
 uninstall:
