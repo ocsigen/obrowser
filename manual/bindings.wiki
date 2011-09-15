@@ -1,0 +1,224 @@
+==How to write bindings for a Javascript Library==
+
+O'Browser provides two kinds of inter-operability between the language
+and its implementation layer. The first operates mainly in the JavaScript
+world, and relies on OCaml's foreign function interface (the
+//external// keyword). The second operates in the OCaml world,
+and consists in JavaScript values manipulation primitives (like the
+Obj module in standard OCaml).
+
+===The JavaScript way===
+With this method, we manipulate OCaml values from JavaScript, like we do from C
+in a standard OCaml environment. We thus write external functions in JavaScript
+using primitives given in he foreign function interface of O'Browser,
+in the file [[sources/rt/js/ffi.js|ffi.js]].
+
+====Example: exploring OCaml values====
+The following function demonstrate how to read OCaml values in JavaScript. It
+flattens a value into a JavaScript, human readable string.
+
+{{{
+function print_val (v, limit) {
+  // we set the global variable truncated if the limit as been reached
+  truncated = false;
+
+  var s = ""; // result string
+  function aux (v) {
+    // auxiliary, recursive pretty printer
+    if (is_long (v)) {
+      s += sprintf ("0x%X", v);
+    } else {
+      switch (block_tag (v)) {
+        case STRING_TAG:
+          s += "\"" + string_val (v) + "\"";
+          break;
+        case DOUBLE_TAG:
+          s += float_val (v).toExponential ();
+          break;
+        default: {
+          s += sprintf ("[(0x%02X) ", block_tag (v));
+          for (var i = 0;i < block_size (v) - 1 && i < limit;i++) {
+            aux (field (v, i));
+            s += ", ";
+          }
+          if (i >= limit) {
+            s += "...";
+            truncated = true;
+          } else {
+            aux (field (v, i));
+          }
+          s += "]";
+        }
+      }
+    }
+  }
+  aux (v);
+  return s;
+}
+}}}
+
+====Using OCaml keyword **external**====
+Let us consider the case of a simple external function taking two
+arguments, and returning a tuple of three values.  The first argument
+is a value v, the second a limit l. The returned tuple is made of
+the unchanged value, the pretty printed string of the JavaScript memory
+representation of v with deep limit l, and a boolean indicating if
+the value has not been fully printed (because of the limit).
+
+<<code language="ocaml"|external print_memory : 'a -> int -> 'a * string * bool = "caml_print_memory"
+>>
+
+We give the name //print_memory// to the OCaml function, and we
+tell the compiler that the symbol name is //caml_print_memory//.
+
+{{{
+function caml_print_memory (v, l) {
+  // a function with n arguments in ML is simply bound to a function with n arguments in JS
+
+  // we allocate a new block with size 3 and tag 0
+  var tup = mk_block (3, 0);
+
+  // and set each of its fields
+  store_field (tup, 0, v);
+  store_field (tup, 1, val_string (print_val (v)));
+  store_field (tup, 2, mk_bool (truncated));
+
+  // the value is simply returned with a JavaScript return
+  return tup;
+}
+}}}
+
+====C stubs for ocamlc====
+For the standard OCaml compiler to accept this external declaration, we
+have to give it the object file containing the required C symbols. For
+example, a simple C file containing a global int variable named
+//caml_print_memory// is enough.
+
+Here is an example Makefile to build a program using a library with
+external functions, assuming the OCaml code of the library is in
+//mylib.ml//, and the C stubs have been put into
+//mylib_stubs.c//.
+
+{{{
+all: main.exe.uue
+main.exe: mylib.cma main.ml
+         CAMLLIB=$(OBROWSERLIB) corner_click.cma main.ml -o $@
+mylib.cma: mylib_stubs.o mylib.cmo
+        CAMLLIB=$(OBROWSERLIB) ocamlmklib mylib_stubs.o mylib.cmo -o mylib
+%.o: %.c
+        CAMLLIB=$(OBROWSERLIB) ocamlc -c $<
+%.cmo: %.ml ../../rt/caml/stdlib.cma
+        CAMLLIB=$(OBROWSERLIB) ocamlc -c $<
+%.uue: %
+        uuencode $^ stdout > $@
+}}}
+
+====Dealing with exceptions====
+In the implementations of blocking functions, O'Browser messes up with
+JavaScript exceptions. When using JavaScript exceptions, the //caml_catch(e)//
+macro has to be used as follows:
+
+{{{
+try {
+  // code raising an exception
+} catch (e) {
+  caml_catch (e);
+  // handler
+}
+}}}
+
+====Blocking functions====
+O'Browser provides a facility to abstract from the asynchronous
+execution model of JavaScript. For example, one can define a function that
+will block until an event occurs in the JavaScript world.
+
+In the following example, we wait for a mouse click in the top left of
+the window, and return the coordinates as a tuple. This is done by
+pausing the machine, and registering an event that will resume the
+machine when it occurs. To achieve this behaviour, we use O'Browser
+threading mechanism.
+
+{{{
+function corner_click (unit) {
+  // 'this' is not a variable but a keyword, so we need to bind it to a variable
+  // for it to be included in closures
+  var vm = this;
+
+  // we need a resource for wait and notify
+  // we will also use it to pass values from the event to the continuation
+  var res = [];
+
+  try {
+    document.onclick = function (evt) {
+      // resume the thread on click
+      res.x = evt.clientX;
+      res.y = evt.clientY;
+      vm.thread_notify_all (res);
+    }
+
+    // this is the function to be called when the thread resumes
+    var cont = function  () {
+      // we wait again if not in the corner
+      if (res.x > 50 || res.y > 50) {
+        vm.thread_wait (res, cont);
+      }
+
+      // we create the result value
+      var b = mk_block (2, 0);
+      store_field (b, 0, res.x);
+      store_field (b, 1, res.y);
+
+      // we simply use return
+      return b;
+    }
+    vm.thread_wait (res, cont);
+  } catch (e) {
+    caml_catch(e); // take care of internal exceptions
+    this.failwith("corner_click");
+  }
+}
+}}}
+
+The function appears as a single normal function from OCaml.
+
+<<code language="ocaml"|external corner_click : unit -> (int * int) = "corner_click"
+>>
+
+====Call-backs====
+O'Browser provides some support for calling OCaml code from
+JavaScript. However, it is not possible to keep the same execution model
+during call-backs. The call-back function is executed entirely at
+once, and threading mechanism does not work during this
+call. Call-back functions should thence not be too long, and are
+forbidden to call threading primitives.
+
+To execute a callback function, one must use the
+//caml_callback// method of the current virtual machine
+object. This methods takes the closure as first argument, and a JavaScript
+array containing the arguments to be passed to the function. The
+following example takes a binary operator over integers, applies it
+using a call-back, and returns the result.
+
+{{{
+function apply_binop (op, i1, i2) {
+  var args = [i1, i2];
+  var res = this.callback (op, args);
+  return res;
+}
+}}}
+
+Declared in OCaml as:
+
+<<code language="ocaml"|external apply_binop : (int-> int -> int) -> int -> int -> int = "apply_binop"
+>>
+
+====Complete example====
+Here is [[sources/examples/bindings/|an example]] showing all these techniques in O'Browser's repository.
+
+===The OCaml way===
+O'Browser provides a reverse way to make OCaml and JavaScript cooperate via the
+[[sources/rt/caml/jSOO.ml|jSOO.ml]] module. This modules defines an abstract type for JavaScript
+values, and operators over them.
+
+
+//coming soon//

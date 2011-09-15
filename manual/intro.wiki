@@ -1,0 +1,11 @@
+==O'Browser==
+
+O'Browser is an OCaml virtual machine written in Javascript, to run OCaml program in browsers!
+It is independant from Eliom and Ocsigen's server. You can use it with any Web server.
+
+[[install|Download from here]].
+
+O'Browser's tutorial is [[http://www.pps.jussieu.fr/~canou/obrowser/tutorial/|here]] for now.
+
+See also the O'Browser-specific OCaml modules [[sources/rt/caml/js.ml|Js]] and [[sources/rt/caml/jSOO.ml|JSOO]] and <<a_manual chapter="bindings"|how to write bindings>>.
+
